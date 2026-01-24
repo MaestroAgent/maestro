@@ -25,13 +25,24 @@ export function createDelegateToAgentTool(
       },
       required: ["agent_name", "message"],
     },
-    execute: async (args: Record<string, unknown>, _context: AgentContext) => {
+    execute: async (args: Record<string, unknown>, context: AgentContext) => {
       const agentName = args.agent_name as string;
       const message = args.message as string;
 
+      // Track delegation in context metadata
+      const delegations = (context.metadata.delegations as string[]) || [];
+      delegations.push(agentName);
+      context.metadata.delegations = delegations;
+      context.metadata.lastAgent = agentName;
+
       const spawner = getSpawner();
       const response = await spawner(agentName, message);
-      return { agent: agentName, response };
+
+      return {
+        agent: agentName,
+        response,
+        delegationCount: delegations.length,
+      };
     },
   };
 }

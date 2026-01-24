@@ -20,11 +20,17 @@ export interface ToolResult {
   isError?: boolean;
 }
 
+// Token usage for cost tracking
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
 // Streaming chunks
 export type StreamChunk =
   | { type: "text"; text: string }
   | { type: "tool_call"; toolCall: ToolCall }
-  | { type: "done"; fullText: string };
+  | { type: "done"; fullText: string; usage?: TokenUsage };
 
 // Agent context shared across hierarchy
 export interface AgentContext {

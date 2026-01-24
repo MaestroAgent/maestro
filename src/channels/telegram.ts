@@ -1,21 +1,24 @@
 import { Bot, Context } from "grammy";
 import { Agent } from "../core/agent.js";
 import { AgentContext } from "../core/types.js";
-import { randomUUID } from "crypto";
+import { MemoryStore } from "../memory/store.js";
 
 export interface TelegramAdapterOptions {
   token: string;
   createOrchestrator: (context: AgentContext) => Agent;
+  memoryStore: MemoryStore;
 }
 
 export class TelegramAdapter {
   private bot: Bot;
   private createOrchestrator: (context: AgentContext) => Agent;
+  private memoryStore: MemoryStore;
   private sessions: Map<number, AgentContext> = new Map();
 
   constructor(options: TelegramAdapterOptions) {
     this.bot = new Bot(options.token);
     this.createOrchestrator = options.createOrchestrator;
+    this.memoryStore = options.memoryStore;
 
     this.setupHandlers();
   }
@@ -32,6 +35,11 @@ export class TelegramAdapter {
     this.bot.command("clear", async (ctx) => {
       const chatId = ctx.chat?.id;
       if (chatId) {
+        const session = this.sessions.get(chatId);
+        if (session) {
+          this.memoryStore.clearSession(session.sessionId);
+          session.history = [];
+        }
         this.sessions.delete(chatId);
         await ctx.reply("Session cleared. Starting fresh!");
       }
@@ -49,16 +57,22 @@ export class TelegramAdapter {
   }
 
   private getOrCreateSession(chatId: number): AgentContext {
-    let session = this.sessions.get(chatId);
-    if (!session) {
-      session = {
-        sessionId: randomUUID(),
-        history: [],
-        metadata: { telegramChatId: chatId },
-      };
-      this.sessions.set(chatId, session);
+    // Check in-memory cache first
+    let context = this.sessions.get(chatId);
+    if (context) {
+      return context;
     }
-    return session;
+
+    // Load from persistent storage
+    const session = this.memoryStore.getOrCreateSession(
+      "telegram",
+      String(chatId)
+    );
+    context = this.memoryStore.createContext(session);
+    context.metadata.telegramChatId = chatId;
+
+    this.sessions.set(chatId, context);
+    return context;
   }
 
   private async handleMessage(ctx: Context): Promise<void> {
@@ -86,6 +100,9 @@ export class TelegramAdapter {
           response += chunk.text;
         }
       }
+
+      // Sync context to persistent storage
+      this.memoryStore.syncContext(session);
 
       // Send response (Telegram has 4096 char limit)
       if (response) {

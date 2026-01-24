@@ -52,6 +52,8 @@ export class AnthropicProvider implements LLMProvider {
     let currentToolId = "";
     let currentToolName = "";
     let currentToolInput = "";
+    let inputTokens = 0;
+    let outputTokens = 0;
 
     for await (const event of stream) {
       if (event.type === "content_block_start") {
@@ -82,10 +84,24 @@ export class AnthropicProvider implements LLMProvider {
           currentToolName = "";
           currentToolInput = "";
         }
+      } else if (event.type === "message_delta") {
+        // Capture usage from message delta
+        if (event.usage) {
+          outputTokens = event.usage.output_tokens;
+        }
+      } else if (event.type === "message_start") {
+        // Capture input tokens from message start
+        if (event.message?.usage) {
+          inputTokens = event.message.usage.input_tokens;
+        }
       }
     }
 
-    yield { type: "done", fullText };
+    yield {
+      type: "done",
+      fullText,
+      usage: { inputTokens, outputTokens },
+    };
   }
 
   private convertMessages(

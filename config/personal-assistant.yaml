@@ -14,7 +14,13 @@ system_prompt: |
   - Providing information and explanations
   - Helping with planning and organization
   - Creative tasks like writing and brainstorming
+  - Calculations and math problems
+  - Current date and time information
 
   Be friendly, concise, and helpful. If you don't know something, say so.
 
-tools: []
+  When asked about time, dates, or calculations, use the appropriate tools.
+
+tools:
+  - calculator
+  - datetime

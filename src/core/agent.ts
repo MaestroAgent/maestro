@@ -8,6 +8,7 @@ import {
   ToolResult,
 } from "./types.js";
 import { LLMProvider } from "../llm/provider.js";
+import { getLogger, getCostTracker } from "../observability/index.js";
 
 export interface AgentRuntime {
   id: string;
@@ -53,6 +54,19 @@ export class Agent implements AgentRuntime {
   }
 
   async *run(input: string): AsyncGenerator<StreamChunk, string, unknown> {
+    const logger = getLogger();
+    const costTracker = getCostTracker(this.context.sessionId, this.config.model.name);
+    const startTime = Date.now();
+
+    // Track current agent in context
+    this.context.metadata.currentAgent = this.config.name;
+
+    // Log agent invocation
+    logger.agentInvoke(input, {
+      sessionId: this.context.sessionId,
+      agentName: this.config.name,
+    });
+
     // Add user message to history
     this.context.history.push({ role: "user", content: input });
 
@@ -61,6 +75,8 @@ export class Agent implements AgentRuntime {
 
     let fullResponse = "";
     let pendingToolCalls: ToolCall[] = [];
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
 
     // Agent loop - keep running until we get a final text response
     while (true) {
@@ -88,6 +104,11 @@ export class Agent implements AgentRuntime {
           yield chunk;
         } else if (chunk.type === "done") {
           fullResponse = chunk.fullText;
+          // Track token usage
+          if (chunk.usage) {
+            totalInputTokens += chunk.usage.inputTokens;
+            totalOutputTokens += chunk.usage.outputTokens;
+          }
         }
       }
 
@@ -99,11 +120,10 @@ export class Agent implements AgentRuntime {
         break;
       }
 
-      // Execute tool calls
+      // Execute tool calls with logging
       const toolResults = await this.executeToolCalls(currentToolCalls);
 
       // Add assistant message with tool calls to history
-      // For Anthropic, we need to track that the assistant made tool calls
       this.context.history.push({
         role: "assistant",
         content: this.formatToolCallsForHistory(currentToolCalls, currentText),
@@ -118,7 +138,28 @@ export class Agent implements AgentRuntime {
       pendingToolCalls = [];
     }
 
-    yield { type: "done", fullText: fullResponse };
+    // Record cost
+    costTracker.record(
+      {
+        inputTokens: totalInputTokens,
+        outputTokens: totalOutputTokens,
+        totalTokens: totalInputTokens + totalOutputTokens,
+      },
+      this.config.name
+    );
+
+    // Log response
+    const durationMs = Date.now() - startTime;
+    logger.agentResponse(totalInputTokens, totalOutputTokens, durationMs, {
+      sessionId: this.context.sessionId,
+      agentName: this.config.name,
+    });
+
+    yield {
+      type: "done",
+      fullText: fullResponse,
+      usage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
+    };
     return fullResponse;
   }
 
@@ -161,16 +202,28 @@ export class Agent implements AgentRuntime {
   }
 
   private async executeToolCalls(toolCalls: ToolCall[]): Promise<ToolResult[]> {
+    const logger = getLogger();
     const results: ToolResult[] = [];
+    const logContext = {
+      sessionId: this.context.sessionId,
+      agentName: this.config.name,
+    };
 
     for (const call of toolCalls) {
+      const toolStartTime = Date.now();
+
+      // Log tool call
+      logger.toolCall(call.name, call.arguments, logContext);
+
       const tool = this.toolRegistry.get(call.name);
       if (!tool) {
+        const errorResult = `Error: Unknown tool ${call.name}`;
         results.push({
           toolCallId: call.id,
-          result: `Error: Unknown tool ${call.name}`,
+          result: errorResult,
           isError: true,
         });
+        logger.toolResult(call.name, errorResult, true, Date.now() - toolStartTime, logContext);
         continue;
       }
 
@@ -180,12 +233,15 @@ export class Agent implements AgentRuntime {
           toolCallId: call.id,
           result,
         });
+        logger.toolResult(call.name, result, false, Date.now() - toolStartTime, logContext);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         results.push({
           toolCallId: call.id,
-          result: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          result: `Error: ${errorMessage}`,
           isError: true,
         });
+        logger.toolResult(call.name, errorMessage, true, Date.now() - toolStartTime, logContext);
       }
     }
 
