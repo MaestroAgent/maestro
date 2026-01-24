@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { loadAllAgentConfigs } from "./core/config.js";
