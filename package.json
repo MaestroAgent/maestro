@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "cli": "tsx src/index.ts cli",
+    "api": "tsx src/index.ts api",
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint src/",
@@ -12,9 +13,11 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@hono/node-server": "^1.19.9",
     "better-sqlite3": "^12.6.2",
     "dotenv": "^17.2.3",
     "grammy": "^1.35.0",
+    "hono": "^4.11.5",
     "yaml": "^2.7.0",
     "zod": "^3.24.2"
   },

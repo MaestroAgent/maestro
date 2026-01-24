@@ -11,18 +11,22 @@ import { CLIAdapter } from "./channels/cli.js";
 import { MemoryStore } from "./memory/store.js";
 import { createToolRegistry, builtinTools } from "./tools/index.js";
 import { initLogger } from "./observability/index.js";
+import { APIServer } from "./api/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = join(__dirname, "..", "config");
 const DATA_DIR = join(__dirname, "..", "data");
 const LOGS_DIR = join(__dirname, "..", "logs");
 
-type Mode = "telegram" | "cli";
+type Mode = "telegram" | "cli" | "api";
 
 function getMode(): Mode {
   const arg = process.argv[2];
   if (arg === "--cli" || arg === "cli") {
     return "cli";
+  }
+  if (arg === "--api" || arg === "api") {
+    return "api";
   }
   return "telegram";
 }
@@ -146,6 +150,30 @@ async function runCLI(app: AppContext): Promise<void> {
   }
 }
 
+async function runAPI(app: AppContext): Promise<void> {
+  const port = parseInt(process.env.PORT ?? "3000", 10);
+
+  const apiServer = new APIServer({
+    port,
+    createOrchestrator: app.createOrchestrator,
+    memoryStore: app.memoryStore,
+    agentRegistry: app.agentConfigs,
+  });
+
+  // Handle shutdown
+  const shutdown = () => {
+    console.log("\nShutting down...");
+    apiServer.stop();
+    app.memoryStore.close();
+    process.exit(0);
+  };
+
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
+
+  apiServer.start();
+}
+
 async function main(): Promise<void> {
   const mode = getMode();
 
@@ -158,6 +186,8 @@ async function main(): Promise<void> {
   // Run in selected mode
   if (mode === "cli") {
     await runCLI(app);
+  } else if (mode === "api") {
+    await runAPI(app);
   } else {
     await runTelegram(app);
   }
