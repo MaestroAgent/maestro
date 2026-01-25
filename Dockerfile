@@ -16,6 +16,9 @@ COPY package*.json ./
 # Install all dependencies (including dev for TypeScript build)
 RUN npm ci
 
+# Install Claude Code CLI globally
+RUN npm install -g @anthropic-ai/claude-code
+
 # Copy source code
 COPY src/ ./src/
 COPY config/ ./config/
