@@ -104,6 +104,11 @@ export class TelegramAdapter {
       // Sync context to persistent storage
       this.memoryStore.syncContext(session);
 
+      // Also sync metadata (for things like currentProject)
+      if (session.metadata) {
+        this.memoryStore.updateSessionMetadata(session.sessionId, session.metadata);
+      }
+
       // Send response (Telegram has 4096 char limit)
       if (response) {
         await this.sendLongMessage(ctx, response);

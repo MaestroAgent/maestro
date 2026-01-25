@@ -169,6 +169,11 @@ export class CLIAdapter {
       // Sync context to storage
       this.memoryStore.syncContext(this.context);
 
+      // Also sync metadata (for things like currentProject)
+      if (this.context.metadata) {
+        this.memoryStore.updateSessionMetadata(this.context.sessionId, this.context.metadata);
+      }
+
       console.log("\n");
     } catch (error) {
       console.error(
@@ -195,6 +200,11 @@ export class CLIAdapter {
 
       // Sync context to storage
       this.memoryStore.syncContext(this.context);
+
+      // Also sync metadata (for things like currentProject)
+      if (this.context.metadata) {
+        this.memoryStore.updateSessionMetadata(this.context.sessionId, this.context.metadata);
+      }
     } catch (error) {
       response = `Error: ${error instanceof Error ? error.message : String(error)}`;
     }

@@ -50,6 +50,11 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono {
       // Sync context to storage
       memoryStore.syncContext(context);
 
+      // Also sync metadata (for things like currentProject)
+      if (context.metadata) {
+        memoryStore.updateSessionMetadata(context.sessionId, context.metadata);
+      }
+
       return c.json({
         sessionId: context.sessionId,
         response,
@@ -86,6 +91,11 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono {
 
         // Sync context to storage
         memoryStore.syncContext(context);
+
+        // Also sync metadata (for things like currentProject)
+        if (context.metadata) {
+          memoryStore.updateSessionMetadata(context.sessionId, context.metadata);
+        }
       } catch (error) {
         await stream.writeSSE({
           event: "error",

@@ -35,3 +35,6 @@ coverage/
 *.sqlite
 *.sqlite3
 data/
+
+# Cloned project repositories
+projects/

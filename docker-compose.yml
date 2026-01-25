@@ -13,6 +13,7 @@ services:
     volumes:
       - maestro-data:/app/data
       - maestro-logs:/app/logs
+      - maestro-projects:/app/projects
     restart: unless-stopped
 
   # Telegram bot service
@@ -27,8 +28,10 @@ services:
     volumes:
       - maestro-data:/app/data
       - maestro-logs:/app/logs
+      - maestro-projects:/app/projects
     restart: unless-stopped
 
 volumes:
   maestro-data:
   maestro-logs:
+  maestro-projects:

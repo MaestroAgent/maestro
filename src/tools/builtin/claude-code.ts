@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import { ToolDefinition } from "../../core/types.js";
+import { ToolDefinition, AgentContext } from "../../core/types.js";
 import { defineTool } from "../registry.js";
 
 /**
@@ -83,10 +83,14 @@ export const claudeCodeTool: ToolDefinition = defineTool(
     },
     required: ["task"],
   },
-  async (args) => {
+  async (args, context: AgentContext) => {
     const task = args.task as string;
-    const workingDir = args.working_directory as string | undefined;
+    const explicitWorkingDir = args.working_directory as string | undefined;
     const timeoutSeconds = Math.min((args.timeout_seconds as number) || 300, 600);
+
+    // Use explicit working_directory, or fall back to current project from context
+    const currentProjectPath = context.metadata.currentProjectPath as string | undefined;
+    const workingDir = explicitWorkingDir || currentProjectPath;
 
     if (!task || typeof task !== "string") {
       return { error: "Task is required and must be a string" };
@@ -98,6 +102,14 @@ export const claudeCodeTool: ToolDefinition = defineTool(
       };
     }
 
+    // Warn if no project is set
+    if (!workingDir) {
+      return {
+        error: "No project is currently active. Use clone_project to clone a repository first, or specify a working_directory.",
+        suggestion: "Try: clone_project with a repository URL",
+      };
+    }
+
     try {
       const result = await executeClaudeCode(
         task,
@@ -105,9 +117,12 @@ export const claudeCodeTool: ToolDefinition = defineTool(
         timeoutSeconds * 1000
       );
 
+      const currentProject = context.metadata.currentProject as string | undefined;
+
       return {
         task,
-        working_directory: workingDir || process.cwd(),
+        project: currentProject || null,
+        working_directory: workingDir,
         exit_code: result.exitCode,
         success: result.exitCode === 0,
         output: result.output,
