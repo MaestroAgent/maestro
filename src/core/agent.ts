@@ -94,14 +94,15 @@ export class Agent implements AgentRuntime {
 
       let currentText = "";
       const currentToolCalls: ToolCall[] = [];
+      const textChunks: StreamChunk[] = [];
 
       for await (const chunk of stream) {
         if (chunk.type === "text") {
           currentText += chunk.text;
-          yield chunk;
+          textChunks.push(chunk); // Buffer text, don't yield yet
         } else if (chunk.type === "tool_call") {
           currentToolCalls.push(chunk.toolCall);
-          yield chunk;
+          // Don't yield tool calls to stream - they're internal
         } else if (chunk.type === "done") {
           fullResponse = chunk.fullText;
           // Track token usage
@@ -112,13 +113,19 @@ export class Agent implements AgentRuntime {
         }
       }
 
-      // If no tool calls, we're done
+      // If no tool calls, yield the text and we're done
       if (currentToolCalls.length === 0) {
+        // Now yield the buffered text chunks
+        for (const chunk of textChunks) {
+          yield chunk;
+        }
         if (currentText) {
           this.context.history.push({ role: "assistant", content: currentText });
         }
         break;
       }
+
+      // If there are tool calls, don't yield the "thinking" text - just execute tools
 
       // Execute tool calls with logging
       const toolResults = await this.executeToolCalls(currentToolCalls);
@@ -252,25 +259,27 @@ export class Agent implements AgentRuntime {
     toolCalls: ToolCall[],
     text: string
   ): string {
-    const parts: string[] = [];
+    // Only include text, not tool call details - we don't want the model to mimic the format
+    // The tool results will provide the context needed
     if (text) {
-      parts.push(text);
+      return text;
     }
-    for (const call of toolCalls) {
-      parts.push(
-        `[Tool Call: ${call.name}(${JSON.stringify(call.arguments)})]`
-      );
-    }
-    return parts.join("\n");
+    // If no text, just note that tools were used (without the parseable format)
+    return `(used ${toolCalls.map(c => c.name).join(", ")})`;
   }
 
   private formatToolResultsForHistory(results: ToolResult[]): string {
+    // Format results in a way that's useful but won't be mimicked as syntax
     return results
-      .map(
-        (r) =>
-          `[Tool Result for ${r.toolCallId}]: ${JSON.stringify(r.result)}${r.isError ? " (error)" : ""}`
-      )
-      .join("\n");
+      .map((r) => {
+        const resultStr = typeof r.result === "string"
+          ? r.result
+          : JSON.stringify(r.result, null, 2);
+        return r.isError
+          ? `Error: ${resultStr}`
+          : resultStr;
+      })
+      .join("\n\n");
   }
 }
 
