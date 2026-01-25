@@ -9,7 +9,8 @@ Maestro is infrastructure for running AI agents. It handles the hard parts—rou
 - **Multi-agent orchestration**: Route requests to specialized agents (coder, assistant, researcher)
 - **Channel abstraction**: One agent, many interfaces (Telegram, CLI, REST API)
 - **Persistent memory**: Conversations survive restarts via SQLite
-- **Tool system**: Give agents capabilities (calculator, datetime, custom tools)
+- **Tool system**: Give agents capabilities (calculator, datetime, Claude Code integration)
+- **Project management**: Clone repos, switch between projects, work on multiple codebases
 - **Observability**: Structured logging, token tracking, cost estimation
 
 ## Quick Start
@@ -75,11 +76,60 @@ docker compose logs -f
                               │
 ┌─────────────────────────────▼───────────────────────────────┐
 │                    INFRASTRUCTURE                            │
-│        [Memory/SQLite]  [Tools]  [Observability]             │
+│   [Memory/SQLite]  [Tools]  [Projects]  [Observability]      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Features
+
+### Multi-Agent Routing
+
+The orchestrator analyzes requests and delegates to specialized agents:
+
+- **Personal Assistant**: General conversation, questions, planning
+- **Coder Agent**: Programming tasks, code execution via Claude Code
+
+### Project Management
+
+Work on multiple codebases without cross-contamination:
+
+```
+You: Clone https://github.com/myorg/project-a
+Bot: Cloned to project-a. This is now your active project.
+
+You: Add a health check endpoint
+Bot: [executes via Claude Code] Done. Added /health endpoint.
+
+You: Clone https://github.com/myorg/project-b
+Bot: Cloned to project-b. Switched to this project.
+
+You: Switch to project-a
+Bot: Switched to project-a.
+```
+
+### Claude Code Integration
+
+The coder agent can execute real coding tasks:
+- Read and write files
+- Run tests and commands
+- Create git commits
+- Refactor code
+
+### Built-in Tools
+
+| Tool | Description |
+|------|-------------|
+| `calculator` | Evaluate math expressions |
+| `datetime` | Get current time/date with timezone |
+| `clone_project` | Clone a git repository |
+| `switch_project` | Switch between projects |
+| `list_projects` | List all cloned projects |
+| `current_project` | Show active project |
+| `claude_code` | Execute coding tasks via Claude Code |
+
 ## Configuration
+
+### Agent Configuration
 
 Agents are configured via YAML files in `config/`:
 
@@ -102,12 +152,33 @@ tools:
   - datetime
 ```
 
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ANTHROPIC_API_KEY` | Yes | Anthropic API key |
+| `TELEGRAM_BOT_TOKEN` | For Telegram | Telegram bot token from @BotFather |
+| `GITHUB_TOKEN` | For private repos | GitHub classic token with `repo` scope |
+| `PORT` | No | API port (default: 3000) |
+| `LOG_LEVEL` | No | Logging level (default: info) |
+
+### GitHub Token Setup
+
+To clone private repositories:
+
+1. Go to https://github.com/settings/tokens
+2. Generate new token (classic)
+3. Select the `repo` scope
+4. Add to `.env`: `GITHUB_TOKEN=ghp_xxxxx`
+
+This works for all repos you have access to, including organization repos.
+
 ## API Reference
 
 ### REST API
 
 ```bash
-# Chat (streaming)
+# Chat (streaming SSE)
 curl -X POST http://localhost:3000/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello", "sessionId": "user-123"}'
@@ -142,26 +213,53 @@ maestro/
 │   ├── personal-assistant.yaml
 │   └── coder-agent.yaml
 ├── src/
+│   ├── agents/            # Orchestrator agent
 │   ├── api/               # REST API (Hono)
 │   ├── channels/          # Telegram, CLI adapters
-│   ├── core/              # Agent runtime, types
+│   ├── core/              # Agent runtime, types, config
 │   ├── llm/               # LLM provider (Anthropic)
 │   ├── memory/            # SQLite persistence
 │   ├── observability/     # Logging, cost tracking
 │   └── tools/             # Tool registry, built-ins
+│       └── builtin/       # calculator, datetime, projects, claude-code
+├── projects/              # Cloned repositories (gitignored)
+├── data/                  # SQLite database (gitignored)
+├── logs/                  # Log files (gitignored)
 ├── docker-compose.yml
 ├── Dockerfile
 └── package.json
 ```
 
-## Environment Variables
+## Deployment
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | Anthropic API key |
-| `TELEGRAM_BOT_TOKEN` | For Telegram | Telegram bot token from @BotFather |
-| `PORT` | No | API port (default: 3000) |
-| `LOG_LEVEL` | No | Logging level (default: info) |
+### Docker (Recommended)
+
+```bash
+# Build and run both services
+docker compose up -d --build
+
+# Run only API
+docker compose up -d api
+
+# Run only Telegram bot
+docker compose up -d telegram
+
+# View logs
+docker compose logs -f
+
+# Restart after updates
+git pull && docker compose up -d --build
+```
+
+### Direct (Without Docker)
+
+```bash
+npm install
+npm run build
+node dist/index.js          # Telegram bot
+node dist/index.js api      # REST API
+node dist/index.js cli      # Interactive CLI
+```
 
 ## Development
 
@@ -174,10 +272,16 @@ npm run build
 
 # Lint
 npm run lint
-
-# Type check
-npm run build
 ```
+
+## Roadmap
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 1: Foundation | ✅ Complete | Agent runtime, CLI, API, tools, memory |
+| Phase 2: Channels | 🟡 Partial | Telegram ✅, Slack/Discord planned |
+| Phase 3: Orchestration | ✅ Complete | Multi-agent routing, delegation |
+| Phase 4: Observability | 🟡 Partial | Logging ✅, Web dashboard planned |
 
 ## License
 
