@@ -8,6 +8,7 @@ export {
   currentProjectTool,
   projectTools,
 } from "./projects.js";
+export { createAgentTools, agentToolNames } from "./agents.js";
 
 import { ToolDefinition } from "../../core/types.js";
 import { calculatorTool } from "./calculator.js";
@@ -16,7 +17,7 @@ import { claudeCodeTool } from "./claude-code.js";
 import { projectTools } from "./projects.js";
 
 /**
- * All built-in tools
+ * All built-in tools (agent tools are added separately via createAgentTools factory)
  */
 export const builtinTools: ToolDefinition[] = [
   calculatorTool,

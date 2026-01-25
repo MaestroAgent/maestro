@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { AgentRegistry } from "../../core/agent.js";
+import { DynamicAgentRegistry } from "../../core/registry.js";
 
 export interface AgentRoutesOptions {
-  agentRegistry: AgentRegistry;
+  agentRegistry: DynamicAgentRegistry;
 }
 
 export function createAgentRoutes(options: AgentRoutesOptions): Hono {
@@ -14,11 +14,12 @@ export function createAgentRoutes(options: AgentRoutesOptions): Hono {
    * List all available agents
    */
   app.get("/", async (c) => {
-    const agents = [...agentRegistry.entries()].map(([name, config]) => ({
-      name,
+    const agents = agentRegistry.getAll().map((config) => ({
+      name: config.name,
       description: config.description,
       model: config.model.name,
       tools: config.tools,
+      isDynamic: agentRegistry.isDynamic(config.name),
     }));
 
     return c.json({ agents });
@@ -46,6 +47,7 @@ export function createAgentRoutes(options: AgentRoutesOptions): Hono {
         maxTokens: config.model.maxTokens,
       },
       tools: config.tools,
+      isDynamic: agentRegistry.isDynamic(config.name),
     });
   });
 

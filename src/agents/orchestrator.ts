@@ -1,6 +1,33 @@
 import { ToolDefinition, AgentContext, AgentConfig } from "../core/types.js";
-import { Agent, AgentRegistry, ToolRegistry } from "../core/agent.js";
+import { Agent, ToolRegistry } from "../core/agent.js";
+import { DynamicAgentRegistry } from "../core/registry.js";
 import { LLMProvider } from "../llm/provider.js";
+import { createAgentTools } from "../tools/builtin/agents.js";
+
+/**
+ * Build dynamic system prompt by injecting agent list
+ */
+function buildDynamicPrompt(
+  basePrompt: string,
+  registry: DynamicAgentRegistry
+): string {
+  const agents = registry.getRoutableAgents();
+
+  const agentList = agents
+    .map((a) => {
+      const tools = a.tools.length > 0 ? ` (tools: ${a.tools.join(", ")})` : "";
+      return `- **${a.name}**: ${a.description}${tools}`;
+    })
+    .join("\n");
+
+  // Replace placeholder or append if not present
+  if (basePrompt.includes("{{AVAILABLE_AGENTS}}")) {
+    return basePrompt.replace("{{AVAILABLE_AGENTS}}", agentList);
+  }
+
+  // Fallback: append agent list if no placeholder
+  return `${basePrompt}\n\n## Available Agents\n\n${agentList}`;
+}
 
 // Factory to create the delegate_to_agent tool with deferred spawner reference
 export function createDelegateToAgentTool(
@@ -51,15 +78,23 @@ export function createDelegateToAgentTool(
 export function createOrchestratorAgent(
   config: AgentConfig,
   provider: LLMProvider,
-  agentRegistry: AgentRegistry,
+  registry: DynamicAgentRegistry,
   baseToolRegistry: ToolRegistry,
   context?: AgentContext
 ): Agent {
   // Use a holder object so we can set the agent reference after creation
   const agentHolder: { agent?: Agent } = {};
 
-  // Create tool registry with delegate_to_agent tool using deferred reference
+  // Build dynamic system prompt with agent list
+  const dynamicConfig: AgentConfig = {
+    ...config,
+    systemPrompt: buildDynamicPrompt(config.systemPrompt, registry),
+  };
+
+  // Create tool registry with orchestrator-specific tools
   const toolRegistry = new Map(baseToolRegistry);
+
+  // Add delegate_to_agent tool using deferred reference
   const delegateTool = createDelegateToAgentTool(() => (name, input) => {
     if (!agentHolder.agent) {
       throw new Error("Agent not initialized");
@@ -68,13 +103,34 @@ export function createOrchestratorAgent(
   });
   toolRegistry.set(delegateTool.name, delegateTool);
 
+  // Add agent management tools
+  const agentTools = createAgentTools(() => registry);
+  for (const tool of agentTools) {
+    toolRegistry.set(tool.name, tool);
+  }
+
+  // Create agent registry Map for compatibility with Agent class
+  // This map is used for spawning subordinates
+  const agentRegistryMap = new Map<string, AgentConfig>();
+  for (const agent of registry.getAll()) {
+    agentRegistryMap.set(agent.name, agent);
+  }
+
+  // Set up context with available tools for tool validation
+  const contextWithMeta: AgentContext = context ?? {
+    sessionId: "",
+    history: [],
+    metadata: {},
+  };
+  contextWithMeta.metadata.availableTools = [...baseToolRegistry.keys()];
+
   // Create the agent with complete tool registry
   const agent = new Agent(
-    config,
+    dynamicConfig,
     provider,
-    agentRegistry,
+    agentRegistryMap,
     toolRegistry,
-    context
+    contextWithMeta
   );
 
   // Set the reference for the deferred spawner

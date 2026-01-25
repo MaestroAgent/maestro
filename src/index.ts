@@ -3,7 +3,8 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { loadAllAgentConfigs } from "./core/config.js";
 import { AgentContext } from "./core/types.js";
-import { AgentRegistry, ToolRegistry } from "./core/agent.js";
+import { ToolRegistry } from "./core/agent.js";
+import { DynamicAgentRegistry } from "./core/registry.js";
 import { AnthropicProvider } from "./llm/anthropic.js";
 import { createOrchestratorAgent } from "./agents/orchestrator.js";
 import { TelegramAdapter } from "./channels/telegram.js";
@@ -50,7 +51,7 @@ function validateEnv(mode: Mode): void {
 }
 
 interface AppContext {
-  agentConfigs: AgentRegistry;
+  agentRegistry: DynamicAgentRegistry;
   provider: AnthropicProvider;
   toolRegistry: ToolRegistry;
   memoryStore: MemoryStore;
@@ -65,11 +66,11 @@ function setupApp(mode: Mode): AppContext {
     console: mode === "cli" ? false : true, // Suppress console in CLI mode
   });
 
-  // Load agent configs
+  // Load static agent configs from YAML
   console.log("Loading agent configurations...");
-  const agentConfigs = loadAllAgentConfigs(CONFIG_DIR);
+  const staticAgentConfigs = loadAllAgentConfigs(CONFIG_DIR);
   console.log(
-    `Loaded ${agentConfigs.size} agent(s): ${[...agentConfigs.keys()].join(", ")}`
+    `Loaded ${staticAgentConfigs.size} static agent(s): ${[...staticAgentConfigs.keys()].join(", ")}`
   );
 
   // Create LLM provider
@@ -87,6 +88,15 @@ function setupApp(mode: Mode): AppContext {
     maxMessages: 100,
   });
 
+  // Create dynamic agent registry (merges static + SQLite agents)
+  const agentRegistry = new DynamicAgentRegistry(staticAgentConfigs, memoryStore);
+  const dynamicAgents = memoryStore.getAllAgents();
+  if (dynamicAgents.length > 0) {
+    console.log(
+      `Loaded ${dynamicAgents.length} dynamic agent(s): ${dynamicAgents.map((a) => a.name).join(", ")}`
+    );
+  }
+
   // Initialize budget guard
   const dailyBudget = parseFloat(process.env.DAILY_BUDGET_USD ?? "20");
   initBudgetGuard({
@@ -96,24 +106,24 @@ function setupApp(mode: Mode): AppContext {
   console.log(`Budget guard initialized: $${dailyBudget}/day limit`);
 
   // Get orchestrator config
-  const orchestratorConfig = agentConfigs.get("orchestrator");
+  const orchestratorConfig = staticAgentConfigs.get("orchestrator");
   if (!orchestratorConfig) {
     throw new Error("Orchestrator config not found");
   }
 
-  // Factory function to create orchestrator
+  // Factory function to create orchestrator with fresh dynamic prompt each time
   const createOrchestrator = (context: AgentContext) => {
     return createOrchestratorAgent(
       orchestratorConfig,
       provider,
-      agentConfigs as AgentRegistry,
+      agentRegistry,
       toolRegistry,
       context
     );
   };
 
   return {
-    agentConfigs,
+    agentRegistry,
     provider,
     toolRegistry,
     memoryStore,
@@ -165,7 +175,7 @@ async function runAPI(app: AppContext): Promise<void> {
     port,
     createOrchestrator: app.createOrchestrator,
     memoryStore: app.memoryStore,
-    agentRegistry: app.agentConfigs,
+    agentRegistry: app.agentRegistry,
   });
 
   // Handle shutdown

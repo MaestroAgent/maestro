@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { serve } from "@hono/node-server";
-import { Agent, AgentRegistry } from "../core/agent.js";
+import { Agent } from "../core/agent.js";
+import { DynamicAgentRegistry } from "../core/registry.js";
 import { AgentContext } from "../core/types.js";
 import { MemoryStore } from "../memory/store.js";
 import { createChatRoutes } from "./routes/chat.js";
@@ -12,7 +13,7 @@ export interface APIServerOptions {
   port?: number;
   createOrchestrator: (context: AgentContext) => Agent;
   memoryStore: MemoryStore;
-  agentRegistry: AgentRegistry;
+  agentRegistry: DynamicAgentRegistry;
 }
 
 export class APIServer {

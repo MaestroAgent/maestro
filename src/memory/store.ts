@@ -1,7 +1,21 @@
 import Database from "better-sqlite3";
 import { randomUUID } from "crypto";
-import { AgentContext, Message, MessageRole } from "../core/types.js";
+import { AgentContext, AgentConfig, Message, MessageRole } from "../core/types.js";
 import { MemoryStoreOptions, Session } from "./types.js";
+
+// Stored agent row from SQLite
+interface StoredAgent {
+  name: string;
+  description: string;
+  system_prompt: string;
+  model_provider: string;
+  model_name: string;
+  temperature: number;
+  max_tokens: number;
+  tools: string; // JSON array
+  created_at: string;
+  updated_at: string;
+}
 
 export class MemoryStore {
   private db: Database.Database;
@@ -42,6 +56,19 @@ export class MemoryStore {
 
       CREATE INDEX IF NOT EXISTS idx_sessions_channel_user
         ON sessions(channel, user_id);
+
+      CREATE TABLE IF NOT EXISTS agents (
+        name TEXT PRIMARY KEY,
+        description TEXT NOT NULL,
+        system_prompt TEXT NOT NULL,
+        model_provider TEXT NOT NULL DEFAULT 'anthropic',
+        model_name TEXT NOT NULL DEFAULT 'claude-sonnet-4-20250514',
+        temperature REAL NOT NULL DEFAULT 0.7,
+        max_tokens INTEGER NOT NULL DEFAULT 4096,
+        tools TEXT NOT NULL DEFAULT '[]',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
     `);
   }
 
@@ -250,6 +277,173 @@ export class MemoryStore {
     this.db
       .prepare(`UPDATE sessions SET metadata = ?, updated_at = ? WHERE id = ?`)
       .run(JSON.stringify(metadata), now, sessionId);
+  }
+
+  // ========== Dynamic Agent CRUD ==========
+
+  /**
+   * Create a new dynamic agent
+   */
+  createAgent(config: {
+    name: string;
+    description: string;
+    systemPrompt?: string;
+    modelProvider?: string;
+    modelName?: string;
+    temperature?: number;
+    maxTokens?: number;
+    tools?: string[];
+  }): AgentConfig {
+    const now = new Date().toISOString();
+
+    this.db
+      .prepare(
+        `INSERT INTO agents (name, description, system_prompt, model_provider, model_name, temperature, max_tokens, tools, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        config.name,
+        config.description,
+        config.systemPrompt ?? "",
+        config.modelProvider ?? "anthropic",
+        config.modelName ?? "claude-sonnet-4-20250514",
+        config.temperature ?? 0.7,
+        config.maxTokens ?? 4096,
+        JSON.stringify(config.tools ?? []),
+        now,
+        now
+      );
+
+    return this.getAgent(config.name)!;
+  }
+
+  /**
+   * Update an existing dynamic agent
+   */
+  updateAgent(
+    name: string,
+    updates: Partial<{
+      description: string;
+      systemPrompt: string;
+      modelProvider: string;
+      modelName: string;
+      temperature: number;
+      maxTokens: number;
+      tools: string[];
+    }>
+  ): AgentConfig | null {
+    const existing = this.getAgent(name);
+    if (!existing) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+
+    // Build dynamic update query
+    const fields: string[] = ["updated_at = ?"];
+    const values: unknown[] = [now];
+
+    if (updates.description !== undefined) {
+      fields.push("description = ?");
+      values.push(updates.description);
+    }
+    if (updates.systemPrompt !== undefined) {
+      fields.push("system_prompt = ?");
+      values.push(updates.systemPrompt);
+    }
+    if (updates.modelProvider !== undefined) {
+      fields.push("model_provider = ?");
+      values.push(updates.modelProvider);
+    }
+    if (updates.modelName !== undefined) {
+      fields.push("model_name = ?");
+      values.push(updates.modelName);
+    }
+    if (updates.temperature !== undefined) {
+      fields.push("temperature = ?");
+      values.push(updates.temperature);
+    }
+    if (updates.maxTokens !== undefined) {
+      fields.push("max_tokens = ?");
+      values.push(updates.maxTokens);
+    }
+    if (updates.tools !== undefined) {
+      fields.push("tools = ?");
+      values.push(JSON.stringify(updates.tools));
+    }
+
+    values.push(name);
+
+    this.db
+      .prepare(`UPDATE agents SET ${fields.join(", ")} WHERE name = ?`)
+      .run(...values);
+
+    return this.getAgent(name);
+  }
+
+  /**
+   * Get a dynamic agent by name
+   */
+  getAgent(name: string): AgentConfig | null {
+    const row = this.db
+      .prepare(`SELECT * FROM agents WHERE name = ?`)
+      .get(name) as StoredAgent | undefined;
+
+    if (!row) {
+      return null;
+    }
+
+    return this.storedAgentToConfig(row);
+  }
+
+  /**
+   * Get all dynamic agents
+   */
+  getAllAgents(): AgentConfig[] {
+    const rows = this.db
+      .prepare(`SELECT * FROM agents ORDER BY name`)
+      .all() as StoredAgent[];
+
+    return rows.map((row) => this.storedAgentToConfig(row));
+  }
+
+  /**
+   * Delete a dynamic agent
+   */
+  deleteAgent(name: string): boolean {
+    const result = this.db
+      .prepare(`DELETE FROM agents WHERE name = ?`)
+      .run(name);
+
+    return result.changes > 0;
+  }
+
+  /**
+   * Check if a dynamic agent exists
+   */
+  hasAgent(name: string): boolean {
+    const row = this.db
+      .prepare(`SELECT 1 FROM agents WHERE name = ?`)
+      .get(name);
+    return row !== undefined;
+  }
+
+  /**
+   * Convert stored agent row to AgentConfig
+   */
+  private storedAgentToConfig(row: StoredAgent): AgentConfig {
+    return {
+      name: row.name,
+      description: row.description,
+      model: {
+        provider: row.model_provider as "anthropic",
+        name: row.model_name,
+        temperature: row.temperature,
+        maxTokens: row.max_tokens,
+      },
+      systemPrompt: row.system_prompt,
+      tools: JSON.parse(row.tools) as string[],
+    };
   }
 
   /**
