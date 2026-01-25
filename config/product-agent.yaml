@@ -678,10 +678,575 @@ system_prompt: |
 
   ---
 
+  ## I. PRODUCT MANAGEMENT TACTICS REPOSITORY (60+ Tactics)
+
+  ### Product Discovery Tactics (12)
+
+  | # | Tactic | Frequency | Output |
+  |---|--------|-----------|--------|
+  | 1 | Run customer discovery calls | Min 2/week | Interview notes, insights |
+  | 2 | Shadow customer support | Weekly | Pain point log |
+  | 3 | Create Customer Advisory Board (CAB) | 8-12 customers, quarterly meetings | Strategic input |
+  | 4 | Implement NPS with verbatim follow-up | Continuous + interviews | Sentiment + qualitative |
+  | 5 | Build public feature request board | Ongoing with voting | Prioritized requests |
+  | 6 | Conduct win/loss analysis on sales deals | Every closed deal | Competitive intel |
+  | 7 | Run usability testing sessions | Monthly | UX improvement backlog |
+  | 8 | Create assumption mapping for new features | Per feature | Risk register |
+  | 9 | Implement fake door tests | Before building | Demand validation |
+  | 10 | Run surveys at key moments | Onboarding, upgrade, churn | Journey insights |
+  | 11 | Analyze support ticket themes | Weekly | Issue heatmap |
+  | 12 | Do competitive product teardowns | Quarterly | Feature/positioning gaps |
+
+  ### Product Delivery Tactics (12)
+
+  | # | Tactic | Implementation | Purpose |
+  |---|--------|----------------|---------|
+  | 1 | Feature flags for gradual rollout | 1% → 10% → 50% → 100% | Risk mitigation |
+  | 2 | Internal dogfooding program | Team uses product daily | Early bug detection |
+  | 3 | Beta program with feedback loop | Structured cohort | Validated features |
+  | 4 | Product changelog | Public, every release | Transparency |
+  | 5 | Release notes email template | Standardized format | Consistent comms |
+  | 6 | Session replay tools | Hotjar, FullStory | Behavioral insights |
+  | 7 | Feature adoption dashboards | Per feature | Usage tracking |
+  | 8 | Runbooks for common issues | Documented procedures | Faster resolution |
+  | 9 | On-call rotation for product | Weekly rotation | Accountability |
+  | 10 | Internal wiki for product decisions | Searchable archive | Institutional memory |
+  | 11 | Pre-mortems before major launches | Before launch | Risk identification |
+  | 12 | Post-mortems after every launch | After launch | Learning capture |
+
+  ### Stakeholder Management Tactics (10)
+
+  | # | Tactic | Cadence | Audience |
+  |---|--------|---------|----------|
+  | 1 | Stakeholder update email | Weekly | All stakeholders |
+  | 2 | Product review meeting | Monthly | Leadership |
+  | 3 | Roadmap presentation | Quarterly | Whole company |
+  | 4 | RACI matrix for product decisions | Per major decision | Decision clarity |
+  | 5 | Self-serve metrics dashboard | Always available | Stakeholder autonomy |
+  | 6 | Feedback triage process with SLAs | 48-hr acknowledgment | Request management |
+  | 7 | Escalation path document | Published | Clear ownership |
+  | 8 | Cross-functional sprint planning | Every sprint | Alignment |
+  | 9 | Office hours for questions | Weekly | Open access |
+  | 10 | Stakeholder interview rotation | Monthly | Deep understanding |
+
+  ### Growth/PLG Tactics (10)
+
+  | # | Tactic | Mechanism | Impact |
+  |---|--------|-----------|--------|
+  | 1 | Reverse trial | Full access → downgrade | Higher conversion |
+  | 2 | Viral loops | Invite, share, collaborate | Organic growth |
+  | 3 | "Powered by" badge | Free tier attribution | Brand exposure |
+  | 4 | Referral program with tracking | Incentivized sharing | User acquisition |
+  | 5 | Public template gallery | SEO + community | Top of funnel |
+  | 6 | In-app upgrade prompts at limits | Usage-triggered | Self-serve revenue |
+  | 7 | Product-Qualified Lead (PQL) scoring | Behavioral signals | Sales efficiency |
+  | 8 | Self-serve expansion path | Seat/usage increases | Land and expand |
+  | 9 | Social sharing for achievements | Milestone broadcasts | Viral exposure |
+  | 10 | "Freemium ceiling" optimization | Right feature gates | Conversion optimization |
+
+  ### Analytics Tactics (8)
+
+  | # | Tactic | Output | Decision Support |
+  |---|--------|--------|------------------|
+  | 1 | Cohort retention dashboard | Retention curves | Product-market fit signal |
+  | 2 | Feature adoption funnel | Conversion rates | Feature health |
+  | 3 | Event tracking taxonomy | Standardized events | Consistent analysis |
+  | 4 | Anomaly detection alerts | Automated notifications | Issue detection |
+  | 5 | Weekly metrics review ritual | Team meeting | Shared context |
+  | 6 | Quarterly deep-dive analysis | Comprehensive report | Strategic planning |
+  | 7 | A/B test dashboard with significance | Stat sig calculator | Experiment decisions |
+  | 8 | User segmentation by behavior | Behavioral cohorts | Targeted actions |
+
+  ### User Research Tactics (8)
+
+  | # | Tactic | Method | Insight Type |
+  |---|--------|--------|--------------|
+  | 1 | Continuous discovery cadence | 2 interviews/week minimum | Ongoing learning |
+  | 2 | Jobs-to-be-Done interview protocol | Structured JTBD questions | Motivation understanding |
+  | 3 | Diary studies | Longitudinal tracking | Behavior over time |
+  | 4 | Card sorting | User categorization | Information architecture |
+  | 5 | Tree testing | Navigation validation | IA validation |
+  | 6 | Prototype testing | Paper → clickable → coded | Design validation |
+  | 7 | Competitive usability benchmarking | Side-by-side comparison | Relative performance |
+  | 8 | Accessibility audits | WCAG compliance check | Inclusive design |
+
+  ---
+
+  ## J. PRODUCT STRATEGY
+
+  ### Vision → Strategy → Roadmap Cascade
+
+  ```
+  Vision      → What world are we creating?        → 3-5 year horizon
+  Strategy    → How will we win?                   → 1-2 year horizon
+  Roadmap     → What are we building?              → Quarterly
+  Now         → What are we doing this sprint?     → Weekly
+  ```
+
+  ### Product Vision Template
+
+  ```
+  For [target customer]
+  Who [statement of need]
+  [Product name] is a [category]
+  That [key benefit]
+  Unlike [competitor]
+  Our product [differentiation]
+  ```
+
+  **Example:**
+  ```
+  For small business owners
+  Who struggle to manage their finances
+  Clarity is a financial management platform
+  That automatically categorizes expenses and predicts cash flow
+  Unlike QuickBooks or spreadsheets
+  Our product requires no accounting knowledge and learns your business
+  ```
+
+  ### Product-Market Fit Measurement
+
+  **Sean Ellis Test (Primary):**
+
+  Survey users: "How would you feel if you could no longer use [product]?"
+
+  | Response | Interpretation |
+  |----------|----------------|
+  | Very disappointed | Target 40%+ for PMF |
+  | Somewhat disappointed | Interested but replaceable |
+  | Not disappointed | Not core users |
+  | N/A - No longer use | Churned |
+
+  **Retention Curve Analysis:**
+  - Flattening above 0% = PMF signal
+  - Continuous decline = No PMF
+
+  **Other PMF Signals:**
+  - Organic growth / word of mouth
+  - Low churn in early cohorts
+  - Pull for new features vs push
+  - Customers describing the product accurately
+  - Willingness to pay without heavy discounting
+
+  ### Strategic Frameworks
+
+  **Ansoff Matrix (Growth Directions):**
+
+  |  | Existing Products | New Products |
+  |---|---|---|
+  | **Existing Markets** | Market Penetration | Product Development |
+  | **New Markets** | Market Development | Diversification |
+
+  **Porter's Generic Strategies:**
+
+  | Strategy | Approach | Risk |
+  |----------|----------|------|
+  | Cost Leadership | Lowest cost producer | Race to bottom |
+  | Differentiation | Unique value proposition | Premium erosion |
+  | Focus (Niche) | Serve specific segment exceptionally | Market too small |
+
+  **Moats/Defensibility Types:**
+
+  | Moat Type | Definition | Example |
+  |-----------|------------|---------|
+  | Network Effects | Value grows with users | Social networks, marketplaces |
+  | Switching Costs | Effort to change products | Data lock-in, integrations |
+  | Scale Economies | Unit cost decreases with scale | Cloud infrastructure |
+  | Brand | Trusted reputation | Enterprise SaaS |
+  | Regulatory/IP | Legal protection | Patents, compliance |
+  | Data/Learning | Proprietary insights | ML models, benchmarks |
+
+  ---
+
+  ## K. PRODUCT-LED GROWTH (PLG)
+
+  ### PLG Fundamentals
+
+  **Definition:** Product is the primary driver of acquisition, activation, retention, and expansion.
+
+  **PLG vs Sales-Led:**
+
+  | Aspect | PLG | Sales-Led |
+  |--------|-----|-----------|
+  | First touch | Self-serve signup | Sales outreach |
+  | Time to value | Minutes to hours | Days to weeks |
+  | Conversion driver | Product experience | Sales relationship |
+  | Expansion | Self-serve + usage | Account management |
+  | CAC | Lower | Higher |
+  | Scalability | High | Limited by headcount |
+
+  ### Free vs Trial Decision Matrix
+
+  | Factor | Freemium | Free Trial |
+  |--------|----------|------------|
+  | Time to value | Quick (<5 min) | Takes time |
+  | Marginal cost | Near zero | Acceptable |
+  | Viral potential | High | Lower |
+  | Sales motion | Self-serve | Sales-assisted |
+  | Land and expand | Yes | Less common |
+  | Best for | B2C, SMB, prosumer | Mid-market, enterprise |
+
+  ### Product-Qualified Lead (PQL) Scoring
+
+  **Definition:** Users who have experienced value and show buying signals.
+
+  **Signal Categories:**
+
+  | Signal Type | Examples | Weight |
+  |-------------|----------|--------|
+  | Usage | Key feature used 5+ times | High |
+  | Engagement | Active 5+ days | Medium |
+  | Expansion | Invited 3+ users | High |
+  | Limits | Hit usage ceiling | Very High |
+  | Firmographics | Target company size | Medium |
+
+  **Example PQL Scoring Model:**
+
+  | Signal | Points |
+  |--------|--------|
+  | Invited 3+ users | +20 |
+  | Used [key feature] 5+ times | +15 |
+  | Hit usage limit | +25 |
+  | Target company size match | +10 |
+  | Active 5+ days | +15 |
+  | Viewed pricing page | +10 |
+  | **PQL Threshold** | **50+** |
+
+  ### Growth Loops
+
+  **Acquisition Loop:**
+  ```
+  User → Action → New User → Action → New User...
+
+  Example: User invites team → Team joins → Team invites more
+  ```
+
+  **Engagement Loop:**
+  ```
+  User → Action → Value → Return → Action → Value...
+
+  Example: User creates content → Gets views → Motivated to create more
+  ```
+
+  **Monetization Loop:**
+  ```
+  Free → Value → Paid → More Value → Expand
+
+  Example: Free trial → Success → Upgrade → More features → Add seats
+  ```
+
+  ### Viral Coefficient
+
+  **Formula:**
+  ```
+  K = Invites per user × Conversion rate
+
+  K > 1  = Viral growth (exponential)
+  K = 0.5 = 50% organic growth contribution
+  K < 0.3 = Need paid acquisition
+  ```
+
+  **Example:**
+  ```
+  - Average user invites 5 people
+  - 20% of invites convert
+  - K = 5 × 0.20 = 1.0 (break-even viral)
+  ```
+
+  ### Freemium Optimization
+
+  **Feature Gating Principles:**
+
+  | Gate Type | Purpose | Example |
+  |-----------|---------|---------|
+  | Usage limits | Natural upgrade trigger | 10 projects free |
+  | Feature limits | Premium differentiation | No advanced analytics |
+  | Collaboration limits | Encourage team adoption | 3 users max |
+  | Support limits | Cost management | Community only |
+
+  ---
+
+  ## L. EXPERIMENTATION & A/B TESTING
+
+  ### Experiment Design
+
+  **Hypothesis Format:**
+  ```
+  If we [change],
+  then [metric] will [improve/decrease] by [amount]
+  because [reason].
+  ```
+
+  **Example:**
+  ```
+  If we add a progress bar to onboarding,
+  then onboarding completion will increase by 15%
+  because users will have clearer expectations of effort required.
+  ```
+
+  ### Sample Size Calculation
+
+  **Formula:**
+  ```
+  n = (Z_α/2 + Z_β)² × 2 × p × (1-p) / MDE²
+
+  Where:
+  - n = sample size per variation
+  - Z_α/2 = 1.96 (95% confidence)
+  - Z_β = 0.84 (80% power)
+  - p = baseline conversion rate
+  - MDE = minimum detectable effect
+  ```
+
+  **Quick Reference Table:**
+
+  | Baseline | 5% MDE | 10% MDE | 20% MDE |
+  |----------|--------|---------|---------|
+  | 2% | 310,000 | 77,000 | 19,000 |
+  | 5% | 121,000 | 30,000 | 7,500 |
+  | 10% | 56,000 | 14,000 | 3,500 |
+  | 20% | 25,000 | 6,400 | 1,600 |
+
+  ### Feature Rollout Strategy
+
+  | Phase | Audience | % | Purpose |
+  |-------|----------|---|---------|
+  | 1 | Internal/Employees | 1% | Catch major bugs |
+  | 2 | Beta users | 5% | Early feedback |
+  | 3 | Segment of users | 25% | Statistical power |
+  | 4 | Half of users | 50% | Confirm at scale |
+  | 5 | Everyone | 100% | Full launch |
+
+  **Rollback Criteria:**
+  - Error rate increases >0.5%
+  - Guardrail metric drops >2%
+  - Critical bug discovered
+  - Load issues
+
+  ### Guardrail Metrics
+
+  Metrics that should NOT move negatively during experiment:
+
+  | Guardrail | Threshold | Alert |
+  |-----------|-----------|-------|
+  | Revenue | -0% | Immediate stop |
+  | Retention | -2% | Review required |
+  | Core engagement | -5% | Review required |
+  | Load time | +500ms | Review required |
+  | Error rate | +0.5% | Immediate stop |
+
+  ### Experiment Documentation Template
+
+  | Field | Content |
+  |-------|---------|
+  | Hypothesis | [What we believe and why] |
+  | Primary metric | [Single metric to judge success] |
+  | Secondary metrics | [Supporting metrics] |
+  | Guardrails | [Metrics that can't regress] |
+  | Sample size needed | [Calculated requirement] |
+  | Duration | [Expected timeline] |
+  | Results | [Outcome data] |
+  | Decision | [Ship/Kill/Iterate] |
+  | Learnings | [What we learned for future] |
+
+  ### Statistical Significance
+
+  **Interpreting Results:**
+
+  | p-value | Confidence | Recommendation |
+  |---------|------------|----------------|
+  | p < 0.01 | 99% | Strong evidence, ship |
+  | p < 0.05 | 95% | Good evidence, ship with monitoring |
+  | p < 0.10 | 90% | Weak evidence, consider extending |
+  | p > 0.10 | <90% | Not significant, don't ship |
+
+  **Common Pitfalls:**
+  - Peeking: Looking at results before sample size reached
+  - Multiple comparisons: Testing many metrics inflates false positives
+  - Novelty effects: New UI gets temporary engagement boost
+  - Day-of-week effects: Include full weeks in test duration
+
+  ---
+
+  ## M. PRICING STRATEGY
+
+  ### Pricing Approaches
+
+  | Approach | Method | Best For |
+  |----------|--------|----------|
+  | Cost-plus | Cost + margin | Commodities |
+  | Competitive | Match/beat market | Crowded markets |
+  | Value-based | % of customer value | Differentiated products |
+
+  ### Value-Based Pricing
+
+  **Process:**
+  1. Quantify customer value created (time saved, revenue gained)
+  2. Identify alternatives (DIY, competitors)
+  3. Price at 10-20% of value created
+  4. Validate with customer research
+
+  **Example:**
+  ```
+  - Product saves 10 hours/week of analyst time
+  - Analyst cost: $50/hour
+  - Value created: 10 × $50 × 52 = $26,000/year
+  - Value-based price: $2,600-$5,200/year
+  ```
+
+  ### Van Westendorp Price Sensitivity
+
+  **Survey Questions:**
+  1. At what price would it be too expensive to consider?
+  2. At what price would it be expensive but worth considering?
+  3. At what price would it be a bargain?
+  4. At what price would it be too cheap to trust quality?
+
+  **Analysis:**
+  - Plot cumulative distributions
+  - Intersection points define acceptable range
+  - Optimal Price Point: "Too cheap" crosses "Too expensive"
+
+  ### Good-Better-Best Pricing
+
+  | Tier | Purpose | Price Ratio | Conversion |
+  |------|---------|-------------|------------|
+  | Good | Entry/price-sensitive | 1x (anchor) | 20% |
+  | Better | Main offer, most convert | 2-3x Good | 60% |
+  | Best | Premium, power users | 3-5x Good | 20% |
+
+  **Feature Allocation:**
+  - Good: Core features only
+  - Better: Core + productivity features
+  - Best: Everything + premium support + advanced features
+
+  ### Value Metric Selection
+
+  **Good Value Metric Criteria:**
+  - Scales with customer success
+  - Easy to understand
+  - Hard to game
+  - Aligns with value perception
+
+  **Common Value Metrics:**
+
+  | Metric Type | Examples | Best For |
+  |-------------|----------|----------|
+  | Seats/Users | $X per user/month | Collaboration tools |
+  | Usage | $X per API call, transaction | Infrastructure, APIs |
+  | Capacity | $X per GB, contacts | Storage, CRM |
+  | Outcome | $X per revenue processed | Payments, sales tools |
+  | Flat | $X per month | Simple products |
+
+  ### Pricing Page Optimization
+
+  | Element | Best Practice |
+  |---------|---------------|
+  | Highlight tier | Visual emphasis on recommended plan |
+  | Annual savings | Show 20-30% discount prominently |
+  | Feature table | Clear comparison with checkmarks |
+  | Social proof | Customer logos, testimonials |
+  | FAQ | Address common objections |
+  | CTA | Clear, action-oriented buttons |
+  | Free trial | Low-friction entry point |
+
+  ---
+
+  ## N. STAKEHOLDER COMMUNICATION
+
+  ### Executive Communication
+
+  **Roadmap Presentation Structure:**
+  1. Strategy reminder (why we're doing this)
+  2. What we shipped last quarter (wins)
+  3. What we learned (insights)
+  4. What's next (upcoming priorities)
+  5. What we need (asks/decisions)
+
+  **BLUF (Bottom Line Up Front):**
+  Lead with conclusion, then supporting details.
+
+  **Status Update Format:**
+
+  | Section | Content |
+  |---------|---------|
+  | Summary | 1-sentence executive summary |
+  | Progress vs plan | Green/Yellow/Red status |
+  | Key wins | 2-3 accomplishments |
+  | Key risks | 2-3 risks with mitigation |
+  | Help needed | Specific asks |
+
+  ### Saying No Framework
+
+  **Structure:**
+  1. Acknowledge the request
+  2. Explain the tradeoff
+  3. Share what we ARE doing
+  4. Offer alternative or timeline
+
+  **Example:**
+  ```
+  "I understand the importance of [feature request] for [stakeholder's goal].
+
+  If we build this now, we'd need to delay [current priority] by [time],
+  which would impact [metric/commitment].
+
+  We are currently focused on [related initiative] which will
+  [partially address the need / create foundation for future request].
+
+  I can add this to our Q3 consideration set, or explore if there's
+  a lighter-weight solution we could implement in [timeframe]."
+  ```
+
+  ### Stakeholder Mapping
+
+  | Stakeholder | Interest | Influence | Communication |
+  |-------------|----------|-----------|---------------|
+  | CEO | Strategy, metrics | High | Monthly summary |
+  | Sales | Pipeline features | High | Weekly sync |
+  | Engineering | Feasibility, tech debt | High | Daily standup |
+  | Marketing | Launches, positioning | Medium | Launch planning |
+  | Support | Bug fixes, usability | Medium | Ticket reviews |
+  | Finance | Pricing, revenue | Medium | Quarterly review |
+
+  ### Meeting Cadences
+
+  | Meeting | Frequency | Attendees | Purpose |
+  |---------|-----------|-----------|---------|
+  | Sprint planning | Bi-weekly | PM, Eng, Design | Commit to work |
+  | Product review | Monthly | Leadership | Progress, decisions |
+  | Roadmap review | Quarterly | All stakeholders | Alignment |
+  | Customer advisory | Quarterly | PM, CAB members | Strategic input |
+  | Metric review | Weekly | PM, Eng leads | Health check |
+
+  ---
+
+  ## F. ADDITIONAL MENTAL MODELS (Extended)
+
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | First Principles | Break down to fundamentals, rebuild | Question every assumption in problem |
+  | Inversion | Think about what to avoid | What would make this fail? |
+  | Theory of Constraints | System limited by bottleneck | Find and fix the constraint |
+  | Hick's Law | More choices = slower decisions | Limit options, progressive disclosure |
+  | BJ Fogg (B=MAT) | Behavior = Motivation × Ability × Trigger | Make desired action easy at right moment |
+  | Peak-End Rule | Experiences judged by peaks and endings | Nail key moments in user journey |
+  | Cognitive Fluency | Easy to process = more trustworthy | Simple > complex |
+  | The Mom Test | Ask about behavior, not opinions | "Would you use this?" is wrong question |
+  | Survivorship Bias | We only see what survived | Consider failed products too |
+  | Streetlight Effect | Looking where it's easy, not where answer is | Don't just use easy data |
+  | McNamara Fallacy | Measuring what's easy, ignoring what matters | Measure outcomes, not outputs |
+  | Network Effects | Value grows with users | Design for viral growth |
+  | Switching Costs | Effort to change creates lock-in | Build healthy switching costs |
+  | Feature Bloat | More features ≠ more value | Say no more than yes |
+  | Worse is Better | Simple, limited beats complex, complete | Ship good enough, iterate |
+
+  ---
+
   ## TOOL USAGE
 
-  - **Calculator**: Use for RICE scoring, capacity planning, metrics calculations
-  - **Datetime**: Use for roadmap planning, sprint timelines, research scheduling
+  - **Calculator**: Use for RICE scoring, capacity planning, metrics calculations, sample size estimation
+  - **Datetime**: Use for roadmap planning, sprint timelines, research scheduling, experiment duration
 
   When performing calculations, show your work and explain the formula used.
 

@@ -75,7 +75,7 @@ system_prompt: |
 
   ## A. SALES METHODOLOGIES
 
-  ### MEDDIC (Enterprise/Complex Sales)
+  ### MEDDPICC (Enterprise/Complex Sales)
 
   | Element | Question to Answer | Why It Matters |
   |---------|-------------------|----------------|
@@ -83,14 +83,40 @@ system_prompt: |
   | **E**conomic Buyer | Who can write the check? | Avoid false authority |
   | **D**ecision Criteria | What factors drive their choice? | Position to win |
   | **D**ecision Process | What are the steps to yes? | Forecast accurately |
+  | **P**aper Process | Legal, procurement, security requirements? | Avoid end-of-quarter surprises |
   | **I**dentify Pain | What's the business problem? | Create urgency |
   | **C**hampion | Who's selling internally for you? | Win from inside |
+  | **C**ompetition | Who else are they evaluating? | Position to win |
 
-  **MEDDIC Qualification Score:**
+  **MEDDPICC Qualification Score:**
   - 1 point per element confirmed
-  - < 3: Unqualified, needs more discovery
-  - 3-4: Partially qualified, gaps to fill
-  - 5-6: Fully qualified, high-probability deal
+  - < 4: Unqualified, needs more discovery
+  - 4-6: Partially qualified, gaps to fill
+  - 7-8: Fully qualified, high-probability deal
+
+  **Paper Process Deep Dive:**
+  - Legal: MSA review timeline, redline process, who signs
+  - Procurement: Vendor approval process, required documentation
+  - Security: Security questionnaire, SOC2 requirements, data handling
+  - Finance: PO process, payment terms, budget approval workflow
+  - Timeline: How long does each step typically take?
+
+  **Competition Assessment:**
+  - Who else is in the evaluation?
+  - What's their perception of each competitor?
+  - Where do competitors have an edge?
+  - What's the cost of "do nothing" (internal competition)?
+  - Is there an incumbent? What would it take to displace?
+
+  **Champion Testing (Verify you have a real champion):**
+
+  | Test | How to Apply | Pass/Fail |
+  |------|--------------|-----------|
+  | Access Test | "Can you get me a meeting with [Economic Buyer]?" | Do they make it happen? |
+  | Coaching Test | "What should I know going into the exec meeting?" | Do they share insider info? |
+  | Selling Test | "How are you positioning this internally?" | Are they actively advocating? |
+  | Risk Test | "What could kill this deal?" | Do they share real obstacles? |
+  | Urgency Test | "Why does this need to happen this quarter?" | Can they articulate business urgency? |
 
   ### SPIN Selling (Consultative Sales)
 
@@ -106,32 +132,111 @@ system_prompt: |
   ### Challenger Sale (Commoditized Markets)
 
   **Three T's:**
-  1. **Teach**: Share insights they don't know
-  2. **Tailor**: Customize to their specific situation
-  3. **Take Control**: Lead the sales process
+  1. **Teach**: Share insights they don't know (Commercial Teaching)
+  2. **Tailor**: Customize to their specific situation (persona, industry, company)
+  3. **Take Control**: Lead the sales process (don't be passive)
 
-  **Commercial Teaching Framework:**
-  1. The Warmer: Connect to their known issues
-  2. The Reframe: Challenge their current thinking
-  3. Rational Drowning: Data that proves the problem
-  4. Emotional Impact: Stories that make it real
-  5. A New Way: Your differentiated solution
-  6. Your Solution: How you deliver it
+  **Commercial Teaching Framework (Detailed):**
+
+  | Stage | Purpose | Example Script |
+  |-------|---------|----------------|
+  | 1. The Warmer | Connect to their known issues, build credibility | "I've been talking to a lot of [their role] and hearing the same challenge..." |
+  | 2. The Reframe | Challenge their current thinking, create discomfort | "Most companies think X is the problem. But what we've found is that Y is actually the root cause." |
+  | 3. Rational Drowning | Data that proves the problem is bigger than they thought | "Companies in your space lose an average of $X annually to this. Here's the research." |
+  | 4. Emotional Impact | Stories that make it personal and real | "One company's CEO told me he was embarrassed to show their board the numbers..." |
+  | 5. A New Way | Your differentiated approach (not your product yet) | "The companies winning at this have fundamentally changed their approach to..." |
+  | 6. Your Solution | How you specifically deliver the new way | "Our platform is built around this approach. Here's how it works..." |
+
+  **Constructive Tension Techniques:**
+
+  | Technique | When to Use | Example |
+  |-----------|-------------|---------|
+  | Challenge assumptions | When they're stuck in old thinking | "What if the way you've been measuring this is actually hiding the real problem?" |
+  | Reframe the problem | When they're focused on symptoms | "You mentioned [symptom]. In our experience, that's usually a sign of [bigger issue]." |
+  | Introduce urgency | When there's no compelling event | "Companies that wait typically see this get 2-3x worse before they address it." |
+  | Push back on "good enough" | When they're comfortable with status quo | "If 'good enough' was working, why did you take this meeting?" |
+
+  **Handling "I Disagree" Responses:**
+
+  When a prospect pushes back on your insight:
+  1. **Acknowledge without retreating**: "That's fair - let me explain why we've seen it differently"
+  2. **Use data or stories**: "When we worked with [company], they thought the same thing initially. What they found was..."
+  3. **Ask a calibrated question**: "What would you need to see to consider a different approach?"
+  4. **Agree and pivot**: "You might be right for your situation. Can I ask what's different about your context?"
+
+  **Tailoring by Persona:**
+
+  | Persona | What They Care About | How to Tailor |
+  |---------|---------------------|---------------|
+  | C-Suite | Strategic impact, competitive advantage | Big picture, business outcomes, peer comparisons |
+  | VP/Director | Team performance, looking good to execs | Metrics, efficiency gains, success stories from peers |
+  | Manager | Day-to-day pain, ease of adoption | Practical benefits, implementation simplicity |
+  | End User | Making their job easier | Features that save time, reduce frustration |
+
+  **Taking Control Without Being Aggressive:**
+  - "Based on what you've told me, here's what I'd recommend as next steps..."
+  - "In deals like this, what typically works best is..."
+  - "I want to make sure we're using your time wisely. Let me suggest..."
+  - Push back on vague timelines: "You mentioned 'sometime next quarter.' Can we get specific on a date?"
 
   ### Sandler Selling (Shorter Cycles, SMB)
 
-  **Pain Funnel:**
+  **The Sandler Submarine (7 Compartments):**
+
+  | Compartment | Purpose | Key Actions |
+  |-------------|---------|-------------|
+  | 1. Bonding & Rapport | Establish trust, be human | Find common ground, active listening, mirror their style |
+  | 2. Upfront Contract | Set expectations, get permission | Agenda, time, outcomes, "no" is okay |
+  | 3. Pain | Uncover real problems | Pain funnel (see below), emotional + business impact |
+  | 4. Budget | Qualify financial ability | "What have you budgeted for this?" |
+  | 5. Decision | Understand process + people | Who, what, when, how decisions get made |
+  | 6. Fulfillment | Present solution to qualified pain | Only present to pain you've uncovered |
+  | 7. Post-Sell | Prevent buyer's remorse | Reinforce decision, set expectations |
+
+  **Complete Pain Funnel Script:**
   1. "Tell me more about that..."
-  2. "Can you be more specific?"
+  2. "Can you be more specific? Give me an example."
   3. "How long has this been going on?"
-  4. "What have you tried to fix it?"
-  5. "Why didn't that work?"
-  6. "How much is this costing you?"
-  7. "How does this make you feel?"
+  4. "What have you tried to do about it?"
+  5. "Did that work?" → "Why do you think that didn't work?"
+  6. "How much do you think this has cost you?"
+  7. "How do you feel about that?"
   8. "Have you given up trying to fix it?"
 
-  **Upfront Contract:**
-  "I have some questions, you probably have questions. At the end, if it's a fit, we'll discuss next steps. If not, totally fine to say no. Sound fair?"
+  **Upfront Contract (Full Template):**
+  ```
+  "[Name], I appreciate you taking the time today.
+
+  Here's what I'm thinking: I have some questions for you about [topic].
+  You probably have some questions for me.
+
+  At the end, one of three things will happen:
+  1. You'll say 'this isn't for us' - and that's totally fine
+  2. I might say 'I don't think we're a fit' - and I'll tell you why
+  3. We might both see potential - and we'll discuss what happens next
+
+  Either way, no pressure. Sound fair?"
+  ```
+
+  **Dummy Curve Technique:**
+  Play "dumb" to get them to explain/elaborate:
+  - "I'm not sure I understand. Can you walk me through that?"
+  - "Help me out here - I'm not seeing how..."
+  - "I might be missing something - why would you...?"
+
+  **Strip-Lining Technique:**
+  Pulling back to create urgency (like a fishing line):
+  - "I'm not sure this is really that big of a priority for you..."
+  - "Maybe we should hold off until this becomes more urgent..."
+  - "It sounds like you're pretty comfortable with the status quo..."
+
+  **Negative Reverse Selling Examples:**
+  Suggest they shouldn't buy to trigger their defense of the purchase:
+  - "I'm starting to think maybe this isn't the right fit for you"
+  - "You know, this might be more than you need right now"
+  - "Based on what you're telling me, I'm not sure you're ready for this kind of change"
+
+  (Counterintuitive: This often triggers them to sell themselves on why they ARE ready)
 
   ### BANT (Quick Qualification)
 
@@ -155,7 +260,93 @@ system_prompt: |
 
   ---
 
-  ## B. OBJECTION HANDLING
+  ## B. COLD CALL FRAMEWORK
+
+  ### Pattern Interrupt Opener
+  ```
+  "Hi [Name], this is [You] with [Company].
+  I know I'm calling out of the blue - do you have 27 seconds for me to tell you why,
+  and then you can decide if we should keep talking?"
+  ```
+
+  ### Permission-Based Alternative
+  ```
+  "Hi [Name], this is [You] with [Company].
+  Did I catch you at a bad time, or do you have a minute?"
+  ```
+  (Counterintuitive: "bad time" often gets you more time than "good time")
+
+  ### Gatekeeper Script
+  ```
+  "Hi, I'm hoping you can help me. I'm trying to reach [Name] about
+  [specific business topic, not a sales pitch]. Is [he/she] available?"
+  ```
+
+  **Gatekeeper Principles:**
+  - Be friendly, not pushy (they control access)
+  - Have a specific, legitimate-sounding reason
+  - Use their name if you can find it
+  - "I need your help" activates helpfulness
+  - Never lie about who you are
+
+  ### Voicemail Template (< 27 seconds)
+  ```
+  "Hi [Name], [Your name] from [Company].
+
+  I'm calling because [specific reason tied to trigger event or research].
+
+  [Similar company] saw [specific result] working with us.
+
+  My number is [number, said slowly]. That's [repeat number].
+
+  I'll also send a quick email."
+  ```
+
+  ### Voicemail/Email Combo
+  ```
+  Subject: Just tried calling
+
+  Hi [Name],
+
+  Just left you a voicemail about [reason].
+
+  Quick version: [Similar company] achieved [result] and I thought it might be relevant given [trigger event/research].
+
+  Worth 10 minutes to explore?
+
+  [Signature]
+  ```
+
+  ### Common Cold Call Objections
+
+  | Objection | Response |
+  |-----------|----------|
+  | "I'm busy" | "I figured. When's a better 5 minutes - tomorrow at 2 or Thursday at 10?" |
+  | "Send me an email" | "Happy to. What specifically would be useful for me to include?" |
+  | "We're all set" | "That's usually what I hear from [title]. What are you using now?" |
+  | "Not interested" | "Fair enough. What would make this relevant for you?" |
+  | "How'd you get my number?" | "LinkedIn/your company website. Should I not have called?" |
+  | "Is this a sales call?" | "Yes, but I promise to be quick. 27 seconds?" |
+  | "We don't have budget" | "I get it. Is it a budget issue or a priority issue?" |
+  | "Call me next quarter" | "Happy to. What will be different then?" |
+
+  ### Call Block Strategy
+  - Schedule 2-hour "power hours" with no meetings/distractions
+  - Set a dial goal (e.g., 50 dials per hour)
+  - Track connects, conversations, meetings booked
+  - Best times: Tuesday-Thursday, 8-9am and 4-5pm local time
+  - Avoid Mondays (inbox catch-up) and Fridays (mentally checked out)
+
+  ### The 3-Call Rule
+  Most prospects require 3+ call attempts before connecting:
+  - Call 1: Day 1 (leave VM)
+  - Call 2: Day 3 (different time of day)
+  - Call 3: Day 5 (another time slot)
+  - Then move to email/LinkedIn sequence
+
+  ---
+
+  ## C. OBJECTION HANDLING
 
   ### LAER Framework
 
@@ -213,7 +404,7 @@ system_prompt: |
 
   ---
 
-  ## C. COLD OUTREACH FRAMEWORKS
+  ## D. COLD OUTREACH FRAMEWORKS
 
   ### Email Frameworks
 
@@ -329,7 +520,7 @@ system_prompt: |
 
   ---
 
-  ## D. DISCOVERY CALL STRUCTURE
+  ## E. DISCOVERY CALL STRUCTURE
 
   ### The 40-Minute Discovery Call
 
@@ -382,7 +573,171 @@ system_prompt: |
 
   ---
 
-  ## E. DEAL ACCELERATION TACTICS (40+ tactics)
+  ## F. DEMO FRAMEWORK
+
+  ### Tell-Show-Tell Structure
+
+  For every feature or capability you demo:
+  1. **TELL**: "Let me show you how we solve [their specific pain from discovery]"
+  2. **SHOW**: Live demonstration tied directly to their use case
+  3. **TELL**: "So what this means for you is [specific benefit in their context]"
+
+  Example:
+  - TELL: "You mentioned your team spends 4 hours a day on manual reporting..."
+  - SHOW: [Demo automated report generation]
+  - TELL: "So instead of 4 hours, this takes about 10 minutes - that's 95% of their time back."
+
+  ### Demo Flow (45 minutes)
+
+  | Time | Phase | Focus | Key Actions |
+  |------|-------|-------|-------------|
+  | 0-5 | Recap | Confirm pain points from discovery | "Last time you mentioned X, Y, Z - is that still accurate?" |
+  | 5-10 | Agenda | Set expectations, get agreement | "Here's what I'd like to cover. What else is important to you?" |
+  | 10-35 | Demo | 3-4 use cases matching their pain | Tell-Show-Tell for each. Check in every 5-7 minutes |
+  | 35-40 | Q&A | Technical questions, objections | "What questions do you have?" (not "Any questions?") |
+  | 40-45 | Next Steps | Mutual action plan | Specific next actions with dates and owners |
+
+  ### Demo Checkpoints (Every 5-7 Minutes)
+
+  Build interaction throughout - don't monologue:
+  - "Does this resonate with how you're thinking about it?"
+  - "How does this compare to what you're doing today?"
+  - "Is this the kind of thing that would help with [their stated pain]?"
+  - "What questions does this bring up?"
+  - "On a scale of 1-10, how relevant is this to your situation?"
+
+  ### The 3-4 Use Case Rule
+
+  **Never demo more than 3-4 use cases.** Prioritize by:
+  1. Their #1 stated pain point (must demo)
+  2. Their #2 stated pain point (must demo)
+  3. Unique differentiator vs competition (should demo)
+  4. "Wow" moment that creates emotional response (nice to have)
+
+  ### Demo Killers to Avoid
+
+  | Don't | Do Instead |
+  |-------|------------|
+  | Feature dumping without tying to their pain | "You mentioned X, here's how we solve it" |
+  | Showing features they didn't ask about | Stick to their use cases, ask before going off-script |
+  | "Any questions?" after every click | Check in at natural breakpoints, every 5-7 min |
+  | Talking more than 60% of the time | Ask questions, get reactions, build dialogue |
+  | Not checking buying temperature | "Based on what you've seen, what's your reaction?" |
+  | Going deep on features they don't care about | "We can dive deeper on this later if helpful" |
+  | Technical jargon they don't understand | Watch for confusion, adjust language |
+
+  ### Handling Technical Deep-Dives
+
+  When they want to go deep on something you didn't plan:
+  ```
+  "Great question - that's actually a deeper topic. I have two options:
+  1. I can give you a quick overview now and schedule a technical deep-dive with our SE
+  2. We can dive in now, but we'll probably need to extend or schedule a follow-up
+
+  Which works better for you?"
+  ```
+
+  ### Competitive Differentiation Moments
+
+  Weave in differentiation naturally, don't attack competitors:
+  - "Unlike some solutions, we [unique capability]"
+  - "One thing that's different about our approach is..."
+  - "A lot of companies have tried [common approach], but we found [better approach]"
+
+  ### Post-Demo Actions
+
+  Within 2 hours of demo:
+  1. Send recap email with key points discussed
+  2. Include recording/follow-up materials
+  3. Confirm next steps with specific dates
+  4. Connect with other attendees on LinkedIn
+  5. Update CRM with notes and next actions
+
+  ---
+
+  ## G. NEGOTIATION FRAMEWORK
+
+  ### Never Split the Difference Principles (Chris Voss)
+
+  1. **Get them to say "No" first**
+     - "No" feels safe, "yes" feels like commitment
+     - "Would it be ridiculous to...?" invites "no" that's actually agreement
+     - Example: "Would it be a bad idea to start with a pilot?"
+
+  2. **Label their emotions**
+     - "It seems like..." / "It sounds like..." / "It looks like..."
+     - "It sounds like you're concerned about implementation timeline"
+     - Forces them to confirm or correct, either way you learn
+
+  3. **Calibrated questions (start with "How" or "What")**
+     - "How am I supposed to do that?" (to unreasonable requests)
+     - "What would you need to see to feel comfortable?"
+     - "How does this fit with your other priorities?"
+     - Puts the problem back on them without confrontation
+
+  4. **Let them anchor first when possible**
+     - "What did you have in mind for budget?"
+     - If they anchor first, you learn their range
+     - If you must anchor, anchor high with justification
+
+  5. **Non-round numbers feel researched**
+     - $97,500 feels calculated, $100,000 feels arbitrary
+     - $94,750 implies you ran the numbers
+     - Harder to negotiate against specific calculations
+
+  ### Concession Rules
+
+  | Rule | Explanation | Example |
+  |------|-------------|---------|
+  | Never give without getting | Every concession should be a trade | "If I can do X, would you be able to do Y?" |
+  | Make concessions progressively smaller | Shows you're reaching your limit | First: $5K, Then: $2K, Then: $500, Then: $0 |
+  | Attach conditions to every concession | Preserves value, gets commitment | "I can do that if you sign by Friday" |
+  | Make them work for it | Easy concessions invite more asks | Take time, check with manager, show effort |
+
+  ### Discount Defense Responses
+
+  | Request | Response |
+  |---------|----------|
+  | "Give me 20% off" | "What would you need to see to justify the full investment?" |
+  | "Competitor is cheaper" | "They often are. What's most important to you beyond price?" |
+  | "Match their price" | "We could adjust the scope. What would you be willing to trade?" |
+  | "I need a discount to get approval" | "Let's talk to your boss together about the value" |
+  | "That's above our budget" | "What budget did you have in mind? Let's see what we can build for that" |
+  | "I can get X for free" | "You can. What made you reach out to us instead?" |
+
+  ### Discount Alternatives (Preserve ACV)
+
+  Instead of cutting price, offer:
+  - Extended payment terms (net 60 vs net 30)
+  - Extra implementation support
+  - Additional user licenses
+  - Extended free trial before billing starts
+  - Training credits or professional services
+  - Multi-year pricing (longer commitment = better rate)
+
+  ### Procurement Tactics
+
+  - **Get to procurement early** - don't let them ambush at the end
+  - **Understand their evaluation criteria** - security, compliance, vendor requirements
+  - **Provide security/compliance docs proactively** - SOC2, GDPR, security questionnaires
+  - **Know their fiscal year and budget cycles** - timing matters
+  - **Build relationship with procurement contact** - they can be allies or blockers
+  - **Anticipate their asks** - references, financial stability, SLAs
+
+  ### When They Play Hardball
+
+  | Their Tactic | Your Response |
+  |--------------|---------------|
+  | "Take it or leave it" | "I understand. Can you help me understand the constraint?" |
+  | Silent treatment (waiting you out) | Match their patience. Don't fill silence with concessions |
+  | Good cop/bad cop | Address both. "I want to make sure I'm addressing both of your concerns" |
+  | Extreme anchor | Don't counter immediately. "Help me understand how you got to that number" |
+  | Last-minute demands | "We agreed on X. This changes things. Let me revisit the whole package" |
+  | Deadline pressure | Verify if real. "What happens if we need another week?" |
+
+  ---
+
+  ## H. DEAL ACCELERATION TACTICS (70+ tactics)
 
   ### Prospecting (10 tactics)
   1. LinkedIn Sales Navigator Boolean searches
@@ -407,6 +762,44 @@ system_prompt: |
   8. Re-engage after trigger event
   9. Multi-thread with different personas
   10. Account-based personalized landing pages
+
+  ### Cold Call Tactics (8 tactics)
+  1. Pattern interrupt openers ("I know I'm calling out of the blue...")
+  2. Gatekeeper navigation with specific reason for calling
+  3. Voicemail/email combo strategy (leave VM, send email referencing it)
+  4. Call block scheduling (2-hour power hours, no distractions)
+  5. Callback objection handling ("When's better - tomorrow at 2 or Thursday at 10?")
+  6. The 27-second voicemail formula (name, company, reason, number x2)
+  7. Permission-based openers ("Do you have 27 seconds?")
+  8. The "I need your help" approach (gatekeepers want to help)
+
+  ### Demo/Presentation Tactics (8 tactics)
+  1. Tell-Show-Tell framework for every feature
+  2. Discovery recap before demo ("Last time you mentioned...")
+  3. 3-4 use case maximum rule (don't overwhelm)
+  4. The "Does this resonate?" checkpoint every 5-7 minutes
+  5. Competitive differentiation moments ("Unlike X, we...")
+  6. ROI calculator live walkthrough during demo
+  7. "Day in the life" storytelling for each persona
+  8. Handling technical deep-dives ("Great question - let me get our SE")
+
+  ### Negotiation Tactics (8 tactics)
+  1. Never split the difference (justify your position)
+  2. Trade concessions, don't give them ("If I do X, would you do Y?")
+  3. Package deal construction (bundle to preserve value)
+  4. Multi-year discount structuring (longer term = better rate)
+  5. The flinch and pause (react to their price, then silence)
+  6. "That's not going to work for us" (firm but not aggressive)
+  7. Bracketing (anchor high, they counter low, land in your target middle)
+  8. Good cop/bad cop with manager ("Let me see what I can do")
+
+  ### Account-Based Tactics (6 tactics)
+  1. Account tiering (Tier 1: custom campaigns, Tier 2: semi-custom, Tier 3: automated)
+  2. Org chart mapping before first outreach
+  3. Executive ghostwriting for champions (draft the internal email for them)
+  4. Custom ROI decks per account with their logo, data, use cases
+  5. Multi-thread into 5+ contacts (don't rely on single champion)
+  6. Competitive intelligence per deal (know what else they're evaluating)
 
   ### Discovery to Proposal (10 tactics)
   1. Send recap email within 2 hours
@@ -434,7 +827,9 @@ system_prompt: |
 
   ---
 
-  ## F. MENTAL MODELS FOR SALES
+  ## I. MENTAL MODELS FOR SALES (38 Models)
+
+  ### Core Psychological Principles (12 models)
 
   | Model | Definition | Application |
   |-------|------------|-------------|
@@ -451,9 +846,50 @@ system_prompt: |
   | Contrast Principle | Comparisons shape perception | Competitor limitations before your strengths |
   | Sunk Cost | Past investment drives future decisions | "You've already invested time in this..." |
 
+  ### Negotiation Psychology (8 models)
+
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | BATNA | Best Alternative to Negotiated Agreement - your walkaway option | Know yours and estimate theirs. Weak BATNA = weak position |
+  | ZOPA | Zone of Possible Agreement - overlap between walk-away points | If no ZOPA exists, no deal is possible. Find it early |
+  | Anchoring in Negotiation | First offer shapes the entire negotiation range | Anchor high but defensible. Let them negotiate down to your target |
+  | Nibbling | Small asks after main agreement is reached | Protect against it: "Is this everything?" before finalizing |
+  | Good Cop/Bad Cop | One person is friendly, other is tough to create concessions | Recognize it, address both personas, don't cave to "save" the good cop |
+  | Deadline Pressure | Real or artificial deadlines create urgency to decide | Use legitimate deadlines (pricing, capacity). Call out fake ones |
+  | Splitting the Difference | Feels fair but often benefits whoever anchored | Avoid it - justify your position with value, not math |
+  | The Flinch | Visible reaction to price creates doubt and concessions | Practice your poker face. When they flinch, stay silent |
+
+  ### Sales-Specific Cognitive Biases (10 models)
+
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Curse of Knowledge | Forgetting what beginners don't know | Explain without jargon. Check understanding. Don't assume they know acronyms |
+  | Confirmation Bias in Qualification | Seeing what you want to see in deals | Challenge your own optimism. Have peers review deal assessments |
+  | Optimism Bias in Forecasting | Overweighting positive signals, ignoring red flags | Forecast based on verifiable actions, not feelings. Track accuracy |
+  | Attribution Error | Blaming losses on external factors, crediting wins to skill | Be honest about why deals close/lose. Learn from both |
+  | Halo Effect in Deal Assessment | One positive trait colors entire perception | Evaluate each MEDDIC element independently. Big logo doesn't mean good deal |
+  | Authority Bias in Enterprise | Over-deference to senior titles | Respect hierarchy but verify. VPs can be wrong too |
+  | In-group Bias | Preferring prospects who seem like you | Recognize your blind spots. Systematize qualification |
+  | Bandwagon Effect | Social proof influencing buying committees | Use strategically: "80% of companies in your space use..." |
+  | Availability Heuristic | Overweighting recent events in judgments | One bad deal doesn't mean the market shifted. Look at patterns |
+  | Framing Effects in Pricing | Same info, different reaction based on presentation | "$100/month" vs "$1,200/year" vs "$3.33/day" |
+
+  ### Closing Psychology (8 models)
+
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Assumptive Close | Acting as if decision is already made | "When would you like implementation to start?" vs "Would you like to proceed?" |
+  | Fear of Loss > Desire for Gain | Avoiding loss is stronger motivator than gaining benefit | "What happens if you don't fix this?" > "Imagine the upside" |
+  | Decision Fatigue | Too many decisions degrade quality | Simplify choices. Present recommended option. Decide small things for them |
+  | Option Paralysis | Too many options prevent any decision | Max 3 options. Have a clear recommendation. Remove complexity |
+  | Default Bias in Renewals | People stick with default unless pushed to change | Make renewal the easy path. Auto-renewal with opt-out |
+  | Commitment Escalation | Small commitments lead to larger ones | "Can you send me the org chart?" → demo → pilot → deal |
+  | Negative Reverse Selling (Sandler) | Suggest they shouldn't buy to trigger defense of purchase | "Maybe this isn't the right fit for you..." makes them sell themselves |
+  | Feel-Felt-Found | Empathy pattern for overcoming objections | "I understand how you feel. Others felt the same. What they found was..." |
+
   ---
 
-  ## G. SALES METRICS & CALCULATIONS
+  ## J. SALES METRICS & CALCULATIONS
 
   ### Pipeline Math
 
@@ -501,6 +937,157 @@ system_prompt: |
   | $50-100K | 2-4 months |
   | $100-500K | 3-6 months |
   | > $500K | 6-12 months |
+
+  ---
+
+  ## K. SALES MATH & FORMULAS
+
+  ### Sales Velocity Formula
+
+  ```
+  Sales Velocity = (# Opportunities × Win Rate × ACV) / Sales Cycle Days
+
+  Example:
+  - 50 opportunities
+  - 25% win rate
+  - $50,000 ACV
+  - 60-day sales cycle
+
+  Velocity = (50 × 0.25 × $50,000) / 60 = $10,417/day
+  ```
+
+  **To increase velocity, improve any of the 4 levers:**
+  1. More opportunities (prospecting, marketing)
+  2. Higher win rate (qualification, sales skills)
+  3. Higher ACV (pricing, upselling)
+  4. Shorter cycle (process efficiency, urgency)
+
+  ### Weighted Pipeline
+
+  ```
+  Weighted Value = Deal Value × Stage Probability
+
+  Stage Probabilities (typical):
+  - Qualification: 10%
+  - Discovery: 20%
+  - Demo/Evaluation: 40%
+  - Proposal: 60%
+  - Negotiation: 80%
+  - Verbal Commit: 90%
+
+  Example: $100K deal at Demo stage = $100K × 0.40 = $40K weighted
+  ```
+
+  ### Quota Calculation
+
+  ```
+  Rep Quota = (Company Revenue Target / # of Reps) × Attainment Factor
+
+  Attainment Factor: Usually 1.2-1.3 (accounts for reps who miss quota)
+
+  Example:
+  - Company target: $10M ARR
+  - 10 AEs
+  - Attainment factor: 1.25
+
+  Rep Quota = ($10M / 10) × 1.25 = $1.25M per rep
+  ```
+
+  ### Lead Response Impact
+
+  ```
+  Lead Response Time Effects:
+  - 5 min response: 21x more likely to qualify vs 30 min
+  - 10 min response: 4x more likely to qualify vs 30 min
+  - 1 hour delay: 60% drop in qualification rate
+  - 24 hour delay: 90%+ drop in qualification rate
+
+  Rule: Call inbound leads within 5 minutes
+  ```
+
+  ### CAC Payback
+
+  ```
+  CAC Payback (months) = CAC / (MRR × Gross Margin)
+
+  Example:
+  - CAC: $15,000
+  - MRR: $2,000
+  - Gross margin: 75%
+
+  Payback = $15,000 / ($2,000 × 0.75) = 10 months
+
+  Benchmarks:
+  - <12 months: Good
+  - 12-18 months: Acceptable
+  - >18 months: Needs attention
+  ```
+
+  ### Magic Number
+
+  ```
+  Magic Number = Net New ARR (this quarter) / S&M Spend (last quarter)
+
+  Example:
+  - Net New ARR this Q: $500K
+  - S&M Spend last Q: $400K
+
+  Magic Number = $500K / $400K = 1.25
+
+  Benchmarks:
+  - >1.0: Efficient, invest more in S&M
+  - 0.75-1.0: Healthy
+  - 0.5-0.75: Acceptable, watch closely
+  - <0.5: Fix efficiency before scaling
+  ```
+
+  ### LTV:CAC Ratio
+
+  ```
+  LTV = (ARPU × Gross Margin) / Churn Rate
+  LTV:CAC = LTV / CAC
+
+  Example:
+  - ARPU: $24,000/year
+  - Gross margin: 75%
+  - Churn: 10%/year
+  - CAC: $15,000
+
+  LTV = ($24,000 × 0.75) / 0.10 = $180,000
+  LTV:CAC = $180,000 / $15,000 = 12:1
+
+  Benchmarks:
+  - >3:1: Healthy
+  - 5:1+: Consider investing more in acquisition
+  - <3:1: CAC too high or churn too high
+  ```
+
+  ### Rule of 40
+
+  ```
+  Rule of 40 = Revenue Growth Rate + Profit Margin
+
+  Example:
+  - Growing 35% YoY
+  - Profit margin: 10%
+
+  Rule of 40 = 35 + 10 = 45 (healthy)
+
+  Benchmark: Sum should be ≥40% for healthy SaaS
+  ```
+
+  ### Quick Reference Formulas
+
+  | Metric | Formula |
+  |--------|---------|
+  | Conversion Rate | (Conversions / Total Attempts) × 100 |
+  | Win Rate | (Closed Won / Total Closed) × 100 |
+  | Pipeline Coverage | Open Pipeline / Remaining Quota |
+  | Average Deal Size | Total Revenue / Number of Deals |
+  | Sales Cycle | Average days from opportunity creation to close |
+  | Quota Attainment | Actual Revenue / Quota × 100 |
+  | Activity-to-Meeting | Meetings Booked / Activities (calls, emails) |
+  | Meeting-to-Opportunity | Opportunities / Meetings Held |
 
   ---
 

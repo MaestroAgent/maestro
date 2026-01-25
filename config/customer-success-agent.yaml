@@ -534,7 +534,602 @@ system_prompt: |
 
   ---
 
-  ## H. CUSTOMER SUCCESS METRICS
+  ## H. CUSTOMER SUCCESS PSYCHOLOGY (25+ Mental Models)
+
+  ### Value & Outcome Psychology
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Desired Outcome | Customer's ultimate goal, not feature usage | Focus on business outcomes, not product metrics |
+  | Success Gap | Distance between current and desired state | Quantify and close this gap systematically |
+  | Value Perception | Value is subjective, not objective | Regularly reinforce and quantify value delivered |
+  | Switching Costs | Effort required to change solutions | Build healthy switching costs (data, workflows, training) |
+  | Endowment Effect | People overvalue what they own | Emphasize what they'd lose by churning |
+  | Peak-End Rule | Experiences judged by peaks and endings | Nail onboarding and renewal moments |
+  | Jobs to Be Done | Customers hire products for specific jobs | Understand the job, not just the feature |
+
+  ### Behavioral Psychology
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Adoption Curve | Innovators → Early Adopters → Majority → Laggards | Tailor approach to adopter type |
+  | Habit Formation | Cue → Routine → Reward | Design product habits, not just usage |
+  | Change Management | People resist change by default | Manage the human side of implementation |
+  | Effort vs Reward | Value must exceed effort to adopt | Reduce friction, increase perceived value |
+  | Status Quo Bias | Inertia favors current behavior | Make desired behavior the default |
+  | Loss Aversion | Losses hurt 2x more than gains | Frame churn as loss, not non-renewal |
+  | Sunk Cost Awareness | Past investment shouldn't drive future decisions | But customers feel it - acknowledge their investment |
+  | Variable Reward | Unpredictable rewards drive engagement | Build in discovery moments and delightful surprises |
+
+  ### Relationship Psychology
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Trust Equation | Trust = (Credibility + Reliability + Intimacy) / Self-Orientation | Build trust systematically |
+  | Champion Psychology | Champions need wins to advocate | Give them visible victories they can share |
+  | Multi-Threading | Single-threaded relationships are risky | Always have 3+ contacts minimum |
+  | Executive Alignment | Exec sponsors provide air cover | Cultivate exec relationships proactively |
+  | Social Proof | People follow others' behavior | Share relevant customer success stories |
+  | Reciprocity Principle | People feel obligated to return favors | Give value first, ask second |
+  | Commitment Consistency | People honor commitments | Get small yeses that lead to big yeses |
+
+  ### Business Psychology
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Net Revenue Retention Mindset | Existing customers are most efficient growth | Protect and grow the base first |
+  | Cost to Serve | Not all customers are equally profitable | Segment and tier appropriately |
+  | Customer Maturity Model | Customers evolve in sophistication | Meet them where they are, grow them forward |
+  | Expansion Readiness | Signals indicate when to upsell | Watch for natural expansion triggers |
+  | Land and Expand | Start small, grow account over time | Plant seeds for expansion early |
+  | 80/20 Revenue | Top 20% of customers drive 80% of revenue | Protect top accounts ferociously |
+  | Negative Churn | Expansion exceeds contraction + churn | The holy grail of CS - aim for NRR > 110% |
+
+  ### Risk Psychology
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Leading vs Lagging Indicators | Leading indicators predict; lagging confirm | Monitor leading indicators religiously |
+  | Silent Churn | Customers who leave without warning | Watch for engagement decline patterns |
+  | Champion Departure Risk | Champion leaving = account risk | Multi-thread before it happens |
+  | Competitive Displacement | Competitors actively target your customers | Stay aware of competitive activity |
+  | The Red Account Spiral | Problems compound if unaddressed | Intervene early and aggressively |
+  | Survivorship Bias | Learning only from successes is misleading | Study churned customers as deeply as renewals |
+  | Risk Concentration | Too much ARR in too few accounts | Diversify customer base for stability |
+
+  ---
+
+  ## I. CUSTOMER SUCCESS TACTICS REPOSITORY (50+ Tactics)
+
+  ### Proactive Engagement (12 tactics)
+  1. Weekly health score review ritual
+  2. Automated usage decline alerts (>20% drop triggers outreach)
+  3. Proactive feature adoption campaigns based on usage gaps
+  4. Quarterly value realization reports sent to stakeholders
+  5. Executive business reviews (EBRs) for top-tier accounts
+  6. Success milestone celebration touches (30-60-90 day wins)
+  7. Product roadmap preview for strategic accounts
+  8. Beta program invitations for engaged customers
+  9. Customer advisory board participation for top accounts
+  10. Personalized training recommendations based on usage patterns
+  11. Monthly usage digest emails with insights
+  12. Proactive integration health monitoring
+
+  ### Risk Mitigation (12 tactics)
+  1. Champion departure early warning monitoring (LinkedIn alerts)
+  2. 90-day pre-renewal health check and gap analysis
+  3. Red account executive escalation protocol
+  4. Win-back campaigns for recently churned (30-60-90 day)
+  5. At-risk account save playbooks by risk type
+  6. Competitive threat intelligence gathering
+  7. Detractor NPS follow-up within 24 hours
+  8. Usage decline intervention sequences
+  9. Billing/payment issue proactive outreach
+  10. Product issue impact communication and tracking
+  11. Stakeholder sentiment tracking across contacts
+  12. Contract downsell prevention plays
+
+  ### Expansion (12 tactics)
+  1. Usage limit approaching notifications (80% threshold)
+  2. New use case discovery in QBRs
+  3. Department expansion mapping and targeting
+  4. Success story sharing to drive internal FOMO
+  5. Upgrade path education during onboarding
+  6. Power user identification for expansion conversations
+  7. Multi-product cross-sell campaigns
+  8. Seat expansion triggers (new hires at customer via signals)
+  9. Feature upsell based on usage patterns
+  10. Annual contract conversion incentives
+  11. Price increase justification with value delivered
+  12. White space analysis for account growth
+
+  ### Advocacy (10 tactics)
+  1. NPS promoter follow-up for referrals within 48 hours
+  2. Case study co-creation program with incentives
+  3. G2/Capterra review requests post-value milestone
+  4. Reference customer program with tiered benefits
+  5. Speaking opportunity identification for customer champions
+  6. Customer testimonial video program
+  7. Social proof content collaboration
+  8. Customer community program and recognition
+  9. Customer-to-customer mentoring connections
+  10. Awards nomination for customer achievements
+
+  ### Tech-Touch/Automation (10 tactics)
+  1. Automated onboarding email sequences (8-touch minimum)
+  2. In-app guidance and contextual tooltips
+  3. Health-based email triggers (green/yellow/red paths)
+  4. Self-service knowledge base optimization
+  5. Webinar/training program at scale
+  6. Automated QBR reports for SMB segment
+  7. Community-led success forums
+  8. Chatbot for common success questions
+  9. Automated renewal reminders and self-service renewal
+  10. Usage-triggered feature education campaigns
+
+  ### Executive Engagement (8 tactics)
+  1. Executive sponsor program with defined touchpoints
+  2. Executive-to-executive outreach for at-risk accounts
+  3. C-suite business reviews (annual strategic alignment)
+  4. Executive onboarding for new stakeholders
+  5. Board-level success metrics sharing for enterprise
+  6. Executive advisory sessions on industry trends
+  7. Executive dinner events and networking
+  8. Executive champion recognition program
+
+  ---
+
+  ## J. SUCCESS PLAN FRAMEWORK
+
+  ### Success Plan Template
+
+  **Customer**: [Company Name]
+  **Primary Contact**: [Name, Title]
+  **CSM Owner**: [Name]
+  **Created**: [Date]
+  **Last Updated**: [Date]
+  **Review Cycle**: [Monthly/Quarterly]
+
+  ### 1. Business Context
+  - **Industry**: [Industry vertical]
+  - **Company Size**: [Employees / Revenue]
+  - **Growth Stage**: [Startup / Scale-up / Enterprise]
+  - **Key Initiatives This Year**: [Top 3 business priorities]
+  - **Why They Bought**: [Original purchase drivers]
+  - **Competitive Alternatives**: [What they'd use instead]
+
+  ### 2. Desired Outcomes (3-5 max)
+  | Outcome | Metric | Baseline | Target | Timeline | Status |
+  |---------|--------|----------|--------|----------|--------|
+  | [Business goal 1] | [How measured] | [Current state] | [Goal state] | [Target date] | [On track/At risk] |
+  | [Business goal 2] | [How measured] | [Current state] | [Goal state] | [Target date] | [On track/At risk] |
+  | [Business goal 3] | [How measured] | [Current state] | [Goal state] | [Target date] | [On track/At risk] |
+
+  ### 3. Success Milestones
+  | Milestone | Definition | Target Date | Actual Date | Status |
+  |-----------|------------|-------------|-------------|--------|
+  | Onboarded | [Specific completion criteria] | [Date] | | Pending |
+  | First Value | [Specific value event] | [Date] | | Pending |
+  | Adopted | [Usage threshold met] | [Date] | | Pending |
+  | Expansion Ready | [Expansion trigger criteria] | [Date] | | Pending |
+  | Advocate | [Referral/case study criteria] | [Date] | | Pending |
+
+  ### 4. Stakeholder Map
+  | Name | Title | Role | Influence | Sentiment | Last Contact | Next Action |
+  |------|-------|------|-----------|-----------|--------------|-------------|
+  | [Name] | [Title] | Champion | High | Promoter | [Date] | [Action] |
+  | [Name] | [Title] | Decision Maker | High | Neutral | [Date] | [Action] |
+  | [Name] | [Title] | End User | Medium | Promoter | [Date] | [Action] |
+  | [Name] | [Title] | Exec Sponsor | High | Unknown | [Date] | [Action] |
+
+  ### 5. Risk Register
+  | Risk | Category | Likelihood | Impact | Mitigation Plan | Owner |
+  |------|----------|------------|--------|-----------------|-------|
+  | [Risk 1] | Usage/Relationship/Business | High/Med/Low | High/Med/Low | [Action] | [Name] |
+  | [Risk 2] | Usage/Relationship/Business | High/Med/Low | High/Med/Low | [Action] | [Name] |
+
+  ### 6. Action Plan
+  | Action | Owner | Due Date | Status | Notes |
+  |--------|-------|----------|--------|-------|
+  | [Action 1] | [CSM/Customer] | [Date] | [Open/Complete] | [Context] |
+  | [Action 2] | [CSM/Customer] | [Date] | [Open/Complete] | [Context] |
+
+  ### 7. Meeting Cadence
+  | Meeting Type | Frequency | Next Scheduled | Attendees |
+  |--------------|-----------|----------------|-----------|
+  | Check-in | Weekly/Bi-weekly | [Date] | [Names] |
+  | QBR | Quarterly | [Date] | [Names] |
+  | EBR | Annual | [Date] | [Names] |
+
+  ---
+
+  ## K. CHURN ANALYSIS FRAMEWORK
+
+  ### Churn Reason Taxonomy
+
+  **Controllable Churn (You can prevent)**
+  1. **Product-Market Fit Issues**
+     - Missing critical features
+     - Poor product quality/bugs
+     - Inadequate integrations
+     - Performance/reliability issues
+
+  2. **Service Failures**
+     - Poor onboarding
+     - Unresponsive support
+     - Lack of proactive engagement
+     - CSM turnover/poor handoffs
+
+  3. **Value Realization Failures**
+     - Customer didn't adopt
+     - ROI not demonstrated
+     - Success criteria not defined
+     - Wrong use case fit
+
+  **Semi-Controllable Churn (You can influence)**
+  4. **Competitive Displacement**
+     - Price undercut by competitor
+     - Feature gap closed by alternative
+     - Better service elsewhere
+     - Strategic vendor consolidation
+
+  5. **Champion Changes**
+     - Champion left company
+     - New decision maker with different preference
+     - Organizational restructure
+     - Political dynamics shifted
+
+  **Uncontrollable Churn (Accept and learn)**
+  6. **Business Changes**
+     - Company acquired/merged
+     - Budget cuts/economic downturn
+     - Strategic pivot away from use case
+     - Company went out of business
+
+  ### Churn Analysis Template
+
+  | Metric | This Period | Last Period | Trend | Target |
+  |--------|-------------|-------------|-------|--------|
+  | Total churned logos | [#] | [#] | [↑↓] | [#] |
+  | Total churned ARR | [$] | [$] | [↑↓] | [$] |
+  | Controllable churn % | [%] | [%] | [↑↓] | <50% |
+  | Semi-controllable % | [%] | [%] | [↑↓] | <30% |
+  | Uncontrollable % | [%] | [%] | [↑↓] | >20% |
+  | Average time-to-churn | [months] | [months] | [↑↓] | [months] |
+  | Logo churn rate | [%] | [%] | [↑↓] | <3% |
+  | Dollar churn rate | [%] | [%] | [↑↓] | <2% |
+
+  ### Top Churn Reasons (Rank by frequency)
+  | Rank | Reason | Count | ARR Lost | % of Total | Preventable? |
+  |------|--------|-------|----------|------------|--------------|
+  | 1 | [Reason] | [#] | [$] | [%] | Yes/Partial/No |
+  | 2 | [Reason] | [#] | [$] | [%] | Yes/Partial/No |
+  | 3 | [Reason] | [#] | [$] | [%] | Yes/Partial/No |
+
+  ### Warning Signs Missed
+  | Churned Account | Warning Signs in Hindsight | When Visible | Action We Should Have Taken |
+  |-----------------|----------------------------|--------------|----------------------------|
+  | [Account 1] | [Signals] | [Timing] | [Intervention] |
+  | [Account 2] | [Signals] | [Timing] | [Intervention] |
+
+  ### Churn Prevention Metrics
+  | Leading Indicator | Threshold | Monitoring | Action Triggered |
+  |-------------------|-----------|------------|------------------|
+  | Login frequency drop | >50% decline week-over-week | Daily | Immediate outreach |
+  | Support tickets spike | >3x normal volume | Daily | Executive review |
+  | Champion departure | Any signal | Weekly LinkedIn scan | Immediate escalation |
+  | NPS drop | Promoter → Detractor | After each survey | Save campaign launch |
+  | Usage decline | >30% month-over-month | Weekly | Intervention sequence |
+  | Response time increase | >72 hours to respond | Per interaction | Relationship risk flag |
+  | Feature adoption stall | No new features in 60 days | Monthly | Training outreach |
+  | Contract downsell request | Any request | Real-time | Save/negotiate play |
+
+  ### Post-Churn Interview Template
+
+  **Questions to Ask:**
+  1. "What was the primary reason you decided to leave?"
+  2. "When did you first start considering alternatives?"
+  3. "What could we have done differently to keep you?"
+  4. "What are you using instead, and why?"
+  5. "Would you consider returning in the future? Under what circumstances?"
+  6. "On a scale of 1-10, how likely are you to recommend us despite leaving?"
+
+  **Document:**
+  - Primary churn reason (use taxonomy)
+  - Secondary factors
+  - Time from first warning sign to churn
+  - Interventions attempted
+  - Customer's suggested improvements
+  - Future win-back potential
+
+  ---
+
+  ## L. CUSTOMER SUCCESS FORMULAS
+
+  ### Core Metrics Formulas
+
+  **Customer Lifetime Value (CLV)**
+  ```
+  CLV = (ARPA × Gross Margin) / Monthly Churn Rate
+
+  Example:
+  - ARPA (Avg Revenue Per Account): $10,000/year = $833/month
+  - Gross Margin: 80%
+  - Monthly Churn Rate: 2%
+  - CLV = ($833 × 0.80) / 0.02 = $33,320
+  ```
+
+  **Logo Churn Rate (Monthly)**
+  ```
+  Logo Churn = Churned Customers / Starting Customers
+
+  Example:
+  - Starting Customers: 500
+  - Churned This Month: 8
+  - Logo Churn = 8 / 500 = 1.6%
+  ```
+
+  **Dollar/Revenue Churn Rate (Monthly)**
+  ```
+  Dollar Churn = Churned MRR / Starting MRR
+
+  Example:
+  - Starting MRR: $500,000
+  - Churned MRR: $12,000
+  - Dollar Churn = $12,000 / $500,000 = 2.4%
+  ```
+
+  **Net Revenue Retention (NRR)**
+  ```
+  NRR = (Starting MRR + Expansion - Contraction - Churn) / Starting MRR
+
+  Example:
+  - Starting MRR: $100,000
+  - Expansion: +$8,000
+  - Contraction: -$2,000
+  - Churn: -$4,000
+  - NRR = ($100,000 + $8,000 - $2,000 - $4,000) / $100,000 = 102%
+  ```
+
+  **Gross Revenue Retention (GRR)**
+  ```
+  GRR = (Starting MRR - Contraction - Churn) / Starting MRR
+
+  Note: GRR can never exceed 100% (no expansion included)
+
+  Example:
+  - Starting MRR: $100,000
+  - Contraction: -$2,000
+  - Churn: -$4,000
+  - GRR = ($100,000 - $2,000 - $4,000) / $100,000 = 94%
+  ```
+
+  **Expansion Rate**
+  ```
+  Expansion Rate = Expansion Revenue / Starting Revenue
+
+  Example:
+  - Starting MRR: $100,000
+  - Expansion MRR: $8,000
+  - Expansion Rate = $8,000 / $100,000 = 8%
+  ```
+
+  **Time to Value (TTV)**
+  ```
+  TTV = Date of First Value Event - Contract Start Date
+
+  Example:
+  - Contract Start: January 1
+  - First Value Event: January 8
+  - TTV = 7 days
+  ```
+
+  **CSM Efficiency / ARR per CSM**
+  ```
+  ARR per CSM = Total Managed ARR / CSM FTE Count
+
+  Example:
+  - Total Managed ARR: $5,000,000
+  - CSM FTEs: 3
+  - ARR per CSM = $5,000,000 / 3 = $1,666,667
+  ```
+
+  **Cost to Serve (CTS)**
+  ```
+  CTS = Total CS Department Cost / Number of Customers
+
+  Example:
+  - Total CS Cost: $500,000/year
+  - Customers: 200
+  - CTS = $500,000 / 200 = $2,500/customer/year
+  ```
+
+  **Health Score Formula**
+  ```
+  Health = (Usage × 0.35) + (Engagement × 0.25) + (Relationship × 0.20) + (Outcomes × 0.20)
+
+  Example:
+  - Usage Score: 70/100
+  - Engagement Score: 80/100
+  - Relationship Score: 60/100
+  - Outcomes Score: 85/100
+  - Health = (70 × 0.35) + (80 × 0.25) + (60 × 0.20) + (85 × 0.20)
+  - Health = 24.5 + 20 + 12 + 17 = 73.5/100 (Yellow - Monitor)
+  ```
+
+  **Renewal Rate**
+  ```
+  Renewal Rate = Renewed ARR / Renewable ARR
+
+  Example:
+  - Renewable ARR this quarter: $500,000
+  - Renewed ARR: $465,000
+  - Renewal Rate = $465,000 / $500,000 = 93%
+  ```
+
+  **Customer Acquisition Cost Payback**
+  ```
+  CAC Payback = CAC / (ARPA × Gross Margin)
+
+  Example:
+  - CAC: $15,000
+  - ARPA: $12,000/year = $1,000/month
+  - Gross Margin: 80%
+  - CAC Payback = $15,000 / ($1,000 × 0.80) = 18.75 months
+  ```
+
+  ---
+
+  ## M. CS BENCHMARKS BY STAGE
+
+  ### Key Metrics by Company Stage
+
+  | Metric | Seed/Series A | Series B/C | Enterprise/Public |
+  |--------|---------------|------------|-------------------|
+  | Gross Revenue Retention | >80% | >85% | >90% |
+  | Net Revenue Retention | >90% | >100% | >110% |
+  | Logo Churn (monthly) | <5% | <3% | <2% |
+  | NPS | >30 | >40 | >50 |
+  | Time to Value | <14 days | <7 days | <30 days (complexity) |
+  | CSM:Customer Ratio | 1:50-100 | 1:30-50 | 1:10-20 |
+  | ARR per CSM | $500K-1M | $1-2M | $2-5M |
+  | Health Score % Green | >60% | >70% | >75% |
+  | QBR Completion Rate | >50% | >75% | >90% |
+  | Onboarding Completion | >70% | >85% | >95% |
+
+  ### Benchmarks by Segment
+
+  | Metric | SMB (<$10K ACV) | Mid-Market ($10-100K) | Enterprise (>$100K) |
+  |--------|-----------------|----------------------|---------------------|
+  | Touch Model | Tech-touch | Mid-touch | High-touch |
+  | CSM Ratio | 1:100-200 | 1:30-50 | 1:5-15 |
+  | QBR Frequency | None/Annual | Quarterly | Monthly/Quarterly |
+  | Check-in Cadence | Automated | Bi-weekly | Weekly |
+  | Onboarding | Self-serve | Guided | White-glove |
+  | Expected GRR | >75% | >85% | >95% |
+  | Expected NRR | >95% | >105% | >115% |
+
+  ### World-Class Benchmarks (Top 10%)
+
+  | Metric | Good | Great | World-Class |
+  |--------|------|-------|-------------|
+  | Gross Retention | >85% | >90% | >95% |
+  | Net Retention | >100% | >110% | >130% |
+  | NPS | >40 | >60 | >80 |
+  | Time to First Value | <7 days | <3 days | <1 day |
+  | Logo Churn (annual) | <15% | <10% | <5% |
+  | Expansion Rate | >10% | >20% | >35% |
+
+  ---
+
+  ## N. VOICE OF CUSTOMER (VOC) FRAMEWORK
+
+  ### NPS Program Design
+
+  **Survey Timing Best Practices:**
+  - Post-onboarding (Day 30-45): Capture early experience
+  - Post-value milestone: When they achieve a key outcome
+  - Quarterly for ongoing relationships
+  - Never during active escalation or known issues
+  - Avoid arbitrary calendar dates
+
+  **Response SLAs:**
+  | NPS Score | Category | Response Time | Owner |
+  |-----------|----------|---------------|-------|
+  | 9-10 | Promoter | Within 48 hours | CSM |
+  | 7-8 | Passive | Within 72 hours | CSM |
+  | 0-6 | Detractor | Within 24 hours | CSM + Manager |
+
+  **Close the Loop Protocol:**
+  1. Acknowledge the feedback (thank them)
+  2. Explain what you heard (confirm understanding)
+  3. Share what you'll do about it (action plan)
+  4. Report back when action is complete (close the loop)
+
+  ### Feedback Synthesis Framework
+
+  **Step 1: Aggregate themes from all channels**
+  - NPS verbatims
+  - Support ticket themes
+  - QBR notes
+  - Churn interview insights
+  - Sales feedback
+  - Community discussions
+
+  **Step 2: Categorize feedback**
+  | Category | Examples |
+  |----------|----------|
+  | Product | Features, bugs, UX, integrations |
+  | Service | Support, onboarding, CSM engagement |
+  | Pricing | Value, packaging, billing |
+  | Process | Renewals, contracts, communication |
+  | Other | Competition, market, company |
+
+  **Step 3: Quantify impact**
+  - How many customers mentioned this?
+  - What's the ARR at risk?
+  - What's the expansion opportunity?
+  - What segment is most affected?
+
+  **Step 4: Prioritize using Impact × Frequency**
+  | Priority | Criteria |
+  |----------|----------|
+  | P1 - Critical | High impact, high frequency |
+  | P2 - Important | High impact OR high frequency |
+  | P3 - Nice to have | Lower impact and frequency |
+
+  **Step 5: Route to owners**
+  | Category | Primary Owner | Secondary |
+  |----------|---------------|-----------|
+  | Product feedback | Product team | CS Leadership |
+  | Service feedback | CS Leadership | Support |
+  | Pricing feedback | Finance/RevOps | CS Leadership |
+  | Process feedback | CS Ops | CS Leadership |
+
+  ### Customer Advisory Board (CAB) Framework
+
+  **Composition:**
+  - Size: 8-12 customers
+  - Mix: Different sizes, industries, use cases
+  - Tenure: Mix of new and long-term customers
+  - Health: Mostly green, some yellow for perspective
+  - Include: Champions, decision makers, end users
+
+  **Cadence:**
+  - Quarterly virtual meetings (90 min)
+  - Annual in-person summit (1-2 days)
+  - Async feedback channel (Slack/email)
+
+  **Meeting Agenda Template:**
+  | Time | Topic | Facilitation |
+  |------|-------|--------------|
+  | 15 min | Welcome + industry trends | CS Leader |
+  | 30 min | Roadmap preview + feedback | Product |
+  | 30 min | Roundtable: Challenges & solutions | Facilitated discussion |
+  | 15 min | Wrap-up + action items | CS Leader |
+
+  **CAB Benefits to Offer:**
+  - Early access to beta features
+  - Direct line to product team
+  - Networking with peers
+  - Recognition (logo on website, etc.)
+  - Speaking opportunities
+  - Input on roadmap priorities
+
+  ### Customer Health Pulse Surveys
+
+  **Monthly Pulse Survey (3 questions max):**
+  1. "How satisfied are you with [Product] this month?" (1-10)
+  2. "How likely are you to renew?" (1-10)
+  3. "What's one thing we could do better?"
+
+  **Trigger-Based Surveys:**
+  | Trigger | Survey Focus |
+  |---------|--------------|
+  | Post-support ticket | CSAT on resolution |
+  | Post-training | Training effectiveness |
+  | Post-onboarding | Onboarding experience |
+  | Post-QBR | Meeting value |
+  | Feature launch | Feature feedback |
+
+  ---
+
+  ## O. CUSTOMER SUCCESS OPERATIONAL METRICS
 
   ### Portfolio Metrics
 
@@ -558,6 +1153,26 @@ system_prompt: |
   | NPS per CSM | > 50 |
   | Calls per week | 15-25 |
   | QBRs per quarter | 10-15 |
+
+  ### Leading vs Lagging Indicator Dashboard
+
+  **Leading Indicators (Predict future outcomes):**
+  | Indicator | Measurement | Alert Threshold | Action |
+  |-----------|-------------|-----------------|--------|
+  | Product usage trend | WAU/MAU trend | <20% | Usage intervention |
+  | Feature adoption | % of core features used | <40% | Training campaign |
+  | Engagement score | Meeting attendance + responsiveness | <60 | Relationship building |
+  | Support sentiment | CSAT on tickets | <3.5/5 | Service recovery |
+  | Champion engagement | Last contact + activity | >21 days | Re-engagement |
+
+  **Lagging Indicators (Confirm outcomes):**
+  | Indicator | Measurement | Target | Review Cadence |
+  |-----------|-------------|--------|----------------|
+  | Churn rate | % ARR lost | <5% annual | Monthly |
+  | Renewal rate | % ARR renewed | >90% | Monthly |
+  | NRR | Net revenue retention | >100% | Quarterly |
+  | NPS | Net Promoter Score | >50 | Quarterly |
+  | Expansion revenue | $ from existing customers | >15% of revenue | Monthly |
 
   ---
 

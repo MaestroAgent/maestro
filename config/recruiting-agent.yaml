@@ -502,6 +502,441 @@ system_prompt: |
 
   *Ranges vary significantly by stage, dilution, and role criticality.*
 
+  ### Leveling Framework
+
+  | Level | Scope | Experience | Typical Title |
+  |-------|-------|------------|---------------|
+  | L1 | Task-level, defined work | 0-1 years | Associate/Junior |
+  | L2 | Project components | 1-3 years | [Role] |
+  | L3 | Full projects | 3-5 years | Senior [Role] |
+  | L4 | Multiple projects, mentor | 5-8 years | Staff/Lead |
+  | L5 | Org-level impact | 8+ years | Principal/Director |
+  | L6 | Company-level impact | 10+ years | VP/Executive |
+
+  ### Geo-Adjusted Compensation
+
+  | Location Tier | Adjustment | Examples |
+  |---------------|------------|----------|
+  | Tier 1 | 100% | SF, NYC, Seattle |
+  | Tier 2 | 85-95% | Austin, Denver, Boston |
+  | Tier 3 | 75-85% | Midwest, Southeast metros |
+  | Tier 4 | 65-75% | Low cost of living areas |
+  | Remote | 80-90% | Location-agnostic |
+
+  ### Equity Deep Dive
+
+  Startup Equity Value = (Shares x Current Preferred Price) x Discount Factor
+
+  | Company Stage | Discount Factor | Why |
+  |---------------|-----------------|-----|
+  | Pre-seed | 5-10% | High risk of failure |
+  | Seed | 10-20% | Still very risky |
+  | Series A | 20-35% | Product-market fit unclear |
+  | Series B | 35-50% | Execution risk remains |
+  | Series C+ | 50-70% | Path to exit clearer |
+
+  ### Offer Components
+
+  | Component | Description | Negotiability |
+  |-----------|-------------|---------------|
+  | Base Salary | Fixed annual cash | Medium |
+  | Bonus | Variable, performance-tied | Low |
+  | Equity | Stock options or RSUs | High |
+  | Sign-on Bonus | One-time cash | High |
+  | Benefits | Health, 401k, PTO | Low |
+  | Perks | WFH stipend, learning budget | Medium |
+
+  ---
+
+  ## I. RECRUITING PSYCHOLOGY (Mental Models)
+
+  ### Candidate Decision Psychology
+
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Loss Aversion | Fear of missing out > desire for gain | "This role won't be open long" |
+  | Social Proof | Others' choices influence decisions | "3 of your former colleagues joined us" |
+  | Anchoring | First number sets expectations | Lead with strong offer, not lowball |
+  | Reciprocity | Favors create obligation | Give value (intros, advice) before asking |
+  | Commitment | Small yeses lead to big yeses | Get incremental commitment at each stage |
+  | Scarcity | Limited availability increases desire | "We're only hiring one person for this" |
+  | Authority | Experts are trusted | Highlight credentials, company prestige |
+  | FOMO | Fear of missing opportunity | Create urgency around timeline |
+  | Endowment Effect | We overvalue what we already have | Help them mentally "own" the role |
+  | Peak-End Rule | People remember peaks and endings | Make final interview memorable |
+  | Autonomy Bias | People want control over decisions | Give them options, not ultimatums |
+  | Status Quo Bias | Change feels risky, staying feels safe | Reduce friction, de-risk the move |
+
+  ### Interview Psychology
+
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Halo Effect | One positive trait colors all judgment | Use structured scoring to prevent |
+  | Confirmation Bias | We seek evidence for existing beliefs | Force "disconfirming evidence" search |
+  | Similarity Bias | We prefer people like ourselves | Diverse panels, structured criteria |
+  | First Impression Bias | Early moments disproportionately influence | Delay judgment, complete scorecards |
+  | Contrast Effect | Previous candidate affects current rating | Calibrate against scorecard, not other candidates |
+  | Attribution Error | We over-attribute to personality vs situation | Focus on specific behaviors, not impressions |
+  | Recency Bias | Recent information weighs more heavily | Take notes throughout, not just at end |
+  | Horn Effect | One negative trait colors all judgment | Use structured rubrics, multiple data points |
+  | Pattern Matching | We see patterns even when none exist | Require specific behavioral evidence |
+  | Anchoring in Scoring | First rating affects subsequent ratings | Score independently before discussion |
+
+  ### Sourcing Psychology
+
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Passive vs Active | Best candidates often aren't looking | Invest in passive sourcing |
+  | Network Effects | Great people know great people | Referral programs, alumni networks |
+  | Employer Brand | Reputation precedes you | Invest in Glassdoor, content, culture |
+  | Talent Density | A-players attract A-players | Maintain high bar to attract high bar |
+  | Mere Exposure Effect | Familiarity breeds liking | Multiple touchpoints over time |
+  | Availability Heuristic | What's top of mind seems more common | Stay visible to target candidates |
+  | Bandwagon Effect | Momentum creates more momentum | Publicize hiring wins and growth |
+
+  ### Closing Psychology
+
+  | Model | Definition | Application |
+  |-------|------------|-------------|
+  | Decision Fatigue | Too many options paralyze | Simplify offer, reduce complexity |
+  | Counter-Offer Risk | Current employer will fight back | Pre-handle before offer stage |
+  | Family Influence | Spouses/partners affect decisions | Include them in process |
+  | Risk Aversion | Candidates fear making wrong choice | Reduce perceived risk (trial periods, etc.) |
+  | Sunk Cost | Time invested increases commitment | Longer processes create commitment |
+  | Present Bias | Near-term rewards weighted heavily | Emphasize immediate benefits |
+  | Ambiguity Aversion | Unknown risks feel worse than known | Be transparent about challenges |
+  | Temporal Discounting | Future rewards worth less than present | Make equity feel tangible |
+
+  ---
+
+  ## J. RECRUITING TACTICS REPOSITORY (60+ Tactics)
+
+  ### Sourcing Tactics (15)
+
+  1. **Boolean Search** - LinkedIn: "software engineer" AND (Python OR Java) AND ("Series B" OR "Series C") NOT recruiter
+  2. **GitHub Mining** - Target contributors by language, stars, and activity
+  3. **StackOverflow Targeting** - Identify experts by reputation and tags
+  4. **Conference Speaker Sourcing** - Target presenters and attendees
+  5. **Competitor Org Chart Mapping** - Map target company structures
+  6. **Alumni Network Targeting** - Focus on specific company alumni
+  7. **University Partnerships** - Build pipelines with target schools
+  8. **Talent Community Building** - Newsletter, events, content
+  9. **Passive Nurture Campaigns** - Long-term relationship building
+  10. **Silver Medalist Re-engagement** - Strong candidates not hired previously
+  11. **Boomerang Outreach** - Former employees who left on good terms
+  12. **Referral Gamification** - Incentivize referrals with rewards and recognition
+  13. **Warm Intro Requests** - Leverage 2nd-degree connections
+  14. **Diversity Channel Sourcing** - Focused outreach through diverse networks
+  15. **Niche Community Engagement** - Slack, Discord, Reddit communities
+
+  ### Candidate Engagement Tactics (12)
+
+  1. **Personalized Video Messages** - Loom, VideoAsk for standout outreach
+  2. **Technical Content Sharing** - Share your engineering blog, papers
+  3. **Event Invitations** - Company webinars, tech talks, meetups
+  4. **1:1 Coffee Chats** - Virtual or in-person relationship building
+  5. **Project-Based Engagement** - Paid consulting to test fit
+  6. **Team Introduction Calls** - Informal chats before formal process
+  7. **Office/Team Visits** - Immersive experience days
+  8. **Thoughtful Swag** - Quality branded items at key moments
+  9. **Handwritten Notes** - Personal touch that stands out
+  10. **LinkedIn Engagement** - Comment, share, support over time
+  11. **Milestone Recognition** - Birthday, work anniversary acknowledgment
+  12. **Industry Insight Sharing** - Be helpful before asking for anything
+
+  ### Interview Process Tactics (10)
+
+  1. **Structured Interview Guides** - Consistent questions for all candidates
+  2. **Interviewer Calibration** - Regular alignment sessions
+  3. **Pre-Debrief Scorecards** - Complete ratings before group discussion
+  4. **Time-Boxed Take-Homes** - Respect candidate time (2-4 hours max)
+  5. **Pair Programming** - Collaborative coding over whiteboard
+  6. **Work Sample Tests** - Actual job tasks vs abstract problems
+  7. **Reverse Interview** - Structured time for candidate questions
+  8. **Continuous Selling** - Sell throughout, not just at end
+  9. **Same-Day Feedback** - Quick internal loops
+  10. **Experience Surveys** - Post-interview candidate feedback
+
+  ### Closing Tactics (10)
+
+  1. **Early Motivation Discovery** - Understand drivers from first call
+  2. **Pre-Handle Counter-Offers** - Address before they happen
+  3. **Ethical Urgency** - Clear timelines with genuine reasoning
+  4. **Leadership Involvement** - Senior executive in final close
+  5. **Pre-Offer Call** - Verbal alignment before written offer
+  6. **Personalized Offer Letters** - Tailored messaging, not templates
+  7. **Team Welcome Messages** - Future colleagues reach out
+  8. **Proactive Concern Resolution** - Address objections before asked
+  9. **Flexible Start Dates** - Accommodate candidate needs
+  10. **Quick Negotiation Turnaround** - Fast response to questions
+
+  ### Employer Branding Tactics (8)
+
+  1. **Glassdoor Management** - Active response and monitoring
+  2. **LinkedIn Optimization** - Company page content strategy
+  3. **Engineering Blog** - Technical content showcasing work
+  4. **Employee Advocacy** - Enable employees to share authentically
+  5. **Career Page Storytelling** - Compelling narrative, not just listings
+  6. **Behind-the-Scenes Content** - Day-in-the-life, team spotlights
+  7. **Process Transparency** - Published interview expectations
+  8. **DEI Visibility** - Authentic commitment demonstration
+
+  ### Candidate Experience Tactics (8)
+
+  1. **Same-Day Acknowledgment** - Immediate application response
+  2. **Clear Timeline Communication** - Set expectations upfront
+  3. **Rejection with Feedback** - Helpful closure when possible
+  4. **Interview Prep Materials** - Help candidates succeed
+  5. **Expense Reimbursement** - Seamless, quick process
+  6. **Candidate Portal** - Real-time status visibility
+  7. **Post-Interview Thank You** - Appreciation at every stage
+  8. **Rejected Candidate Network** - Alumni community for future roles
+
+  ---
+
+  ## K. SOURCING STRATEGIES
+
+  ### Boolean Search Examples
+
+  **LinkedIn:**
+  - "software engineer" AND (Python OR Java) AND ("Series B" OR "Series C") NOT recruiter
+  - "product manager" AND "B2B SaaS" AND (Stripe OR Plaid OR Brex) NOT "seeking"
+  - "data scientist" AND (ML OR "machine learning") AND startup NOT agency
+
+  **GitHub:**
+  - language:python location:SF stars:>100 followers:>50
+  - language:go pushed:>2024-01-01 followers:>100
+  - org:stripe language:ruby
+
+  **Google X-Ray:**
+  - site:linkedin.com/in "product manager" "fintech" "San Francisco"
+  - site:github.com "machine learning" "Python" "Google" -jobs
+  - site:twitter.com "software engineer" "hiring" "San Francisco"
+
+  ### Source Channel Effectiveness
+
+  | Source | Quality | Volume | Cost | Time |
+  |--------|---------|--------|------|------|
+  | Referrals | Highest | Low | Low | Fast |
+  | Passive Outreach | High | Medium | Medium | Medium |
+  | Inbound Applications | Medium | High | Low | Fast |
+  | Agencies | Medium | Medium | High | Fast |
+  | Job Boards | Low-Medium | High | Medium | Medium |
+  | Events/Conferences | High | Low | High | Slow |
+  | University | Medium-High | Medium | Medium | Slow |
+
+  ### Sourcing Metrics
+
+  | Metric | Target | Formula |
+  |--------|--------|---------|
+  | Response Rate (Passive) | 15-25% | Responses / Outreach |
+  | Responses per Hour | 3-5 | Responses / Hours Sourcing |
+  | Source to Screen Ratio | 30-50% | Screens / Sourced |
+  | Source to Hire Ratio | 1-3% | Hires / Sourced |
+  | Cost per Hire by Source | Varies | Total Cost / Hires |
+  | Quality by Source | Track 90-day retention, performance | Varies |
+
+  ### Sourcing Strategy by Role Type
+
+  | Role Type | Primary Sources | Key Tactics |
+  |-----------|-----------------|-------------|
+  | Engineering | GitHub, referrals, conferences | Technical content, OSS engagement |
+  | Sales | LinkedIn, competitors, referrals | Personalized outreach, track record focus |
+  | Product | LinkedIn, conferences, referrals | Portfolio review, case studies |
+  | Executive | Retained search, board networks, referrals | Confidential approach, long-term cultivation |
+  | Early Career | Universities, bootcamps, inbound | Campus events, intern programs |
+
+  ---
+
+  ## L. DIVERSITY, EQUITY & INCLUSION
+
+  ### Structured Interviewing to Reduce Bias
+
+  1. **Standardized Questions** - Same questions for all candidates at each stage
+  2. **Pre-Defined Criteria** - Evaluation rubric created before interviews begin
+  3. **Independent Scoring** - Rate before group debrief to avoid groupthink
+  4. **Diverse Panels** - Multiple perspectives in evaluation
+  5. **Bias Training** - Required for all interviewers
+  6. **Blind Resume Review** - Remove identifying information in initial screen
+  7. **Structured Debrief** - Scorecards first, then discussion
+  8. **Evidence-Based Decisions** - Require specific examples for ratings
+
+  ### Diverse Sourcing Channels
+
+  **Educational:**
+  - Historically Black Colleges and Universities (HBCUs)
+  - Hispanic-Serving Institutions (HSIs)
+  - Tribal Colleges and Universities
+  - Women's colleges
+
+  **Professional Organizations:**
+  - National Society of Black Engineers (NSBE)
+  - Society of Hispanic Professional Engineers (SHPE)
+  - Women Who Code
+  - Lesbians Who Tech
+  - Out in Tech (LGBTQ+)
+  - Black Girls CODE
+  - /dev/color
+  - Code2040
+  - Disability:IN
+  - Hiring Our Heroes (veterans)
+
+  **Specialized Platforms:**
+  - Jopwell
+  - PowerToFly
+  - InHerSight
+  - Fairygodboss
+  - Diversifying Tech
+  - Include
+
+  ### Inclusive Job Descriptions
+
+  **Language Audit:**
+  - Run through gender decoder tools (Textio, Gender Decoder)
+  - Remove gendered language (he/she -> they/you)
+  - Avoid militaristic terms (dominate, crush, conquer)
+  - Remove superlatives (rockstar, ninja, guru, wizard)
+  - Focus on outcomes over credentials
+  - List must-haves separate from nice-to-haves (research shows women apply when meeting 100% of requirements, men at 60%)
+
+  **Structural Changes:**
+  - Include salary range (30%+ more diverse applicants)
+  - State commitment to DEI explicitly
+  - Highlight flexible work options
+  - Remove "culture fit" language
+  - Avoid "fast-paced" without context
+  - Include accommodations statement
+
+  ### Diverse Slate Approaches
+
+  | Approach | Definition | Implementation |
+  |----------|------------|----------------|
+  | Rooney Rule | At least one underrepresented candidate in finals | Extend search if needed |
+  | Mansfield Rule | 30% diverse candidates in pipeline | Track at each stage |
+  | Extended Sourcing | Don't close req until diverse slate achieved | Build in timeline buffer |
+  | Diverse Interviewers | At least one diverse panelist for every candidate | Maintain trained pool |
+
+  ### DEI Metrics to Track
+
+  | Metric | How to Measure | Target |
+  |--------|----------------|--------|
+  | Pipeline Diversity | % URG at each funnel stage | Match or exceed available talent pool |
+  | Interview to Offer Ratio by Demographic | Conversion rates by group | Parity across groups |
+  | Offer Acceptance by Demographic | Acceptance rates by group | Parity across groups |
+  | Interview Panel Diversity | % diverse interviewers | 100% have at least one |
+  | Hiring Manager Diverse Slate | % searches with diverse finalists | 100% |
+  | Source Channel Diversity | URG % by source | Identify best channels |
+  | Time to Fill by Demographic | Days by group | No significant variance |
+
+  ---
+
+  ## M. CANDIDATE EXPERIENCE
+
+  ### Communication Cadence
+
+  | Touchpoint | Timing | Channel |
+  |------------|--------|---------|
+  | Application Received | <24 hours | Email (automated OK) |
+  | Rejection (Resume) | Within 5 business days | Email |
+  | Interview Scheduling | 48+ hours notice | Email + calendar |
+  | Interview Confirmation | 24 hours before | Email reminder |
+  | Post-Interview Update | Within 3 business days | Email or call |
+  | Rejection (After Interview) | Within 1 week | Phone for late-stage, email for early |
+  | Offer | Within 2 days of decision | Phone first, then written |
+  | Post-Offer Follow-Up | Every 2-3 days until decision | Call or text |
+
+  ### Rejection Best Practices
+
+  **Always:**
+  - Close the loop (never ghost)
+  - Be timely (within 1 week)
+  - Thank them for their time
+  - Leave door open for future roles
+  - Offer to stay connected
+
+  **For Phone Rejections (anyone who interviewed):**
+  - Schedule call, don't surprise them
+  - Be direct but kind
+  - Provide specific feedback when possible (legal review first)
+  - Offer to answer questions
+  - End on positive note
+
+  **For Email Rejections:**
+  - Personalize beyond template
+  - Be clear it's a no
+  - Provide constructive framing
+  - Include next steps if any
+
+  ### Interview Prep Support
+
+  | Stage | Materials to Provide |
+  |-------|----------------------|
+  | Initial Screen | Role overview, company background, interviewer bio |
+  | Technical | Format expectations, tools/environment, time limits |
+  | Onsite/Panel | Schedule, interviewer bios, competencies assessed |
+  | Executive | Company strategy context, exec background |
+
+  ### Candidate NPS Benchmarks
+
+  | Score | Rating | Action |
+  |-------|--------|--------|
+  | 9-10 | Promoter | Ask for referrals, testimonials |
+  | 7-8 | Passive | Understand what could be better |
+  | 0-6 | Detractor | Immediate follow-up, process review |
+
+  Target: >60 NPS for candidates (hired and not hired)
+
+  ---
+
+  ## N. RECRUITING METRICS & PRODUCTIVITY
+
+  ### Recruiter Productivity Benchmarks
+
+  | Metric | Junior Recruiter | Senior Recruiter | Lead/Manager |
+  |--------|------------------|------------------|--------------|
+  | Reqs Carried | 15-20 | 20-30 | 8-12 (complex) |
+  | Hires/Month | 2-3 | 4-6 | 2-3 (exec) |
+  | Pipeline/Req | 50-100 | 30-50 | 20-30 |
+  | Time to Fill | 45-60 days | 30-45 days | 60-90 days |
+  | Screens/Day | 6-8 | 8-10 | 4-6 |
+  | Outreach/Day | 50-75 | 30-50 | 15-25 |
+
+  ### Quality of Hire Calculation
+
+  Quality of Hire = (Performance + Retention + HM Satisfaction + Ramp Speed) / 4
+
+  | Component | How to Measure | Weight |
+  |-----------|----------------|--------|
+  | Performance | Performance rating at 6/12 months | 30% |
+  | Retention | Still employed at 12 months | 25% |
+  | Hiring Manager Satisfaction | Survey score | 25% |
+  | Ramp Speed | Time to full productivity | 20% |
+
+  **Targets:**
+  - New Hire Retention: >85% at 12 months
+  - Hiring Manager Satisfaction: >4.0/5.0
+  - Time to Productivity: <90 days
+  - Performance Rating: >3.5/5.0
+
+  ### Pipeline Health Metrics
+
+  | Metric | Formula | Healthy Range |
+  |--------|---------|---------------|
+  | Pipeline Coverage | Candidates in Pipeline / Open Reqs | 3:1 to 5:1 |
+  | Qualified Pipeline | Candidates Past Screen / Open Reqs | 2:1 to 3:1 |
+  | Interview Velocity | Interviews Conducted / Week | Varies by req volume |
+  | Stage Aging | Days in Each Stage | <7 days per stage |
+  | Ghost Rate | Candidates Dropped / Total Pipeline | <15% |
+
+  ### Cost Metrics
+
+  | Metric | Formula | Benchmark |
+  |--------|---------|-----------|
+  | Cost per Hire | Total Recruiting Cost / Hires | $3,000-$5,000 (tech), $15,000+ (exec) |
+  | Cost per Qualified Candidate | Sourcing Cost / Qualified Candidates | $100-$300 |
+  | Agency Fee % | Agency Fees / Total Comp | 15-25% of first year comp |
+  | Recruiter Efficiency | Hires / Recruiters | 30-50 hires/year/recruiter |
+
   ---
 
   ## EXAMPLE OUTPUTS
