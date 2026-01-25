@@ -1,6 +1,24 @@
-# Maestro
+<p align="center">
+  <img src="assets/brand/enzo.png" alt="Enzo the Maestro Penguin" width="200">
+</p>
 
-A multi-agent orchestration platform for AI agents. Deploy any agent type to any interface.
+<h1 align="center">Maestro</h1>
+
+<p align="center">
+  <strong>Orchestrate your AI agents</strong>
+</p>
+
+<p align="center">
+  Deploy any agent to any interface. Maestro handles routing, memory, tools, and observability — so you can focus on what your agents do.
+</p>
+
+<p align="center">
+  <a href="https://maestro.is">Website</a> •
+  <a href="https://maestro.is/getting-started/introduction">Documentation</a> •
+  <a href="https://maestro.is/getting-started/quickstart">Quick Start</a>
+</p>
+
+---
 
 ## What is Maestro?
 
@@ -19,6 +37,21 @@ Maestro is infrastructure for running AI agents. It handles the hard parts—rou
 
 - Node.js 22+
 - Anthropic API key
+
+### Docker (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/MaestroAgent/maestro.git
+cd maestro
+
+# Configure
+cp .env.example .env
+# Edit .env with your ANTHROPIC_API_KEY
+
+# Build and run
+docker compose up -d --build
+```
 
 ### Local Development
 
@@ -42,20 +75,6 @@ npm run dev
 npm run api
 ```
 
-### Docker Deployment
-
-```bash
-# Create .env file
-cp .env.example .env
-# Edit .env with your keys
-
-# Build and run
-docker compose up -d --build
-
-# View logs
-docker compose logs -f
-```
-
 ## Architecture
 
 ```
@@ -71,7 +90,7 @@ docker compose logs -f
                               │
 ┌─────────────────────────────▼───────────────────────────────┐
 │                         AGENTS                               │
-│         [Personal Assistant]  [Coder]  [+ Custom]            │
+│    [Personal Assistant]  [Coder]  [Marketing]  [+ Custom]    │
 └─────────────────────────────┬───────────────────────────────┘
                               │
 ┌─────────────────────────────▼───────────────────────────────┐
@@ -88,6 +107,7 @@ The orchestrator analyzes requests and delegates to specialized agents:
 
 - **Personal Assistant**: General conversation, questions, planning
 - **Coder Agent**: Programming tasks, code execution via Claude Code
+- **Marketing Agent**: CRO, copywriting, SEO, paid ads, analytics, and growth
 - **Dynamic Agents**: Create custom agents through conversation
 
 ### Dynamic Agent Creation
@@ -114,24 +134,6 @@ Dynamic agents are:
 - **Immediately available**: No restart required after creation
 - **Fully configurable**: System prompt, model, temperature, tools
 
-### Project Management
-
-Work on multiple codebases without cross-contamination:
-
-```
-You: Clone https://github.com/myorg/project-a
-Bot: Cloned to project-a. This is now your active project.
-
-You: Add a health check endpoint
-Bot: [executes via Claude Code] Done. Added /health endpoint.
-
-You: Clone https://github.com/myorg/project-b
-Bot: Cloned to project-b. Switched to this project.
-
-You: Switch to project-a
-Bot: Switched to project-a.
-```
-
 ### Claude Code Integration
 
 The coder agent can execute real coding tasks:
@@ -154,7 +156,6 @@ The coder agent can execute real coding tasks:
 | `create_agent` | Create a new dynamic agent |
 | `update_agent` | Update agent config (prompt, tools, etc.) |
 | `list_agents` | List all available agents |
-| `get_agent` | Get full agent details |
 | `delete_agent` | Delete a dynamic agent |
 
 ## Configuration
@@ -193,17 +194,8 @@ tools:
 | `GITHUB_TOKEN` | For private repos | GitHub classic token with `repo` scope |
 | `PORT` | No | API port (default: 3000) |
 | `LOG_LEVEL` | No | Logging level (default: info) |
-
-### GitHub Token Setup
-
-To clone private repositories:
-
-1. Go to https://github.com/settings/tokens
-2. Generate new token (classic)
-3. Select the `repo` scope
-4. Add to `.env`: `GITHUB_TOKEN=ghp_xxxxx`
-
-This works for all repos you have access to, including organization repos.
+| `DAILY_BUDGET_LIMIT` | No | Maximum daily API cost in USD |
+| `MONTHLY_BUDGET_LIMIT` | No | Maximum monthly API cost in USD |
 
 ## API Reference
 
@@ -236,14 +228,22 @@ curl http://localhost:3000/agents
 /quit   - Exit CLI
 ```
 
+## Documentation
+
+Full documentation is available at [maestro.is](https://maestro.is):
+
+- [Introduction](https://maestro.is/getting-started/introduction)
+- [Quick Start](https://maestro.is/getting-started/quickstart)
+- [Configuration](https://maestro.is/getting-started/configuration)
+- [Architecture](https://maestro.is/concepts/architecture)
+- [Creating Agents](https://maestro.is/guides/creating-agents)
+- [API Reference](https://maestro.is/reference/api)
+
 ## Project Structure
 
 ```
 maestro/
 ├── config/                 # Agent YAML configurations (static agents)
-│   ├── orchestrator.yaml
-│   ├── personal-assistant.yaml
-│   └── coder-agent.yaml
 ├── src/
 │   ├── agents/            # Orchestrator agent
 │   ├── api/               # REST API (Hono)
@@ -253,67 +253,24 @@ maestro/
 │   ├── memory/            # SQLite persistence (sessions + dynamic agents)
 │   ├── observability/     # Logging, cost tracking
 │   └── tools/             # Tool registry, built-ins
-│       └── builtin/       # calculator, datetime, projects, claude-code, agents
+├── assets/brand/          # Brand assets (Enzo, logos)
 ├── projects/              # Cloned repositories (gitignored)
 ├── data/                  # SQLite database (gitignored)
-├── logs/                  # Log files (gitignored)
-├── docker-compose.yml
-├── Dockerfile
-└── package.json
-```
-
-## Deployment
-
-### Docker (Recommended)
-
-```bash
-# Build and run both services
-docker compose up -d --build
-
-# Run only API
-docker compose up -d api
-
-# Run only Telegram bot
-docker compose up -d telegram
-
-# View logs
-docker compose logs -f
-
-# Restart after updates
-git pull && docker compose up -d --build
-```
-
-### Direct (Without Docker)
-
-```bash
-npm install
-npm run build
-node dist/index.js          # Telegram bot
-node dist/index.js api      # REST API
-node dist/index.js cli      # Interactive CLI
-```
-
-## Development
-
-```bash
-# Run in development mode
-npm run dev
-
-# Build
-npm run build
-
-# Lint
-npm run lint
+└── logs/                  # Log files (gitignored)
 ```
 
 ## Roadmap
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| Phase 1: Foundation | ✅ Complete | Agent runtime, CLI, API, tools, memory |
-| Phase 2: Channels | 🟡 Partial | Telegram ✅, Slack/Discord planned |
-| Phase 3: Orchestration | ✅ Complete | Multi-agent routing, delegation, dynamic agent creation |
-| Phase 4: Observability | 🟡 Partial | Logging ✅, Web dashboard planned |
+| Phase 1: Foundation | Done | Agent runtime, CLI, API, tools, memory |
+| Phase 2: Channels | Partial | Telegram done, Slack/Discord planned |
+| Phase 3: Orchestration | Done | Multi-agent routing, dynamic agent creation |
+| Phase 4: Observability | Partial | Logging done, web dashboard planned |
+
+## Acknowledgments
+
+- **Marketing Agent**: Built on frameworks from [Marketing Skills for Claude Code](https://github.com/coreyhaines31/marketingskills) by [Corey Haines](https://github.com/coreyhaines31) - an excellent collection of 23 marketing skills for CRO, copywriting, SEO, and growth strategy.
 
 ## License
 
