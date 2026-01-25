@@ -78,8 +78,21 @@ export class Agent implements AgentRuntime {
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
 
+    // Safety limits to prevent runaway loops
+    const MAX_TOOL_ROUNDS = 10;
+    const MAX_CONSECUTIVE_ERRORS = 3;
+    let toolRounds = 0;
+    let consecutiveErrors = 0;
+
     // Agent loop - keep running until we get a final text response
     while (true) {
+      // Check safety limits
+      if (toolRounds >= MAX_TOOL_ROUNDS) {
+        const limitMsg = `I've reached the maximum number of tool calls (${MAX_TOOL_ROUNDS}). Please try breaking down your request into smaller steps.`;
+        yield { type: "text", text: limitMsg };
+        this.context.history.push({ role: "assistant", content: limitMsg });
+        break;
+      }
       const stream = this.provider.chatWithTools(
         this.context.history,
         {
@@ -126,9 +139,24 @@ export class Agent implements AgentRuntime {
       }
 
       // If there are tool calls, don't yield the "thinking" text - just execute tools
+      toolRounds++;
 
       // Execute tool calls with logging
       const toolResults = await this.executeToolCalls(currentToolCalls);
+
+      // Track consecutive errors
+      const hasErrors = toolResults.some(r => r.isError);
+      if (hasErrors) {
+        consecutiveErrors++;
+        if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+          const errorMsg = `I've encountered ${consecutiveErrors} consecutive errors with tools. There may be a configuration issue. Please check the logs or try a different approach.`;
+          yield { type: "text", text: errorMsg };
+          this.context.history.push({ role: "assistant", content: errorMsg });
+          break;
+        }
+      } else {
+        consecutiveErrors = 0;
+      }
 
       // Add assistant message with tool calls to history
       this.context.history.push({
