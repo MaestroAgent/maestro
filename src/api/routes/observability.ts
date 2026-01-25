@@ -1,0 +1,232 @@
+import { Hono } from "hono";
+import { streamSSE } from "hono/streaming";
+import { readFileSync, existsSync, statSync, watchFile, unwatchFile } from "fs";
+import { getBudgetGuard } from "../../observability/budget.js";
+import { LogEvent } from "../../observability/types.js";
+
+export interface ObservabilityRoutesOptions {
+  logFile: string;
+}
+
+export function createObservabilityRoutes(
+  options: ObservabilityRoutesOptions
+): Hono {
+  const app = new Hono();
+  const { logFile } = options;
+
+  /**
+   * GET /observability/events
+   * Stream log events via SSE
+   * Query params:
+   *   - tail: number of recent events to return (default 50)
+   *   - follow: if "true", stream new events as they arrive
+   */
+  app.get("/events", async (c) => {
+    const tail = parseInt(c.req.query("tail") ?? "50", 10);
+    const follow = c.req.query("follow") === "true";
+
+    if (!existsSync(logFile)) {
+      return c.json({ error: "Log file not found" }, 404);
+    }
+
+    // Read recent events
+    const content = readFileSync(logFile, "utf-8");
+    const lines = content.trim().split("\n").filter(Boolean);
+    const recentLines = lines.slice(-tail);
+    const events: LogEvent[] = recentLines
+      .map((line) => {
+        try {
+          return JSON.parse(line) as LogEvent;
+        } catch {
+          return null;
+        }
+      })
+      .filter((e): e is LogEvent => e !== null);
+
+    // If not following, return as JSON array
+    if (!follow) {
+      return c.json({ events });
+    }
+
+    // Stream mode - send recent events then watch for new ones
+    return streamSSE(c, async (stream) => {
+      // Send recent events
+      for (const event of events) {
+        await stream.writeSSE({
+          event: "log",
+          data: JSON.stringify(event),
+        });
+      }
+
+      // Track file position for new events
+      let lastSize = statSync(logFile).size;
+
+      // Set up file watcher
+      const onFileChange = async () => {
+        try {
+          const currentSize = statSync(logFile).size;
+          if (currentSize > lastSize) {
+            // Read new content
+            const fd = readFileSync(logFile, "utf-8");
+            const allContent = fd.substring(lastSize);
+            const newLines = allContent.trim().split("\n").filter(Boolean);
+
+            for (const line of newLines) {
+              try {
+                const event = JSON.parse(line) as LogEvent;
+                await stream.writeSSE({
+                  event: "log",
+                  data: JSON.stringify(event),
+                });
+              } catch {
+                // Skip malformed lines
+              }
+            }
+            lastSize = currentSize;
+          }
+        } catch {
+          // File may be temporarily unavailable
+        }
+      };
+
+      watchFile(logFile, { interval: 500 }, onFileChange);
+
+      // Send heartbeat to keep connection alive
+      const heartbeat = setInterval(async () => {
+        try {
+          await stream.writeSSE({
+            event: "heartbeat",
+            data: JSON.stringify({ timestamp: new Date().toISOString() }),
+          });
+        } catch {
+          clearInterval(heartbeat);
+          unwatchFile(logFile, onFileChange);
+        }
+      }, 30000);
+
+      // Clean up on close
+      stream.onAbort(() => {
+        clearInterval(heartbeat);
+        unwatchFile(logFile, onFileChange);
+      });
+
+      // Keep stream open until client disconnects
+      await new Promise(() => {});
+    });
+  });
+
+  /**
+   * GET /observability/costs
+   * Get cost summary from budget guard
+   */
+  app.get("/costs", async (c) => {
+    const budgetGuard = getBudgetGuard();
+
+    if (!budgetGuard) {
+      return c.json({ error: "Budget guard not initialized" }, 500);
+    }
+
+    const status = budgetGuard.getStatus();
+    const history = budgetGuard.getHistory(30);
+
+    // Parse log file for per-session costs if available
+    const sessionCosts: Record<
+      string,
+      { inputTokens: number; outputTokens: number; requests: number }
+    > = {};
+
+    if (existsSync(logFile)) {
+      const content = readFileSync(logFile, "utf-8");
+      const lines = content.trim().split("\n").filter(Boolean);
+
+      for (const line of lines) {
+        try {
+          const event = JSON.parse(line);
+          if (
+            event.event === "agent.response" &&
+            event.sessionId &&
+            event.inputTokens !== undefined
+          ) {
+            if (!sessionCosts[event.sessionId]) {
+              sessionCosts[event.sessionId] = {
+                inputTokens: 0,
+                outputTokens: 0,
+                requests: 0,
+              };
+            }
+            sessionCosts[event.sessionId].inputTokens += event.inputTokens;
+            sessionCosts[event.sessionId].outputTokens += event.outputTokens;
+            sessionCosts[event.sessionId].requests += 1;
+          }
+        } catch {
+          // Skip malformed lines
+        }
+      }
+    }
+
+    return c.json({
+      today: {
+        spent: status.dailySpent,
+        limit: status.dailyLimit,
+        remaining: status.remaining,
+        percentUsed: status.percentUsed,
+      },
+      history: history.map((h) => ({
+        date: h.date,
+        cost: h.totalCost,
+        requests: h.requestCount,
+      })),
+      bySessions: Object.entries(sessionCosts).map(([id, data]) => ({
+        sessionId: id,
+        ...data,
+      })),
+    });
+  });
+
+  /**
+   * GET /observability/budget
+   * Get current budget status
+   */
+  app.get("/budget", async (c) => {
+    const budgetGuard = getBudgetGuard();
+
+    if (!budgetGuard) {
+      return c.json({ error: "Budget guard not initialized" }, 500);
+    }
+
+    const status = budgetGuard.getStatus();
+
+    return c.json({
+      dailySpent: status.dailySpent,
+      dailyLimit: status.dailyLimit,
+      remaining: status.remaining,
+      percentUsed: status.percentUsed,
+      isExceeded: status.isExceeded,
+      date: status.date,
+    });
+  });
+
+  /**
+   * POST /observability/budget/override
+   * Override budget limit temporarily
+   */
+  app.post("/budget/override", async (c) => {
+    const budgetGuard = getBudgetGuard();
+
+    if (!budgetGuard) {
+      return c.json({ error: "Budget guard not initialized" }, 500);
+    }
+
+    const body = await c.req.json<{ durationMinutes?: number }>().catch(() => ({ durationMinutes: undefined }));
+    const duration = body.durationMinutes ?? 60;
+
+    budgetGuard.override(duration);
+
+    return c.json({
+      success: true,
+      message: `Budget override active for ${duration} minutes`,
+    });
+  });
+
+  return app;
+}

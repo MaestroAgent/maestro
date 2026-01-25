@@ -29,3 +29,30 @@ export interface MemoryStoreOptions {
   dbPath?: string;
   maxMessages?: number; // Max messages to retain per session (default: 100)
 }
+
+// Semantic memory types
+export type MemoryType = "fact" | "preference" | "context" | "learning";
+
+export const SemanticMemorySchema = z.object({
+  id: z.string(),
+  sessionId: z.string().optional(), // null for global memories
+  content: z.string(),
+  type: z.enum(["fact", "preference", "context", "learning"]),
+  confidence: z.number().min(0).max(1).default(1.0),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+export type SemanticMemory = z.infer<typeof SemanticMemorySchema>;
+
+export interface MemorySearchResult {
+  memory: SemanticMemory;
+  score: number;
+}
+
+export interface EmbeddingProvider {
+  embed(texts: string[]): Promise<number[][]>;
+  getDimensions(): number;
+  getModelName(): string;
+}

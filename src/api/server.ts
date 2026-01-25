@@ -2,31 +2,50 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { createNodeWebSocket } from "@hono/node-ws";
 import { Agent } from "../core/agent.js";
 import { DynamicAgentRegistry } from "../core/registry.js";
 import { AgentContext } from "../core/types.js";
 import { MemoryStore } from "../memory/store.js";
 import { createChatRoutes } from "./routes/chat.js";
 import { createAgentRoutes } from "./routes/agents.js";
+import { createSessionRoutes } from "./routes/sessions.js";
+import { createObservabilityRoutes } from "./routes/observability.js";
+import { initWebSocketManager, getWebSocketManager } from "./websocket.js";
 
 export interface APIServerOptions {
   port?: number;
   createOrchestrator: (context: AgentContext) => Agent;
   memoryStore: MemoryStore;
   agentRegistry: DynamicAgentRegistry;
+  logFile?: string;
+  dashboardPath?: string;
 }
 
 export class APIServer {
   private app: Hono;
   private options: APIServerOptions;
   private server: ReturnType<typeof serve> | null = null;
+  private injectWebSocket: ReturnType<typeof createNodeWebSocket>["injectWebSocket"];
+  private upgradeWebSocket: ReturnType<typeof createNodeWebSocket>["upgradeWebSocket"];
 
   constructor(options: APIServerOptions) {
     this.options = options;
     this.app = new Hono();
 
+    // Initialize WebSocket
+    const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app: this.app });
+    this.injectWebSocket = injectWebSocket;
+    this.upgradeWebSocket = upgradeWebSocket;
+
+    // Initialize WebSocket manager
+    initWebSocketManager();
+
     this.setupMiddleware();
     this.setupRoutes();
+    this.setupWebSocket();
+    this.setupDashboard();
   }
 
   private setupMiddleware(): void {
@@ -62,6 +81,14 @@ export class APIServer {
           clearSession: "DELETE /chat/:sessionId",
           agents: "GET /agents",
           agentDetails: "GET /agents/:name",
+          sessions: "GET /sessions",
+          sessionDetails: "GET /sessions/:id",
+          sessionMessages: "GET /sessions/:id/messages",
+          observabilityEvents: "GET /observability/events",
+          observabilityCosts: "GET /observability/costs",
+          observabilityBudget: "GET /observability/budget",
+          websocket: "WS /ws",
+          dashboard: "GET /dashboard",
         },
       });
     });
@@ -78,6 +105,18 @@ export class APIServer {
     });
     this.app.route("/agents", agentRoutes);
 
+    const sessionRoutes = createSessionRoutes({
+      memoryStore: this.options.memoryStore,
+    });
+    this.app.route("/sessions", sessionRoutes);
+
+    if (this.options.logFile) {
+      const observabilityRoutes = createObservabilityRoutes({
+        logFile: this.options.logFile,
+      });
+      this.app.route("/observability", observabilityRoutes);
+    }
+
     // 404 handler
     this.app.notFound((c) => {
       return c.json({ error: "Not found" }, 404);
@@ -93,6 +132,75 @@ export class APIServer {
     });
   }
 
+  private setupWebSocket(): void {
+    this.app.get(
+      "/ws",
+      this.upgradeWebSocket((_c) => {
+        return {
+          onOpen: (_event, ws) => {
+            const manager = getWebSocketManager();
+            if (manager) {
+              manager.addClient(ws);
+            }
+          },
+          onMessage: (event, ws) => {
+            // Handle incoming messages if needed
+            // Currently just echo back for testing
+            try {
+              const data = JSON.parse(event.data.toString());
+              if (data.type === "ping") {
+                ws.send(JSON.stringify({ type: "pong", timestamp: new Date().toISOString() }));
+              }
+            } catch {
+              // Ignore malformed messages
+            }
+          },
+          onClose: (_event, ws) => {
+            const manager = getWebSocketManager();
+            if (manager) {
+              manager.removeClient(ws);
+            }
+          },
+          onError: (_event, ws) => {
+            const manager = getWebSocketManager();
+            if (manager) {
+              manager.removeClient(ws);
+            }
+          },
+        };
+      })
+    );
+  }
+
+  private setupDashboard(): void {
+    if (!this.options.dashboardPath) {
+      return;
+    }
+
+    // Serve static assets from dashboard dist
+    this.app.use(
+      "/dashboard/*",
+      serveStatic({
+        root: this.options.dashboardPath,
+        rewriteRequestPath: (path) => path.replace(/^\/dashboard/, ""),
+      })
+    );
+
+    // Serve index.html for SPA routing
+    this.app.get("/dashboard", (c) => {
+      return c.redirect("/dashboard/");
+    });
+
+    // Fallback to index.html for client-side routing
+    this.app.get("/dashboard/*", async (c) => {
+      const response = await serveStatic({
+        root: this.options.dashboardPath!,
+        path: "index.html",
+      })(c, async () => {});
+      return response || c.notFound();
+    });
+  }
+
   start(): void {
     const port = this.options.port ?? 3000;
 
@@ -101,12 +209,27 @@ export class APIServer {
       port,
     });
 
+    // Inject WebSocket support
+    this.injectWebSocket(this.server);
+
     console.log(`Maestro API server running on http://localhost:${port}`);
+    console.log(`WebSocket available at ws://localhost:${port}/ws`);
+    if (this.options.dashboardPath) {
+      console.log(`Dashboard available at http://localhost:${port}/dashboard`);
+    }
   }
 
   stop(): void {
+    const manager = getWebSocketManager();
+    if (manager) {
+      manager.close();
+    }
     if (this.server) {
       this.server.close();
     }
+  }
+
+  getWebSocketManager() {
+    return getWebSocketManager();
   }
 }

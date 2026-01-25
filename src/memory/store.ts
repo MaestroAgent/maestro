@@ -73,6 +73,118 @@ export class MemoryStore {
   }
 
   /**
+   * Get all sessions, optionally filtered by channel
+   */
+  getAllSessions(channel?: string): Session[] {
+    let query = `SELECT id, channel, user_id, created_at, updated_at, metadata
+                 FROM sessions ORDER BY updated_at DESC`;
+    const params: string[] = [];
+
+    if (channel) {
+      query = `SELECT id, channel, user_id, created_at, updated_at, metadata
+               FROM sessions WHERE channel = ? ORDER BY updated_at DESC`;
+      params.push(channel);
+    }
+
+    const rows = this.db.prepare(query).all(...params) as Array<{
+      id: string;
+      channel: string;
+      user_id: string;
+      created_at: string;
+      updated_at: string;
+      metadata: string | null;
+    }>;
+
+    return rows.map((row) => ({
+      id: row.id,
+      channel: row.channel,
+      userId: row.user_id,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+    }));
+  }
+
+  /**
+   * Get a session by ID
+   */
+  getSession(sessionId: string): Session | null {
+    const row = this.db
+      .prepare(
+        `SELECT id, channel, user_id, created_at, updated_at, metadata
+         FROM sessions WHERE id = ?`
+      )
+      .get(sessionId) as
+      | {
+          id: string;
+          channel: string;
+          user_id: string;
+          created_at: string;
+          updated_at: string;
+          metadata: string | null;
+        }
+      | undefined;
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      channel: row.channel,
+      userId: row.user_id,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+    };
+  }
+
+  /**
+   * Get message count for a session
+   */
+  getMessageCount(sessionId: string): number {
+    const result = this.db
+      .prepare(`SELECT COUNT(*) as count FROM messages WHERE session_id = ?`)
+      .get(sessionId) as { count: number };
+    return result.count;
+  }
+
+  /**
+   * Load paginated history for a session
+   */
+  loadHistoryPaginated(
+    sessionId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): { messages: Array<Message & { id: number; createdAt: string }>; total: number } {
+    const total = this.getMessageCount(sessionId);
+
+    const rows = this.db
+      .prepare(
+        `SELECT id, role, content, created_at FROM messages
+         WHERE session_id = ?
+         ORDER BY id ASC
+         LIMIT ? OFFSET ?`
+      )
+      .all(sessionId, limit, offset) as Array<{
+        id: number;
+        role: string;
+        content: string;
+        created_at: string;
+      }>;
+
+    return {
+      messages: rows.map((row) => ({
+        id: row.id,
+        role: row.role as MessageRole,
+        content: row.content,
+        createdAt: row.created_at,
+      })),
+      total,
+    };
+  }
+
+  /**
    * Get or create a session for a channel + user combination
    */
   getOrCreateSession(channel: string, userId: string): Session {

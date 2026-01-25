@@ -8,10 +8,12 @@ import { DynamicAgentRegistry } from "./core/registry.js";
 import { AnthropicProvider } from "./llm/anthropic.js";
 import { createOrchestratorAgent } from "./agents/orchestrator.js";
 import { TelegramAdapter } from "./channels/telegram.js";
+import { SlackAdapter } from "./channels/slack.js";
 import { CLIAdapter } from "./channels/cli.js";
 import { MemoryStore } from "./memory/store.js";
 import { createToolRegistry, builtinTools } from "./tools/index.js";
 import { initLogger, initBudgetGuard } from "./observability/index.js";
+import { initVectorStore } from "./memory/index.js";
 import { APIServer } from "./api/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -19,7 +21,7 @@ const CONFIG_DIR = join(__dirname, "..", "config");
 const DATA_DIR = join(__dirname, "..", "data");
 const LOGS_DIR = join(__dirname, "..", "logs");
 
-type Mode = "telegram" | "cli" | "api";
+type Mode = "telegram" | "slack" | "cli" | "api";
 
 function getMode(): Mode {
   const arg = process.argv[2];
@@ -29,6 +31,9 @@ function getMode(): Mode {
   if (arg === "--api" || arg === "api") {
     return "api";
   }
+  if (arg === "--slack" || arg === "slack") {
+    return "slack";
+  }
   return "telegram";
 }
 
@@ -37,6 +42,10 @@ function validateEnv(mode: Mode): void {
 
   if (mode === "telegram") {
     required.push("TELEGRAM_BOT_TOKEN");
+  }
+
+  if (mode === "slack") {
+    required.push("SLACK_BOT_TOKEN", "SLACK_APP_TOKEN", "SLACK_SIGNING_SECRET");
   }
 
   const missing = required.filter((key) => !process.env[key]);
@@ -105,6 +114,12 @@ function setupApp(mode: Mode): AppContext {
   });
   console.log(`Budget guard initialized: $${dailyBudget}/day limit`);
 
+  // Initialize vector store for semantic memory
+  initVectorStore({
+    dbPath: join(DATA_DIR, "maestro.db"),
+  });
+  console.log("Semantic memory initialized");
+
   // Get orchestrator config
   const orchestratorConfig = staticAgentConfigs.get("orchestrator");
   if (!orchestratorConfig) {
@@ -154,6 +169,30 @@ async function runTelegram(app: AppContext): Promise<void> {
   await telegram.start();
 }
 
+async function runSlack(app: AppContext): Promise<void> {
+  const slack = new SlackAdapter({
+    botToken: process.env.SLACK_BOT_TOKEN!,
+    appToken: process.env.SLACK_APP_TOKEN!,
+    signingSecret: process.env.SLACK_SIGNING_SECRET!,
+    createOrchestrator: app.createOrchestrator,
+    memoryStore: app.memoryStore,
+    agentRegistry: app.agentRegistry,
+  });
+
+  // Handle shutdown
+  const shutdown = async () => {
+    console.log("\nShutting down...");
+    await slack.stop();
+    app.memoryStore.close();
+    process.exit(0);
+  };
+
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
+
+  await slack.start();
+}
+
 async function runCLI(app: AppContext): Promise<void> {
   const cli = new CLIAdapter({
     createOrchestrator: app.createOrchestrator,
@@ -176,6 +215,8 @@ async function runAPI(app: AppContext): Promise<void> {
     createOrchestrator: app.createOrchestrator,
     memoryStore: app.memoryStore,
     agentRegistry: app.agentRegistry,
+    logFile: join(LOGS_DIR, "maestro.jsonl"),
+    dashboardPath: join(__dirname, "..", "dashboard", "dist"),
   });
 
   // Handle shutdown
@@ -206,6 +247,8 @@ async function main(): Promise<void> {
     await runCLI(app);
   } else if (mode === "api") {
     await runAPI(app);
+  } else if (mode === "slack") {
+    await runSlack(app);
   } else {
     await runTelegram(app);
   }
