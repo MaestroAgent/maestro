@@ -9,6 +9,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       - maestro-data:/app/data
@@ -24,6 +25,7 @@ services:
       - NODE_ENV=production
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     volumes:
       - maestro-data:/app/data

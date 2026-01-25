@@ -18,6 +18,27 @@ function ensureProjectsDir(): void {
 }
 
 /**
+ * Inject GitHub token into HTTPS URL for private repo access
+ */
+function injectGitHubToken(url: string): string {
+  const token = process.env.GITHUB_TOKEN;
+
+  if (!token) {
+    return url;
+  }
+
+  // Only inject for GitHub HTTPS URLs
+  // https://github.com/user/repo → https://{token}@github.com/user/repo
+  const githubHttpsPattern = /^https:\/\/github\.com\//;
+
+  if (githubHttpsPattern.test(url)) {
+    return url.replace("https://github.com/", `https://${token}@github.com/`);
+  }
+
+  return url;
+}
+
+/**
  * Extract project name from git URL
  */
 function getProjectNameFromUrl(url: string): string {
@@ -85,8 +106,11 @@ export const cloneProjectTool: ToolDefinition = defineTool(
     }
 
     try {
+      // Inject GitHub token if available (for private repos)
+      const cloneUrl = injectGitHubToken(repoUrl);
+
       // Clone the repository
-      execSync(`git clone "${repoUrl}" "${projectPath}"`, {
+      execSync(`git clone "${cloneUrl}" "${projectPath}"`, {
         stdio: "pipe",
         timeout: 120000, // 2 minute timeout
       });
@@ -102,9 +126,14 @@ export const cloneProjectTool: ToolDefinition = defineTool(
         project_path: projectPath,
       };
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const hint = !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
+        ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
+        : "";
+
       return {
         success: false,
-        error: `Failed to clone repository: ${error instanceof Error ? error.message : String(error)}`,
+        error: `Failed to clone repository: ${errorMsg}${hint}`,
       };
     }
   }
