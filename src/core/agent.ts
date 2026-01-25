@@ -8,7 +8,7 @@ import {
   ToolResult,
 } from "./types.js";
 import { LLMProvider } from "../llm/provider.js";
-import { getLogger, getCostTracker } from "../observability/index.js";
+import { getLogger, getCostTracker, getBudgetGuard } from "../observability/index.js";
 
 export interface AgentRuntime {
   id: string;
@@ -93,6 +93,22 @@ export class Agent implements AgentRuntime {
         this.context.history.push({ role: "assistant", content: limitMsg });
         break;
       }
+
+      // Check budget before making API call
+      const budgetGuard = getBudgetGuard();
+      if (budgetGuard) {
+        const budgetCheck = budgetGuard.checkBudget();
+        if (!budgetCheck.allowed) {
+          const budgetMsg = budgetCheck.message || "Daily budget limit reached.";
+          yield { type: "text", text: budgetMsg };
+          this.context.history.push({ role: "assistant", content: budgetMsg });
+          break;
+        }
+        // Show warning if approaching limit (only on first round to avoid spam)
+        if (budgetCheck.message && toolRounds === 0) {
+          yield { type: "text", text: budgetCheck.message + "\n\n" };
+        }
+      }
       const stream = this.provider.chatWithTools(
         this.context.history,
         {
@@ -122,6 +138,15 @@ export class Agent implements AgentRuntime {
           if (chunk.usage) {
             totalInputTokens += chunk.usage.inputTokens;
             totalOutputTokens += chunk.usage.outputTokens;
+
+            // Record spending in budget guard
+            const budgetGuard = getBudgetGuard();
+            if (budgetGuard) {
+              budgetGuard.recordSpending(
+                { ...chunk.usage, totalTokens: chunk.usage.inputTokens + chunk.usage.outputTokens },
+                this.config.model.name
+              );
+            }
           }
         }
       }

@@ -2,7 +2,7 @@ import * as readline from "readline";
 import { Agent } from "../core/agent.js";
 import { AgentContext } from "../core/types.js";
 import { MemoryStore } from "../memory/store.js";
-import { getCostTracker, clearCostTracker } from "../observability/index.js";
+import { getCostTracker, clearCostTracker, getBudgetGuard } from "../observability/index.js";
 
 export interface CLIAdapterOptions {
   createOrchestrator: (context: AgentContext) => Agent;
@@ -110,7 +110,9 @@ export class CLIAdapter {
   }
 
   private async handleCommand(command: string): Promise<void> {
-    const cmd = command.toLowerCase();
+    const parts = command.toLowerCase().split(/\s+/);
+    const cmd = parts[0];
+    const args = parts.slice(1);
 
     switch (cmd) {
       case "/clear":
@@ -131,6 +133,21 @@ export class CLIAdapter {
         }
         break;
 
+      case "/budget": {
+        const budgetGuard = getBudgetGuard();
+        if (!budgetGuard) {
+          console.log("Budget tracking is not enabled.\n");
+          break;
+        }
+        if (args[0] === "override") {
+          budgetGuard.override(60);
+          console.log("Budget limit overridden for the next hour.\n");
+        } else {
+          console.log(budgetGuard.formatStatus());
+        }
+        break;
+      }
+
       case "/quit":
       case "/exit":
       case "/q":
@@ -140,10 +157,12 @@ export class CLIAdapter {
 
       case "/help":
         console.log("\nCommands:");
-        console.log("  /clear  - Clear conversation history");
-        console.log("  /cost   - Show token usage and cost summary");
-        console.log("  /quit   - Exit the CLI");
-        console.log("  /help   - Show this help\n");
+        console.log("  /clear           - Clear conversation history");
+        console.log("  /cost            - Show token usage and cost summary");
+        console.log("  /budget          - Show daily budget status");
+        console.log("  /budget override - Override budget limit for 1 hour");
+        console.log("  /quit            - Exit the CLI");
+        console.log("  /help            - Show this help\n");
         break;
 
       default:

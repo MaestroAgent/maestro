@@ -10,7 +10,7 @@ import { TelegramAdapter } from "./channels/telegram.js";
 import { CLIAdapter } from "./channels/cli.js";
 import { MemoryStore } from "./memory/store.js";
 import { createToolRegistry, builtinTools } from "./tools/index.js";
-import { initLogger } from "./observability/index.js";
+import { initLogger, initBudgetGuard } from "./observability/index.js";
 import { APIServer } from "./api/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -86,6 +86,14 @@ function setupApp(mode: Mode): AppContext {
     dbPath: join(DATA_DIR, "maestro.db"),
     maxMessages: 100,
   });
+
+  // Initialize budget guard
+  const dailyBudget = parseFloat(process.env.DAILY_BUDGET_USD ?? "20");
+  initBudgetGuard({
+    dailyLimitUsd: dailyBudget,
+    dbPath: join(DATA_DIR, "maestro.db"),
+  });
+  console.log(`Budget guard initialized: $${dailyBudget}/day limit`);
 
   // Get orchestrator config
   const orchestratorConfig = agentConfigs.get("orchestrator");

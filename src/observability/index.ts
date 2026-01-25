@@ -3,6 +3,9 @@ export type { LoggerOptions } from "./logger.js";
 
 export { CostTracker, getCostTracker, clearCostTracker, calculateCost } from "./cost.js";
 
+export { BudgetGuard, initBudgetGuard, getBudgetGuard } from "./budget.js";
+export type { BudgetConfig, BudgetStatus } from "./budget.js";
+
 export type {
   LogLevel,
   LogEvent,

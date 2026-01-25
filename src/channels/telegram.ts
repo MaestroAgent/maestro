@@ -2,6 +2,7 @@ import { Bot, Context } from "grammy";
 import { Agent } from "../core/agent.js";
 import { AgentContext } from "../core/types.js";
 import { MemoryStore } from "../memory/store.js";
+import { getBudgetGuard } from "../observability/index.js";
 
 export interface TelegramAdapterOptions {
   token: string;
@@ -43,6 +44,26 @@ export class TelegramAdapter {
         this.sessions.delete(chatId);
         await ctx.reply("Session cleared. Starting fresh!");
       }
+    });
+
+    // Handle /budget command to check budget status
+    this.bot.command("budget", async (ctx) => {
+      const budgetGuard = getBudgetGuard();
+      if (!budgetGuard) {
+        await ctx.reply("Budget tracking is not enabled.");
+        return;
+      }
+
+      const messageText = ctx.message?.text || "";
+      const args = messageText.split(/\s+/).slice(1);
+
+      if (args[0] === "override") {
+        budgetGuard.override(60); // 1 hour override
+        await ctx.reply("Budget limit overridden for the next hour. Use responsibly!");
+        return;
+      }
+
+      await ctx.reply(budgetGuard.formatStatus());
     });
 
     // Handle all text messages
