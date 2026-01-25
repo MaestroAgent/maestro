@@ -30,8 +30,17 @@ RUN npm run build
 # Remove dev dependencies after build
 RUN npm prune --production
 
+# Create non-root user for security (required for Claude Code)
+RUN useradd -m -s /bin/bash maestro
+
 # Create directories for data, logs, and projects
 RUN mkdir -p /app/data /app/logs /app/projects
+
+# Change ownership to non-root user
+RUN chown -R maestro:maestro /app
+
+# Switch to non-root user
+USER maestro
 
 # Default to API mode, can be overridden
 ENV NODE_ENV=production
