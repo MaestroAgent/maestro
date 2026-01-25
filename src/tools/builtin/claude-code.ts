@@ -11,7 +11,9 @@ async function executeClaudeCode(
   timeoutMs: number = 300000 // 5 minutes default
 ): Promise<{ output: string; exitCode: number }> {
   return new Promise((resolve, reject) => {
-    const args = ["-p", task, "--no-input"];
+    // -p for non-interactive print mode
+    // --dangerously-skip-permissions to avoid prompts in container environment
+    const args = ["-p", task, "--dangerously-skip-permissions"];
 
     const proc = spawn("claude", args, {
       cwd: workingDir || process.cwd(),
