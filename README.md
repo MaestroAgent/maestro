@@ -88,6 +88,31 @@ The orchestrator analyzes requests and delegates to specialized agents:
 
 - **Personal Assistant**: General conversation, questions, planning
 - **Coder Agent**: Programming tasks, code execution via Claude Code
+- **Dynamic Agents**: Create custom agents through conversation
+
+### Dynamic Agent Creation
+
+Create, configure, and manage agents through natural conversation:
+
+```
+You: Create an agent called research-assistant that helps me research topics
+Maestro: Created research-assistant. What system prompt should it use?
+
+You: It should search the web, summarize findings, and cite sources
+Maestro: Updated system prompt. What tools should it have?
+
+You: Give it calculator and datetime
+Maestro: Done. research-assistant is now available.
+
+[Later]
+You: Help me research the history of Unix
+[Orchestrator routes to research-assistant]
+```
+
+Dynamic agents are:
+- **Persistent**: Stored in SQLite, survive restarts
+- **Immediately available**: No restart required after creation
+- **Fully configurable**: System prompt, model, temperature, tools
 
 ### Project Management
 
@@ -126,12 +151,17 @@ The coder agent can execute real coding tasks:
 | `list_projects` | List all cloned projects |
 | `current_project` | Show active project |
 | `claude_code` | Execute coding tasks via Claude Code |
+| `create_agent` | Create a new dynamic agent |
+| `update_agent` | Update agent config (prompt, tools, etc.) |
+| `list_agents` | List all available agents |
+| `get_agent` | Get full agent details |
+| `delete_agent` | Delete a dynamic agent |
 
 ## Configuration
 
 ### Agent Configuration
 
-Agents are configured via YAML files in `config/`:
+**Static agents** are configured via YAML files in `config/`:
 
 ```yaml
 # config/personal-assistant.yaml
@@ -151,6 +181,8 @@ tools:
   - calculator
   - datetime
 ```
+
+**Dynamic agents** are created through conversation and stored in SQLite. They have the same configuration options but can be created, updated, and deleted at runtime without restarting the application.
 
 ### Environment Variables
 
@@ -208,7 +240,7 @@ curl http://localhost:3000/agents
 
 ```
 maestro/
-├── config/                 # Agent YAML configurations
+├── config/                 # Agent YAML configurations (static agents)
 │   ├── orchestrator.yaml
 │   ├── personal-assistant.yaml
 │   └── coder-agent.yaml
@@ -216,12 +248,12 @@ maestro/
 │   ├── agents/            # Orchestrator agent
 │   ├── api/               # REST API (Hono)
 │   ├── channels/          # Telegram, CLI adapters
-│   ├── core/              # Agent runtime, types, config
+│   ├── core/              # Agent runtime, types, config, registry
 │   ├── llm/               # LLM provider (Anthropic)
-│   ├── memory/            # SQLite persistence
+│   ├── memory/            # SQLite persistence (sessions + dynamic agents)
 │   ├── observability/     # Logging, cost tracking
 │   └── tools/             # Tool registry, built-ins
-│       └── builtin/       # calculator, datetime, projects, claude-code
+│       └── builtin/       # calculator, datetime, projects, claude-code, agents
 ├── projects/              # Cloned repositories (gitignored)
 ├── data/                  # SQLite database (gitignored)
 ├── logs/                  # Log files (gitignored)
@@ -280,7 +312,7 @@ npm run lint
 |-------|--------|-------------|
 | Phase 1: Foundation | ✅ Complete | Agent runtime, CLI, API, tools, memory |
 | Phase 2: Channels | 🟡 Partial | Telegram ✅, Slack/Discord planned |
-| Phase 3: Orchestration | ✅ Complete | Multi-agent routing, delegation |
+| Phase 3: Orchestration | ✅ Complete | Multi-agent routing, delegation, dynamic agent creation |
 | Phase 4: Observability | 🟡 Partial | Logging ✅, Web dashboard planned |
 
 ## License
