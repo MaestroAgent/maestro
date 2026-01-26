@@ -197,6 +197,12 @@ tools:
 | `DAILY_BUDGET_LIMIT` | No | Maximum daily API cost in USD |
 | `MONTHLY_BUDGET_LIMIT` | No | Maximum monthly API cost in USD |
 
+## Security Note
+
+The REST API does not include authentication by default. For production deployments:
+- Run behind a reverse proxy with authentication (nginx, Cloudflare Access, etc.)
+- Or use the CLI/Telegram/Slack channels which have their own auth
+
 ## API Reference
 
 ### REST API

@@ -2,6 +2,20 @@
   "name": "maestro",
   "version": "0.1.0",
   "type": "module",
+  "description": "Orchestrate your AI agents",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MaestroAgent/maestro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MaestroAgent/maestro/issues"
+  },
+  "homepage": "https://github.com/MaestroAgent/maestro",
+  "keywords": ["ai", "agents", "llm", "orchestration", "anthropic", "claude"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "cli": "tsx src/index.ts cli",

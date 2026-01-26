@@ -15,7 +15,7 @@ function evaluateExpression(expression: string): number {
   }
 
   // Replace common math functions and constants
-  let processed = expr
+  const processed = expr
     .replace(/\^/g, "**") // Power operator
     .replace(/\bpi\b/gi, String(Math.PI))
     .replace(/\be\b/gi, String(Math.E))
