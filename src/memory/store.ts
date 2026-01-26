@@ -2,6 +2,18 @@ import Database from "better-sqlite3";
 import { randomUUID } from "crypto";
 import { AgentContext, AgentConfig, Message, MessageRole } from "../core/types.js";
 import { MemoryStoreOptions, Session } from "./types.js";
+import { hashApiKey } from "../api/utils/auth.js";
+
+// API key record
+export interface ApiKeyRecord {
+  id: string;
+  name: string;
+  keyHash: string;
+  keyPrefix: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+}
 
 // Stored agent row from SQLite
 interface StoredAgent {
@@ -69,6 +81,18 @@ export class MemoryStore {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS api_keys (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        key_hash TEXT NOT NULL UNIQUE,
+        key_prefix TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_used_at TEXT,
+        revoked_at TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
     `);
   }
 
@@ -556,6 +580,132 @@ export class MemoryStore {
       systemPrompt: row.system_prompt,
       tools: JSON.parse(row.tools) as string[],
     };
+  }
+
+  // ========== API Key Management ==========
+
+  /**
+   * Create a new API key record
+   */
+  createApiKey(name: string, keyHash: string, keyPrefix: string): ApiKeyRecord {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+
+    this.db
+      .prepare(
+        `INSERT INTO api_keys (id, name, key_hash, key_prefix, created_at)
+         VALUES (?, ?, ?, ?, ?)`
+      )
+      .run(id, name, keyHash, keyPrefix, now);
+
+    return {
+      id,
+      name,
+      keyHash,
+      keyPrefix,
+      createdAt: now,
+      lastUsedAt: null,
+      revokedAt: null,
+    };
+  }
+
+  /**
+   * Validate an API key by hashing and looking up
+   * Returns the key record if valid, null otherwise
+   */
+  validateApiKey(key: string): ApiKeyRecord | null {
+    const keyHash = hashApiKey(key);
+
+    const row = this.db
+      .prepare(
+        `SELECT id, name, key_hash, key_prefix, created_at, last_used_at, revoked_at
+         FROM api_keys WHERE key_hash = ?`
+      )
+      .get(keyHash) as {
+        id: string;
+        name: string;
+        key_hash: string;
+        key_prefix: string;
+        created_at: string;
+        last_used_at: string | null;
+        revoked_at: string | null;
+      } | undefined;
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      name: row.name,
+      keyHash: row.key_hash,
+      keyPrefix: row.key_prefix,
+      createdAt: row.created_at,
+      lastUsedAt: row.last_used_at,
+      revokedAt: row.revoked_at,
+    };
+  }
+
+  /**
+   * Update last_used_at timestamp for an API key
+   */
+  touchApiKey(id: string): void {
+    const now = new Date().toISOString();
+    this.db
+      .prepare(`UPDATE api_keys SET last_used_at = ? WHERE id = ?`)
+      .run(now, id);
+  }
+
+  /**
+   * Revoke an API key
+   */
+  revokeApiKey(id: string): boolean {
+    const now = new Date().toISOString();
+    const result = this.db
+      .prepare(`UPDATE api_keys SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL`)
+      .run(now, id);
+
+    return result.changes > 0;
+  }
+
+  /**
+   * Get all API keys (without the hash for security)
+   */
+  getAllApiKeys(): ApiKeyRecord[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, name, key_hash, key_prefix, created_at, last_used_at, revoked_at
+         FROM api_keys ORDER BY created_at DESC`
+      )
+      .all() as Array<{
+        id: string;
+        name: string;
+        key_hash: string;
+        key_prefix: string;
+        created_at: string;
+        last_used_at: string | null;
+        revoked_at: string | null;
+      }>;
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      keyHash: row.key_hash,
+      keyPrefix: row.key_prefix,
+      createdAt: row.created_at,
+      lastUsedAt: row.last_used_at,
+      revokedAt: row.revoked_at,
+    }));
+  }
+
+  /**
+   * Check if any API keys exist
+   */
+  hasApiKeys(): boolean {
+    const result = this.db
+      .prepare(`SELECT 1 FROM api_keys LIMIT 1`)
+      .get();
+    return result !== undefined;
   }
 
   /**

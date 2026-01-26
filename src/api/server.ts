@@ -13,6 +13,7 @@ import { createAgentRoutes } from "./routes/agents.js";
 import { createSessionRoutes } from "./routes/sessions.js";
 import { createObservabilityRoutes } from "./routes/observability.js";
 import { initWebSocketManager, getWebSocketManager } from "./websocket.js";
+import { createAuthMiddleware, validateWebSocketToken } from "./middleware/auth.js";
 
 export interface APIServerOptions {
   port?: number;
@@ -49,11 +50,14 @@ export class APIServer {
   }
 
   private setupMiddleware(): void {
-    // CORS
+    // CORS - parse comma-separated origins from env var
+    const corsOrigins = process.env.MAESTRO_CORS_ORIGINS;
+    const origin = corsOrigins ? corsOrigins.split(",").map((o) => o.trim()) : "*";
+
     this.app.use(
       "*",
       cors({
-        origin: "*",
+        origin,
         allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
         allowHeaders: ["Content-Type", "Authorization"],
       })
@@ -61,6 +65,9 @@ export class APIServer {
 
     // Request logging
     this.app.use("*", logger());
+
+    // API key authentication
+    this.app.use("*", createAuthMiddleware(this.options.memoryStore));
   }
 
   private setupRoutes(): void {
@@ -133,21 +140,50 @@ export class APIServer {
   }
 
   private setupWebSocket(): void {
+    const memoryStore = this.options.memoryStore;
+
     this.app.get(
       "/ws",
-      this.upgradeWebSocket((_c) => {
+      this.upgradeWebSocket((c) => {
+        // Get token from query parameter
+        const token = c.req.query("token");
+        let authenticated = validateWebSocketToken(memoryStore, token);
+
         return {
           onOpen: (_event, ws) => {
-            const manager = getWebSocketManager();
-            if (manager) {
-              manager.addClient(ws);
+            if (authenticated) {
+              const manager = getWebSocketManager();
+              if (manager) {
+                manager.addClient(ws);
+              }
             }
           },
           onMessage: (event, ws) => {
-            // Handle incoming messages if needed
-            // Currently just echo back for testing
             try {
               const data = JSON.parse(event.data.toString());
+
+              // Handle auth message if not yet authenticated
+              if (!authenticated && data.type === "auth" && data.token) {
+                if (validateWebSocketToken(memoryStore, data.token)) {
+                  authenticated = true;
+                  const manager = getWebSocketManager();
+                  if (manager) {
+                    manager.addClient(ws);
+                  }
+                  ws.send(JSON.stringify({ type: "auth", success: true }));
+                } else {
+                  ws.send(JSON.stringify({ type: "auth", success: false, error: "Invalid token" }));
+                  ws.close(4001, "Unauthorized");
+                }
+                return;
+              }
+
+              // Reject messages from unauthenticated clients
+              if (!authenticated) {
+                ws.send(JSON.stringify({ type: "error", error: "Not authenticated" }));
+                return;
+              }
+
               if (data.type === "ping") {
                 ws.send(JSON.stringify({ type: "pong", timestamp: new Date().toISOString() }));
               }
