@@ -19,7 +19,7 @@ function sanitizeStackTrace(stack: string | undefined): string | undefined {
   const cwd = process.cwd();
 
   // Replace absolute paths with relative or generic paths
-  let sanitized = stack
+  const sanitized = stack
     // Replace CWD with relative path indicator
     .replace(new RegExp(escapeRegExp(cwd), "g"), ".")
     // Replace home directory paths
