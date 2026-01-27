@@ -6,9 +6,11 @@ export interface WebSocketEvent {
 
 type EventHandler = (event: WebSocketEvent) => void;
 
+const API_KEY_STORAGE_KEY = 'maestro_api_key';
+
 class WebSocketClient {
   private ws: WebSocket | null = null;
-  private url: string;
+  private baseUrl: string;
   private handlers: Map<string, Set<EventHandler>> = new Map();
   private reconnectTimeout: number | null = null;
   private reconnectAttempts = 0;
@@ -16,14 +18,27 @@ class WebSocketClient {
   private reconnectDelay = 1000;
 
   constructor(url: string = `ws://${window.location.host}/ws`) {
-    this.url = url;
+    this.baseUrl = url;
+  }
+
+  private getUrl(): string {
+    const apiKey = typeof window !== 'undefined' && window.localStorage
+      ? localStorage.getItem(API_KEY_STORAGE_KEY)
+      : null;
+
+    if (apiKey) {
+      const separator = this.baseUrl.includes('?') ? '&' : '?';
+      return `${this.baseUrl}${separator}token=${encodeURIComponent(apiKey)}`;
+    }
+
+    return this.baseUrl;
   }
 
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN) return;
 
     try {
-      this.ws = new WebSocket(this.url);
+      this.ws = new WebSocket(this.getUrl());
 
       this.ws.onopen = () => {
         console.log('WebSocket connected');

@@ -1,6 +1,6 @@
-import { execSync } from "child_process";
-import { existsSync, readdirSync, statSync } from "fs";
-import { join, dirname } from "path";
+import { spawnSync } from "child_process";
+import { existsSync, readdirSync, statSync, mkdirSync } from "fs";
+import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { ToolDefinition, AgentContext } from "../../core/types.js";
 import { defineTool } from "../registry.js";
@@ -13,8 +13,72 @@ const PROJECTS_DIR = join(__dirname, "..", "..", "..", "projects");
  */
 function ensureProjectsDir(): void {
   if (!existsSync(PROJECTS_DIR)) {
-    execSync(`mkdir -p "${PROJECTS_DIR}"`);
+    mkdirSync(PROJECTS_DIR, { recursive: true });
   }
+}
+
+/**
+ * Validate project name to prevent path traversal and injection attacks
+ * Only allows alphanumeric characters, dashes, underscores, and dots
+ */
+function isValidProjectName(name: string): boolean {
+  // Must be non-empty and reasonable length
+  if (!name || name.length === 0 || name.length > 100) {
+    return false;
+  }
+  // Only allow safe characters
+  if (!/^[a-zA-Z0-9_.-]+$/.test(name)) {
+    return false;
+  }
+  // Prevent path traversal
+  if (name.includes("..") || name.startsWith(".") || name.startsWith("-")) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Validate git URL to prevent command injection
+ * Only allows HTTPS URLs from known git hosting providers
+ */
+function isValidGitUrl(url: string): boolean {
+  // Must be a valid URL format
+  try {
+    const parsed = new URL(url);
+    // Only allow HTTPS protocol
+    if (parsed.protocol !== "https:") {
+      return false;
+    }
+    // Only allow known git hosting providers
+    const allowedHosts = ["github.com", "gitlab.com", "bitbucket.org"];
+    if (!allowedHosts.includes(parsed.hostname)) {
+      return false;
+    }
+    // Path should be reasonable (owner/repo format)
+    const pathParts = parsed.pathname.split("/").filter(Boolean);
+    if (pathParts.length < 2 || pathParts.length > 3) {
+      return false;
+    }
+    // Each path segment should be reasonable
+    for (const part of pathParts) {
+      const cleanPart = part.replace(/\.git$/, "");
+      if (!/^[a-zA-Z0-9_.-]+$/.test(cleanPart)) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Validate that a resolved path is within the PROJECTS_DIR
+ */
+function isPathWithinProjectsDir(targetPath: string): boolean {
+  const resolved = resolve(targetPath);
+  const projectsResolved = resolve(PROJECTS_DIR);
+  return resolved.startsWith(projectsResolved + "/") || resolved === projectsResolved;
 }
 
 /**
@@ -39,6 +103,15 @@ function injectGitHubToken(url: string): string {
 }
 
 /**
+ * Sanitize error messages to remove any embedded tokens/credentials
+ * Removes patterns like https://TOKEN@github.com/...
+ */
+function sanitizeErrorMessage(message: string): string {
+  // Remove tokens from URLs (https://TOKEN@host/...)
+  return message.replace(/https:\/\/[^@\s]+@/g, "https://***@");
+}
+
+/**
  * Extract project name from git URL
  */
 function getProjectNameFromUrl(url: string): string {
@@ -60,19 +133,21 @@ function getProjectNameFromUrl(url: string): string {
 export const cloneProjectTool: ToolDefinition = defineTool(
   "clone_project",
   "Clone a git repository to work on. The repository will be cloned to the projects directory " +
-    "and set as your current active project. Use this before asking to make code changes.",
+    "and set as your current active project. Only HTTPS URLs from GitHub, GitLab, or Bitbucket are allowed.",
   {
     type: "object",
     properties: {
       repo_url: {
         type: "string",
         description:
-          "The git repository URL to clone (e.g., 'https://github.com/user/repo' or 'git@github.com:user/repo.git')",
+          "The git repository URL to clone. Must be HTTPS URL from GitHub, GitLab, or Bitbucket " +
+          "(e.g., 'https://github.com/user/repo')",
       },
       project_name: {
         type: "string",
         description:
-          "Optional custom name for the project directory. If not provided, uses the repo name.",
+          "Optional custom name for the project directory. Must contain only alphanumeric characters, " +
+          "dashes, underscores, and dots. If not provided, uses the repo name.",
       },
     },
     required: ["repo_url"],
@@ -85,10 +160,35 @@ export const cloneProjectTool: ToolDefinition = defineTool(
       return { error: "Repository URL is required" };
     }
 
-    ensureProjectsDir();
+    // Validate repository URL
+    if (!isValidGitUrl(repoUrl)) {
+      return {
+        success: false,
+        error: "Invalid repository URL. Only HTTPS URLs from GitHub, GitLab, or Bitbucket are allowed.",
+      };
+    }
 
     const projectName = customName || getProjectNameFromUrl(repoUrl);
+
+    // Validate project name
+    if (!isValidProjectName(projectName)) {
+      return {
+        success: false,
+        error: "Invalid project name. Use only alphanumeric characters, dashes, underscores, and dots.",
+      };
+    }
+
+    ensureProjectsDir();
+
     const projectPath = join(PROJECTS_DIR, projectName);
+
+    // Validate path is within projects directory (prevent path traversal)
+    if (!isPathWithinProjectsDir(projectPath)) {
+      return {
+        success: false,
+        error: "Invalid project path.",
+      };
+    }
 
     // Check if already exists
     if (existsSync(projectPath)) {
@@ -109,11 +209,24 @@ export const cloneProjectTool: ToolDefinition = defineTool(
       // Inject GitHub token if available (for private repos)
       const cloneUrl = injectGitHubToken(repoUrl);
 
-      // Clone the repository
-      execSync(`git clone "${cloneUrl}" "${projectPath}"`, {
+      // Clone using spawnSync to avoid shell injection
+      const result = spawnSync("git", ["clone", cloneUrl, projectPath], {
         stdio: "pipe",
         timeout: 120000, // 2 minute timeout
+        encoding: "utf-8",
       });
+
+      if (result.status !== 0) {
+        // Sanitize error to remove any embedded tokens
+        const errorMsg = sanitizeErrorMessage(result.stderr || "Unknown error");
+        const hint = !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
+          ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
+          : "";
+        return {
+          success: false,
+          error: `Failed to clone repository: ${errorMsg}${hint}`,
+        };
+      }
 
       // Set as current project
       context.metadata.currentProject = projectName;
@@ -126,7 +239,9 @@ export const cloneProjectTool: ToolDefinition = defineTool(
         project_path: projectPath,
       };
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      // Sanitize error to remove any embedded tokens
+      const rawErrorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = sanitizeErrorMessage(rawErrorMsg);
       const hint = !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
         ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
         : "";
@@ -163,9 +278,25 @@ export const switchProjectTool: ToolDefinition = defineTool(
       return { error: "Project name is required" };
     }
 
+    // Validate project name
+    if (!isValidProjectName(projectName)) {
+      return {
+        success: false,
+        error: "Invalid project name.",
+      };
+    }
+
     ensureProjectsDir();
 
     const projectPath = join(PROJECTS_DIR, projectName);
+
+    // Validate path is within projects directory
+    if (!isPathWithinProjectsDir(projectPath)) {
+      return {
+        success: false,
+        error: "Invalid project path.",
+      };
+    }
 
     if (!existsSync(projectPath)) {
       // List available projects

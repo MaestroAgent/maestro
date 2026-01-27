@@ -3,6 +3,7 @@ import { Agent } from "../core/agent.js";
 import { AgentContext } from "../core/types.js";
 import { MemoryStore } from "../memory/store.js";
 import { getBudgetGuard } from "../observability/index.js";
+import { isAllowedTelegramUser } from "./utils/allowlist.js";
 
 export interface TelegramAdapterOptions {
   token: string;
@@ -27,6 +28,11 @@ export class TelegramAdapter {
   private setupHandlers(): void {
     // Handle /start command
     this.bot.command("start", async (ctx) => {
+      const chatId = ctx.chat?.id;
+      if (chatId && !isAllowedTelegramUser(chatId)) {
+        await ctx.reply("Sorry, you are not authorized to use this bot.");
+        return;
+      }
       await ctx.reply(
         "Hello! I'm Maestro, your AI assistant. How can I help you today?"
       );
@@ -35,6 +41,10 @@ export class TelegramAdapter {
     // Handle /clear command to reset session
     this.bot.command("clear", async (ctx) => {
       const chatId = ctx.chat?.id;
+      if (chatId && !isAllowedTelegramUser(chatId)) {
+        await ctx.reply("Sorry, you are not authorized to use this bot.");
+        return;
+      }
       if (chatId) {
         const session = this.sessions.get(chatId);
         if (session) {
@@ -48,6 +58,12 @@ export class TelegramAdapter {
 
     // Handle /budget command to check budget status
     this.bot.command("budget", async (ctx) => {
+      const chatId = ctx.chat?.id;
+      if (chatId && !isAllowedTelegramUser(chatId)) {
+        await ctx.reply("Sorry, you are not authorized to use this bot.");
+        return;
+      }
+
       const budgetGuard = getBudgetGuard();
       if (!budgetGuard) {
         await ctx.reply("Budget tracking is not enabled.");
@@ -101,6 +117,12 @@ export class TelegramAdapter {
     const messageText = ctx.message?.text;
 
     if (!chatId || !messageText) {
+      return;
+    }
+
+    // Check allowlist
+    if (!isAllowedTelegramUser(chatId)) {
+      await ctx.reply("Sorry, you are not authorized to use this bot.");
       return;
     }
 

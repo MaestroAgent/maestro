@@ -51,7 +51,8 @@ export function defineTool(
   name: string,
   description: string,
   parameters: ToolDefinition["parameters"],
-  execute: ToolDefinition["execute"]
+  execute: ToolDefinition["execute"],
+  permissions?: ToolDefinition["permissions"]
 ): ToolDefinition {
-  return { name, description, parameters, execute };
+  return { name, description, parameters, execute, permissions };
 }

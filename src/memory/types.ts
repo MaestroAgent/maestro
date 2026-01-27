@@ -9,6 +9,7 @@ export const SessionSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   metadata: z.record(z.unknown()).optional(),
+  apiKeyId: z.string().optional(), // API key that owns this session
 });
 
 export type Session = z.infer<typeof SessionSchema>;

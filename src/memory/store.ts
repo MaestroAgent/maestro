@@ -2,6 +2,19 @@ import Database from "better-sqlite3";
 import { randomUUID } from "crypto";
 import { AgentContext, AgentConfig, Message, MessageRole } from "../core/types.js";
 import { MemoryStoreOptions, Session } from "./types.js";
+import { hashApiKey } from "../api/utils/auth.js";
+
+// API key record
+export interface ApiKeyRecord {
+  id: string;
+  name: string;
+  keyHash: string;
+  keyPrefix: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+  isAdmin: boolean;
+}
 
 // Stored agent row from SQLite
 interface StoredAgent {
@@ -39,6 +52,7 @@ export class MemoryStore {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         metadata TEXT,
+        api_key_id TEXT,
         UNIQUE(channel, user_id)
       );
 
@@ -69,22 +83,59 @@ export class MemoryStore {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS api_keys (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        key_hash TEXT NOT NULL UNIQUE,
+        key_prefix TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_used_at TEXT,
+        revoked_at TEXT,
+        is_admin INTEGER NOT NULL DEFAULT 0
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
     `);
+
+    // Migration: Add api_key_id column to sessions if it doesn't exist
+    this.migrateSchema();
+  }
+
+  private migrateSchema(): void {
+    // Check if api_key_id column exists in sessions
+    const sessionColumns = this.db.prepare("PRAGMA table_info(sessions)").all() as Array<{ name: string }>;
+    if (!sessionColumns.some(col => col.name === "api_key_id")) {
+      this.db.exec("ALTER TABLE sessions ADD COLUMN api_key_id TEXT");
+    }
+
+    // Check if is_admin column exists in api_keys
+    const keyColumns = this.db.prepare("PRAGMA table_info(api_keys)").all() as Array<{ name: string }>;
+    if (!keyColumns.some(col => col.name === "is_admin")) {
+      this.db.exec("ALTER TABLE api_keys ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0");
+    }
   }
 
   /**
-   * Get all sessions, optionally filtered by channel
+   * Get all sessions, optionally filtered by channel and/or API key
    */
-  getAllSessions(channel?: string): Session[] {
-    let query = `SELECT id, channel, user_id, created_at, updated_at, metadata
-                 FROM sessions ORDER BY updated_at DESC`;
+  getAllSessions(channel?: string, apiKeyId?: string): Session[] {
+    const conditions: string[] = [];
     const params: string[] = [];
 
     if (channel) {
-      query = `SELECT id, channel, user_id, created_at, updated_at, metadata
-               FROM sessions WHERE channel = ? ORDER BY updated_at DESC`;
+      conditions.push("channel = ?");
       params.push(channel);
     }
+
+    if (apiKeyId) {
+      conditions.push("api_key_id = ?");
+      params.push(apiKeyId);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const query = `SELECT id, channel, user_id, created_at, updated_at, metadata, api_key_id
+                   FROM sessions ${whereClause} ORDER BY updated_at DESC`;
 
     const rows = this.db.prepare(query).all(...params) as Array<{
       id: string;
@@ -93,6 +144,7 @@ export class MemoryStore {
       created_at: string;
       updated_at: string;
       metadata: string | null;
+      api_key_id: string | null;
     }>;
 
     return rows.map((row) => ({
@@ -102,6 +154,7 @@ export class MemoryStore {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      apiKeyId: row.api_key_id ?? undefined,
     }));
   }
 
@@ -111,7 +164,7 @@ export class MemoryStore {
   getSession(sessionId: string): Session | null {
     const row = this.db
       .prepare(
-        `SELECT id, channel, user_id, created_at, updated_at, metadata
+        `SELECT id, channel, user_id, created_at, updated_at, metadata, api_key_id
          FROM sessions WHERE id = ?`
       )
       .get(sessionId) as
@@ -122,6 +175,7 @@ export class MemoryStore {
           created_at: string;
           updated_at: string;
           metadata: string | null;
+          api_key_id: string | null;
         }
       | undefined;
 
@@ -136,6 +190,7 @@ export class MemoryStore {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+      apiKeyId: row.api_key_id ?? undefined,
     };
   }
 
@@ -187,13 +242,13 @@ export class MemoryStore {
   /**
    * Get or create a session for a channel + user combination
    */
-  getOrCreateSession(channel: string, userId: string): Session {
+  getOrCreateSession(channel: string, userId: string, apiKeyId?: string): Session {
     const now = new Date().toISOString();
 
     // Try to get existing session
     const existing = this.db
       .prepare(
-        `SELECT id, channel, user_id, created_at, updated_at, metadata
+        `SELECT id, channel, user_id, created_at, updated_at, metadata, api_key_id
          FROM sessions WHERE channel = ? AND user_id = ?`
       )
       .get(channel, userId) as
@@ -204,6 +259,7 @@ export class MemoryStore {
           created_at: string;
           updated_at: string;
           metadata: string | null;
+          api_key_id: string | null;
         }
       | undefined;
 
@@ -215,6 +271,7 @@ export class MemoryStore {
         createdAt: existing.created_at,
         updatedAt: existing.updated_at,
         metadata: existing.metadata ? JSON.parse(existing.metadata) : undefined,
+        apiKeyId: existing.api_key_id ?? undefined,
       };
     }
 
@@ -222,10 +279,10 @@ export class MemoryStore {
     const id = randomUUID();
     this.db
       .prepare(
-        `INSERT INTO sessions (id, channel, user_id, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO sessions (id, channel, user_id, created_at, updated_at, api_key_id)
+         VALUES (?, ?, ?, ?, ?, ?)`
       )
-      .run(id, channel, userId, now, now);
+      .run(id, channel, userId, now, now, apiKeyId ?? null);
 
     return {
       id,
@@ -233,6 +290,7 @@ export class MemoryStore {
       userId,
       createdAt: now,
       updatedAt: now,
+      apiKeyId,
     };
   }
 
@@ -556,6 +614,138 @@ export class MemoryStore {
       systemPrompt: row.system_prompt,
       tools: JSON.parse(row.tools) as string[],
     };
+  }
+
+  // ========== API Key Management ==========
+
+  /**
+   * Create a new API key record
+   */
+  createApiKey(name: string, keyHash: string, keyPrefix: string, isAdmin: boolean = false): ApiKeyRecord {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+
+    this.db
+      .prepare(
+        `INSERT INTO api_keys (id, name, key_hash, key_prefix, created_at, is_admin)
+         VALUES (?, ?, ?, ?, ?, ?)`
+      )
+      .run(id, name, keyHash, keyPrefix, now, isAdmin ? 1 : 0);
+
+    return {
+      id,
+      name,
+      keyHash,
+      keyPrefix,
+      createdAt: now,
+      lastUsedAt: null,
+      revokedAt: null,
+      isAdmin,
+    };
+  }
+
+  /**
+   * Validate an API key by hashing and looking up
+   * Returns the key record if valid, null otherwise
+   * Uses timing-safe comparison to prevent timing attacks
+   */
+  validateApiKey(key: string): ApiKeyRecord | null {
+    const keyHash = hashApiKey(key);
+
+    const row = this.db
+      .prepare(
+        `SELECT id, name, key_hash, key_prefix, created_at, last_used_at, revoked_at, is_admin
+         FROM api_keys WHERE key_hash = ?`
+      )
+      .get(keyHash) as {
+        id: string;
+        name: string;
+        key_hash: string;
+        key_prefix: string;
+        created_at: string;
+        last_used_at: string | null;
+        revoked_at: string | null;
+        is_admin: number;
+      } | undefined;
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      name: row.name,
+      keyHash: row.key_hash,
+      keyPrefix: row.key_prefix,
+      createdAt: row.created_at,
+      lastUsedAt: row.last_used_at,
+      revokedAt: row.revoked_at,
+      isAdmin: row.is_admin === 1,
+    };
+  }
+
+  /**
+   * Update last_used_at timestamp for an API key
+   */
+  touchApiKey(id: string): void {
+    const now = new Date().toISOString();
+    this.db
+      .prepare(`UPDATE api_keys SET last_used_at = ? WHERE id = ?`)
+      .run(now, id);
+  }
+
+  /**
+   * Revoke an API key
+   */
+  revokeApiKey(id: string): boolean {
+    const now = new Date().toISOString();
+    const result = this.db
+      .prepare(`UPDATE api_keys SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL`)
+      .run(now, id);
+
+    return result.changes > 0;
+  }
+
+  /**
+   * Get all API keys (without the hash for security)
+   */
+  getAllApiKeys(): ApiKeyRecord[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, name, key_hash, key_prefix, created_at, last_used_at, revoked_at, is_admin
+         FROM api_keys ORDER BY created_at DESC`
+      )
+      .all() as Array<{
+        id: string;
+        name: string;
+        key_hash: string;
+        key_prefix: string;
+        created_at: string;
+        last_used_at: string | null;
+        revoked_at: string | null;
+        is_admin: number;
+      }>;
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      keyHash: row.key_hash,
+      keyPrefix: row.key_prefix,
+      createdAt: row.created_at,
+      lastUsedAt: row.last_used_at,
+      revokedAt: row.revoked_at,
+      isAdmin: row.is_admin === 1,
+    }));
+  }
+
+  /**
+   * Check if any API keys exist
+   */
+  hasApiKeys(): boolean {
+    const result = this.db
+      .prepare(`SELECT 1 FROM api_keys LIMIT 1`)
+      .get();
+    return result !== undefined;
   }
 
   /**

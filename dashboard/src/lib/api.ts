@@ -1,6 +1,7 @@
 // In production (served from /dashboard/), API is at origin root
 // In development (Vite proxy), API is also at root
 const API_BASE = '';
+const API_KEY_STORAGE_KEY = 'maestro_api_key';
 
 export interface Session {
   id: string;
@@ -90,15 +91,48 @@ export interface StreamEvent {
 
 class APIClient {
   private baseUrl: string;
+  private apiKey: string | null = null;
 
   constructor(baseUrl: string = API_BASE) {
     this.baseUrl = baseUrl;
+    this.loadApiKey();
+  }
+
+  private loadApiKey(): void {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      this.apiKey = localStorage.getItem(API_KEY_STORAGE_KEY);
+    }
+  }
+
+  setApiKey(key: string | null): void {
+    this.apiKey = key;
+    if (typeof window !== 'undefined' && window.localStorage) {
+      if (key) {
+        localStorage.setItem(API_KEY_STORAGE_KEY, key);
+      } else {
+        localStorage.removeItem(API_KEY_STORAGE_KEY);
+      }
+    }
+  }
+
+  getApiKey(): string | null {
+    return this.apiKey;
+  }
+
+  private getAuthHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (this.apiKey) {
+      headers['Authorization'] = `Bearer ${this.apiKey}`;
+    }
+    return headers;
   }
 
   private async fetch<T>(path: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       headers: {
-        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
         ...options?.headers,
       },
       ...options,
@@ -166,7 +200,7 @@ class APIClient {
   ): AsyncGenerator<StreamEvent> {
     const response = await fetch(`${this.baseUrl}/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: this.getAuthHeaders(),
       body: JSON.stringify({ message, sessionId, stream: true }),
     });
 

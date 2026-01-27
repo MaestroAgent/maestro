@@ -54,6 +54,14 @@ export const ToolParameterSchema = z.object({
 
 export type ToolParameter = z.infer<typeof ToolParameterSchema>;
 
+// Tool permission levels (from least to most dangerous)
+export type ToolPermissionLevel = "low" | "medium" | "high" | "critical";
+
+export interface ToolPermissions {
+  level: ToolPermissionLevel;
+  requiresAllowlist?: boolean;
+}
+
 export interface ToolDefinition {
   name: string;
   description: string;
@@ -62,6 +70,7 @@ export interface ToolDefinition {
     args: Record<string, unknown>,
     context: AgentContext
   ) => Promise<unknown>;
+  permissions?: ToolPermissions;
 }
 
 // Agent config schema (loaded from YAML)
@@ -76,6 +85,12 @@ export const AgentConfigSchema = z.object({
   }),
   systemPrompt: z.string(),
   tools: z.array(z.string()).default([]),
+  // Maximum tool permission level this agent can access
+  // low: calculator, datetime, memory tools
+  // medium: browse_web
+  // high: clone_project, switch_project
+  // critical: claude_code (default: all tools allowed)
+  maxToolLevel: z.enum(["low", "medium", "high", "critical"]).optional(),
 });
 
 export type AgentConfig = z.infer<typeof AgentConfigSchema>;

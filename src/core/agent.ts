@@ -5,6 +5,7 @@ import {
   StreamChunk,
   ToolCall,
   ToolDefinition,
+  ToolPermissionLevel,
   ToolResult,
 } from "./types.js";
 import { LLMProvider } from "../llm/provider.js";
@@ -250,15 +251,32 @@ export class Agent implements AgentRuntime {
 
   private getTools(): ToolDefinition[] {
     const tools: ToolDefinition[] = [];
+    const maxLevel = this.config.maxToolLevel;
 
     for (const toolName of this.config.tools) {
       const tool = this.toolRegistry.get(toolName);
       if (tool) {
+        // Filter by permission level if maxToolLevel is set
+        if (maxLevel && tool.permissions) {
+          if (!this.isToolAllowed(tool.permissions.level, maxLevel)) {
+            continue;
+          }
+        }
         tools.push(tool);
       }
     }
 
     return tools;
+  }
+
+  /**
+   * Check if a tool's permission level is allowed given the agent's max level
+   */
+  private isToolAllowed(toolLevel: ToolPermissionLevel, maxLevel: ToolPermissionLevel): boolean {
+    const levelOrder: ToolPermissionLevel[] = ["low", "medium", "high", "critical"];
+    const toolIndex = levelOrder.indexOf(toolLevel);
+    const maxIndex = levelOrder.indexOf(maxLevel);
+    return toolIndex <= maxIndex;
   }
 
   private async executeToolCalls(toolCalls: ToolCall[]): Promise<ToolResult[]> {

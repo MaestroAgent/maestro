@@ -15,6 +15,8 @@ import { createToolRegistry, builtinTools } from "./tools/index.js";
 import { initLogger, initBudgetGuard } from "./observability/index.js";
 import { initVectorStore } from "./memory/index.js";
 import { APIServer } from "./api/index.js";
+import { hashApiKey, isValidKeyFormat } from "./api/utils/auth.js";
+import { checkAllowlistConfiguration } from "./channels/utils/allowlist.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = join(__dirname, "..", "config");
@@ -75,6 +77,9 @@ function setupApp(mode: Mode): AppContext {
     console: mode === "cli" ? false : true, // Suppress console in CLI mode
   });
 
+  // Check allowlist configuration and warn about missing settings
+  checkAllowlistConfiguration();
+
   // Load static agent configs from YAML
   console.log("Loading agent configurations...");
   const staticAgentConfigs = loadAllAgentConfigs(CONFIG_DIR);
@@ -96,6 +101,19 @@ function setupApp(mode: Mode): AppContext {
     dbPath: join(DATA_DIR, "maestro.db"),
     maxMessages: 100,
   });
+
+  // Seed API key from environment variable if set and no keys exist
+  const seedApiKey = process.env.MAESTRO_API_KEY;
+  if (seedApiKey && !memoryStore.hasApiKeys()) {
+    if (isValidKeyFormat(seedApiKey)) {
+      const keyHash = hashApiKey(seedApiKey);
+      const keyPrefix = seedApiKey.slice(0, 12);
+      memoryStore.createApiKey("Default API Key", keyHash, keyPrefix);
+      console.log(`API key seeded from MAESTRO_API_KEY (prefix: ${keyPrefix})`);
+    } else {
+      console.warn("MAESTRO_API_KEY is set but has invalid format (expected: msk_<64 hex chars>)");
+    }
+  }
 
   // Create dynamic agent registry (merges static + SQLite agents)
   const agentRegistry = new DynamicAgentRegistry(staticAgentConfigs, memoryStore);
