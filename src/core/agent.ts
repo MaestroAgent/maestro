@@ -270,10 +270,10 @@ export class Agent implements AgentRuntime {
       } catch (streamError) {
         // Log the error for debugging
         const errorMessage = streamError instanceof Error ? streamError.message : String(streamError);
-        logger.agentResponse(totalInputTokens, totalOutputTokens, Date.now() - startTime, {
+        logger.error(streamError instanceof Error ? streamError : new Error(errorMessage), {
           sessionId: this.context.sessionId,
           agentName: this.config.name,
-          error: errorMessage,
+          additionalContext: { type: "stream_error", totalInputTokens, totalOutputTokens },
         });
 
         // Yield error to user

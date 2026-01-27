@@ -67,7 +67,7 @@ async function executeClaudeCode(
       }
     });
 
-    let timeoutHandle = setTimeout(() => {
+    const timeoutHandle = setTimeout(() => {
       // First try SIGTERM for graceful shutdown
       proc.kill("SIGTERM");
 
