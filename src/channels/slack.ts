@@ -5,6 +5,7 @@ import { AgentContext } from "../core/types.js";
 import { MemoryStore } from "../memory/store.js";
 import { getBudgetGuard } from "../observability/index.js";
 import { DynamicAgentRegistry } from "../core/registry.js";
+import { isAllowedSlackUser } from "./utils/allowlist.js";
 
 export interface SlackAdapterOptions {
   botToken: string;
@@ -81,6 +82,15 @@ export class SlackAdapter {
       const userId = command.user_id;
       const text = command.text.trim();
 
+      // Check allowlist
+      if (!isAllowedSlackUser(userId)) {
+        await say({
+          text: ":x: Sorry, you are not authorized to use this bot.",
+          channel: channelId,
+        });
+        return;
+      }
+
       if (!text) {
         await say({
           text: "Usage: `/maestro <your message>` - Ask me anything!",
@@ -132,6 +142,15 @@ export class SlackAdapter {
     this.app.command("/maestro-clear", async ({ command, ack, say }) => {
       await ack();
 
+      // Check allowlist
+      if (!isAllowedSlackUser(command.user_id)) {
+        await say({
+          text: ":x: Sorry, you are not authorized to use this bot.",
+          channel: command.channel_id,
+        });
+        return;
+      }
+
       const key = this.getSessionKey(command.team_id, command.channel_id, command.user_id);
       const session = this.sessions.get(key);
 
@@ -150,6 +169,15 @@ export class SlackAdapter {
     // Budget status command
     this.app.command("/maestro-budget", async ({ command, ack, say }) => {
       await ack();
+
+      // Check allowlist - critical for budget override
+      if (!isAllowedSlackUser(command.user_id)) {
+        await say({
+          text: ":x: Sorry, you are not authorized to use this bot.",
+          channel: command.channel_id,
+        });
+        return;
+      }
 
       const budgetGuard = getBudgetGuard();
       if (!budgetGuard) {
@@ -226,6 +254,15 @@ export class SlackAdapter {
     this.app.command("/maestro-agents", async ({ command, ack, say }) => {
       await ack();
 
+      // Check allowlist
+      if (!isAllowedSlackUser(command.user_id)) {
+        await say({
+          text: ":x: Sorry, you are not authorized to use this bot.",
+          channel: command.channel_id,
+        });
+        return;
+      }
+
       if (!this.agentRegistry) {
         await say({
           text: "Agent registry not available.",
@@ -269,6 +306,15 @@ export class SlackAdapter {
       // Use thread_ts if we're in a thread, otherwise use the message ts
       const threadTs = event.thread_ts || event.ts || "";
       const text = event.text.replace(/<@[A-Z0-9]+>/g, "").trim();
+
+      // Check allowlist
+      if (!isAllowedSlackUser(userId)) {
+        await say({
+          text: ":x: Sorry, you are not authorized to use this bot.",
+          thread_ts: threadTs,
+        });
+        return;
+      }
 
       if (!text) {
         await say({
@@ -344,6 +390,12 @@ export class SlackAdapter {
       const channelId = msg.channel || "";
       const userId = msg.user || "";
       const text = msg.text;
+
+      // Check allowlist
+      if (!isAllowedSlackUser(userId)) {
+        await say(":x: Sorry, you are not authorized to use this bot.");
+        return;
+      }
 
       // Add reaction to show we're processing
       try {

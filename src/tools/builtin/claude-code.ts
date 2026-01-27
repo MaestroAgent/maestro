@@ -5,15 +5,27 @@ import { defineTool } from "../registry.js";
 /**
  * Execute Claude Code CLI and capture output
  */
+// Default tools that Claude Code is allowed to use (restricted for safety)
+const DEFAULT_ALLOWED_TOOLS = "Read,Glob,Grep";
+
 async function executeClaudeCode(
   task: string,
   workingDir?: string,
-  timeoutMs: number = 300000 // 5 minutes default
+  timeoutMs: number = 300000, // 5 minutes default
+  maxTurns: number = 10
 ): Promise<{ output: string; exitCode: number }> {
   return new Promise((resolve, reject) => {
+    // Get allowed tools from environment or use restricted default
+    const allowedTools = process.env.MAESTRO_CLAUDE_CODE_ALLOWED_TOOLS || DEFAULT_ALLOWED_TOOLS;
+
     // -p for non-interactive print mode
-    // --dangerously-skip-permissions to avoid prompts in container environment
-    const args = ["-p", task, "--dangerously-skip-permissions"];
+    // --allowedTools restricts what operations Claude Code can perform
+    // --max-turns limits the number of agentic turns to prevent runaway loops
+    const args = [
+      "-p", task,
+      "--allowedTools", allowedTools,
+      "--max-turns", String(maxTurns),
+    ];
 
     const proc = spawn("claude", args, {
       cwd: workingDir || process.cwd(),
@@ -55,21 +67,21 @@ async function executeClaudeCode(
 
 export const claudeCodeTool: ToolDefinition = defineTool(
   "claude_code",
-  "Execute a coding task using Claude Code CLI. Use this for tasks that require " +
-    "file system access, code editing, git operations, or running commands. " +
-    "Claude Code can read/write files, run tests, create commits, and more. " +
-    "Provide a clear, specific task description.",
+  "Execute a coding task using Claude Code CLI with restricted permissions. " +
+    "By default, Claude Code can only read files and search code (Read, Glob, Grep). " +
+    "Additional tools can be enabled via MAESTRO_CLAUDE_CODE_ALLOWED_TOOLS. " +
+    "Use this for code analysis, reading files, and searching through codebases.",
   {
     type: "object",
     properties: {
       task: {
         type: "string",
         description:
-          "The coding task to perform. Be specific about what files to modify, " +
-          "what changes to make, and any constraints. Examples: " +
-          "'Add input validation to the login function in src/auth.ts', " +
-          "'Fix the bug in the calculateTotal function that causes NaN for empty arrays', " +
-          "'Create a new React component for displaying user profiles'",
+          "The coding task to perform. Be specific about what files to read, " +
+          "what to search for, and what analysis to perform. Examples: " +
+          "'Find all usages of the calculateTotal function in the codebase', " +
+          "'Read and summarize the authentication logic in src/auth/', " +
+          "'Search for TODO comments and list them with their file locations'",
       },
       working_directory: {
         type: "string",

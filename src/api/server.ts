@@ -14,6 +14,7 @@ import { createSessionRoutes } from "./routes/sessions.js";
 import { createObservabilityRoutes } from "./routes/observability.js";
 import { initWebSocketManager, getWebSocketManager } from "./websocket.js";
 import { createAuthMiddleware, validateWebSocketToken } from "./middleware/auth.js";
+import { createRateLimitMiddleware, stopRateLimitStore } from "./middleware/rateLimit.js";
 
 export interface APIServerOptions {
   port?: number;
@@ -65,6 +66,9 @@ export class APIServer {
 
     // Request logging
     this.app.use("*", logger());
+
+    // Rate limiting (before auth to protect against brute force)
+    this.app.use("*", createRateLimitMiddleware());
 
     // API key authentication
     this.app.use("*", createAuthMiddleware(this.options.memoryStore));
@@ -260,6 +264,7 @@ export class APIServer {
     if (manager) {
       manager.close();
     }
+    stopRateLimitStore();
     if (this.server) {
       this.server.close();
     }
