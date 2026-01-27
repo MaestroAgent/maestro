@@ -22,6 +22,10 @@ export class SlackAdapter {
   private memoryStore: MemoryStore;
   private agentRegistry?: DynamicAgentRegistry;
   private sessions: Map<string, AgentContext> = new Map();
+  // SECURITY: Track session access time for TTL-based eviction
+  private sessionAccessTimes: Map<string, number> = new Map();
+  private sessionCleanupInterval: ReturnType<typeof setInterval> | null = null;
+  private readonly SESSION_TTL_MS = 3600000; // 1 hour TTL for in-memory sessions
 
   constructor(options: SlackAdapterOptions) {
     this.app = new App({
@@ -39,6 +43,9 @@ export class SlackAdapter {
     this.setupCommands();
     this.setupEventHandlers();
     this.setupAppHome();
+
+    // SECURITY: Start periodic cleanup of stale sessions
+    this.startSessionCleanup();
   }
 
   private getSessionKey(teamId: string, channelId: string, userId: string, threadTs?: string): string {
@@ -55,6 +62,8 @@ export class SlackAdapter {
     // Check in-memory cache first
     let context = this.sessions.get(key);
     if (context) {
+      // SECURITY: Update access time for TTL tracking
+      this.sessionAccessTimes.set(key, Date.now());
       return context;
     }
 
@@ -69,7 +78,53 @@ export class SlackAdapter {
     }
 
     this.sessions.set(key, context);
+    // SECURITY: Track access time for TTL-based eviction
+    this.sessionAccessTimes.set(key, Date.now());
     return context;
+  }
+
+  /**
+   * SECURITY: Periodically clean up stale sessions from memory to prevent memory leaks
+   */
+  private startSessionCleanup(): void {
+    // Run cleanup every 10 minutes
+    this.sessionCleanupInterval = setInterval(() => {
+      const now = Date.now();
+      const staleKeys: string[] = [];
+
+      for (const [key, accessTime] of this.sessionAccessTimes.entries()) {
+        if (now - accessTime > this.SESSION_TTL_MS) {
+          staleKeys.push(key);
+        }
+      }
+
+      for (const key of staleKeys) {
+        this.sessions.delete(key);
+        this.sessionAccessTimes.delete(key);
+      }
+
+      if (staleKeys.length > 0) {
+        console.debug(`SlackAdapter: Cleaned up ${staleKeys.length} stale sessions`);
+      }
+    }, 10 * 60 * 1000);
+  }
+
+  /**
+   * Shutdown the adapter and clean up resources
+   */
+  async shutdown(): Promise<void> {
+    // Stop cleanup interval
+    if (this.sessionCleanupInterval) {
+      clearInterval(this.sessionCleanupInterval);
+      this.sessionCleanupInterval = null;
+    }
+
+    // Clear sessions from memory
+    this.sessions.clear();
+    this.sessionAccessTimes.clear();
+
+    // Stop the Slack app
+    await this.app.stop();
   }
 
   private setupCommands(): void {

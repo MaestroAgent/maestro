@@ -509,43 +509,60 @@ export class MemoryStore {
 
     const now = new Date().toISOString();
 
-    // Build dynamic update query
-    const fields: string[] = ["updated_at = ?"];
-    const values: unknown[] = [now];
+    // SECURITY: Build dynamic UPDATE query with validated field names
+    // Field names are hardcoded (never from user input), values are parameterized
+    const fields: Array<{ column: string; value: unknown }> = [
+      { column: "updated_at", value: now },
+    ];
+
+    // SECURITY: Only allow specific columns to be updated (whitelist approach)
+    const allowedFields = new Set([
+      "description",
+      "system_prompt",
+      "model_provider",
+      "model_name",
+      "temperature",
+      "max_tokens",
+      "tools",
+    ]);
 
     if (updates.description !== undefined) {
-      fields.push("description = ?");
-      values.push(updates.description);
+      fields.push({ column: "description", value: updates.description });
     }
     if (updates.systemPrompt !== undefined) {
-      fields.push("system_prompt = ?");
-      values.push(updates.systemPrompt);
+      fields.push({ column: "system_prompt", value: updates.systemPrompt });
     }
     if (updates.modelProvider !== undefined) {
-      fields.push("model_provider = ?");
-      values.push(updates.modelProvider);
+      fields.push({ column: "model_provider", value: updates.modelProvider });
     }
     if (updates.modelName !== undefined) {
-      fields.push("model_name = ?");
-      values.push(updates.modelName);
+      fields.push({ column: "model_name", value: updates.modelName });
     }
     if (updates.temperature !== undefined) {
-      fields.push("temperature = ?");
-      values.push(updates.temperature);
+      fields.push({ column: "temperature", value: updates.temperature });
     }
     if (updates.maxTokens !== undefined) {
-      fields.push("max_tokens = ?");
-      values.push(updates.maxTokens);
+      fields.push({ column: "max_tokens", value: updates.maxTokens });
     }
     if (updates.tools !== undefined) {
-      fields.push("tools = ?");
-      values.push(JSON.stringify(updates.tools));
+      fields.push({ column: "tools", value: JSON.stringify(updates.tools) });
     }
 
+    // Build SQL with validated field names
+    const setClauses = fields
+      .map(field => {
+        if (!allowedFields.has(field.column) && field.column !== "updated_at") {
+          throw new Error(`Invalid field for update: ${field.column}`);
+        }
+        return `${field.column} = ?`;
+      })
+      .join(", ");
+
+    const values = fields.map(f => f.value);
     values.push(name);
 
     this.db
-      .prepare(`UPDATE agents SET ${fields.join(", ")} WHERE name = ?`)
+      .prepare(`UPDATE agents SET ${setClauses} WHERE name = ?`)
       .run(...values);
 
     return this.getAgent(name);

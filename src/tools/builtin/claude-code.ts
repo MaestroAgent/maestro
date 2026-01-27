@@ -15,6 +15,10 @@ async function executeClaudeCode(
   maxTurns: number = 10
 ): Promise<{ output: string; exitCode: number }> {
   return new Promise((resolve, reject) => {
+    // SECURITY: Resource limits
+    const MAX_OUTPUT_SIZE = 5 * 1024 * 1024; // 5MB max output
+    const KILL_TIMEOUT_MS = 2000; // 2s after SIGTERM before SIGKILL
+
     // Get allowed tools from environment or use restricted default
     const allowedTools = process.env.MAESTRO_CLAUDE_CODE_ALLOWED_TOOLS || DEFAULT_ALLOWED_TOOLS;
 
@@ -35,31 +39,67 @@ async function executeClaudeCode(
 
     let stdout = "";
     let stderr = "";
+    let outputTruncated = false;
+    let killTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
 
+    // SECURITY: Monitor output size and truncate if necessary
     proc.stdout.on("data", (data) => {
-      stdout += data.toString();
+      const chunk = data.toString();
+      if ((stdout + chunk).length > MAX_OUTPUT_SIZE) {
+        stdout = stdout.slice(0, MAX_OUTPUT_SIZE - 100); // Leave room for truncation message
+        stdout += "\n... [OUTPUT TRUNCATED - size limit exceeded] ...\n";
+        outputTruncated = true;
+        // Kill process if output exceeds limit
+        proc.kill("SIGTERM");
+      } else {
+        stdout += chunk;
+      }
     });
 
     proc.stderr.on("data", (data) => {
-      stderr += data.toString();
+      const chunk = data.toString();
+      if ((stderr + chunk).length > MAX_OUTPUT_SIZE / 2) {
+        stderr = stderr.slice(0, MAX_OUTPUT_SIZE / 2 - 50);
+        stderr += "\n... [STDERR TRUNCATED] ...\n";
+        proc.kill("SIGTERM");
+      } else {
+        stderr += chunk;
+      }
     });
 
-    const timeout = setTimeout(() => {
+    let timeoutHandle = setTimeout(() => {
+      // First try SIGTERM for graceful shutdown
       proc.kill("SIGTERM");
-      reject(new Error(`Claude Code timed out after ${timeoutMs / 1000} seconds`));
+
+      // If process doesn't exit within KILL_TIMEOUT_MS, use SIGKILL
+      killTimeoutHandle = setTimeout(() => {
+        proc.kill("SIGKILL");
+        reject(new Error(`Claude Code timed out after ${timeoutMs / 1000} seconds and did not respond to SIGTERM`));
+      }, KILL_TIMEOUT_MS);
     }, timeoutMs);
 
     proc.on("close", (code) => {
-      clearTimeout(timeout);
+      clearTimeout(timeoutHandle);
+      if (killTimeoutHandle) {
+        clearTimeout(killTimeoutHandle);
+      }
+
       const output = stdout + (stderr ? `\n\nStderr:\n${stderr}` : "");
+      const finalOutput = outputTruncated
+        ? output + "\n[WARNING: Output was truncated due to size limits]"
+        : output;
+
       resolve({
-        output: output.trim() || "(no output)",
+        output: finalOutput.trim() || "(no output)",
         exitCode: code ?? 0,
       });
     });
 
     proc.on("error", (error) => {
-      clearTimeout(timeout);
+      clearTimeout(timeoutHandle);
+      if (killTimeoutHandle) {
+        clearTimeout(killTimeoutHandle);
+      }
       reject(new Error(`Failed to execute Claude Code: ${error.message}`));
     });
   });

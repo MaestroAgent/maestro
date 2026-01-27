@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { z } from "zod";
 import {
   AgentConfig,
   AgentContext,
@@ -20,6 +21,119 @@ export interface AgentRuntime {
 
 export type AgentRegistry = Map<string, AgentConfig>;
 export type ToolRegistry = Map<string, ToolDefinition>;
+
+/**
+ * SECURITY: Redact sensitive information from tool arguments for logging
+ */
+function sanitizeArgumentsForLogging(args: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
+  const sensitivePatterns = [
+    /token/i,
+    /password/i,
+    /secret/i,
+    /key/i,
+    /credential/i,
+    /auth/i,
+    /api_key/i,
+    /bearer/i,
+  ];
+
+  for (const [key, value] of Object.entries(args)) {
+    // Check if key matches sensitive patterns
+    const isSensitiveKey = sensitivePatterns.some(pattern => pattern.test(key));
+
+    if (isSensitiveKey) {
+      sanitized[key] = "***REDACTED***";
+    } else if (typeof value === "string") {
+      // Check for credential patterns in string values
+      let sanitizedValue = value as string;
+
+      // Redact URLs with embedded credentials
+      sanitizedValue = sanitizedValue.replace(/https?:\/\/[^@\s:/]+@/g, "***@");
+      // Redact bearer tokens
+      sanitizedValue = sanitizedValue.replace(/Bearer\s+[A-Za-z0-9_-]+/g, "Bearer ***");
+      // Redact common token patterns
+      sanitizedValue = sanitizedValue.replace(/([a-z_]+_)?token[=:\s]+[A-Za-z0-9_-]{20,}/gi, "token=***");
+
+      sanitized[key] = sanitizedValue;
+    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      // Recursively sanitize nested objects
+      sanitized[key] = sanitizeArgumentsForLogging(value as Record<string, unknown>);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+
+  return sanitized;
+}
+
+/**
+ * SECURITY: Validate tool arguments against the tool's schema
+ * Prevents type errors and injection attacks from LLM-generated arguments
+ */
+function validateToolArguments(
+  tool: ToolDefinition,
+  arguments_: Record<string, unknown>
+): { valid: boolean; error?: string; sanitizedArguments?: Record<string, unknown> } {
+  try {
+    // Build a Zod schema from the tool's parameter definition
+    const propertySchemas: Record<string, z.ZodTypeAny> = {};
+
+    if (tool.parameters && tool.parameters.properties) {
+      for (const [key, prop] of Object.entries(tool.parameters.properties)) {
+        // Create a basic schema based on the property type
+        // For now, we'll be permissive but type-aware
+        let propSchema: z.ZodTypeAny = z.unknown();
+
+        if (prop.type === "string") {
+          propSchema = z.string();
+        } else if (prop.type === "number") {
+          propSchema = z.number();
+        } else if (prop.type === "boolean") {
+          propSchema = z.boolean();
+        } else if (prop.type === "array") {
+          propSchema = z.array(z.unknown());
+        } else if (prop.type === "object") {
+          propSchema = z.record(z.unknown());
+        }
+
+        // Handle required fields vs optional
+        const isRequired = tool.parameters.required?.includes(key) ?? false;
+        propSchema = isRequired ? propSchema : propSchema.optional();
+
+        propertySchemas[key] = propSchema;
+      }
+    }
+
+    // Create the full schema
+    const schema = z.object(propertySchemas);
+
+    // Validate and parse
+    const result = schema.safeParse(arguments_);
+
+    if (!result.success) {
+      // Format validation errors for LLM feedback
+      const errors = result.error.errors
+        .map((err) => `${err.path.join(".")}: ${err.message}`)
+        .join("; ");
+      return {
+        valid: false,
+        error: `Invalid arguments for tool '${tool.name}': ${errors}`,
+      };
+    }
+
+    return {
+      valid: true,
+      sanitizedArguments: result.data,
+    };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return {
+      valid: false,
+      error: `Failed to validate tool arguments: ${errorMsg}`,
+    };
+  }
+}
 
 export class Agent implements AgentRuntime {
   id: string;
@@ -126,30 +240,47 @@ export class Agent implements AgentRuntime {
       const currentToolCalls: ToolCall[] = [];
       const textChunks: StreamChunk[] = [];
 
-      for await (const chunk of stream) {
-        if (chunk.type === "text") {
-          currentText += chunk.text;
-          textChunks.push(chunk); // Buffer text, don't yield yet
-        } else if (chunk.type === "tool_call") {
-          currentToolCalls.push(chunk.toolCall);
-          // Don't yield tool calls to stream - they're internal
-        } else if (chunk.type === "done") {
-          fullResponse = chunk.fullText;
-          // Track token usage
-          if (chunk.usage) {
-            totalInputTokens += chunk.usage.inputTokens;
-            totalOutputTokens += chunk.usage.outputTokens;
+      // SECURITY: Handle stream errors gracefully (connection loss, API failures, etc.)
+      try {
+        for await (const chunk of stream) {
+          if (chunk.type === "text") {
+            currentText += chunk.text;
+            textChunks.push(chunk); // Buffer text, don't yield yet
+          } else if (chunk.type === "tool_call") {
+            currentToolCalls.push(chunk.toolCall);
+            // Don't yield tool calls to stream - they're internal
+          } else if (chunk.type === "done") {
+            fullResponse = chunk.fullText;
+            // Track token usage
+            if (chunk.usage) {
+              totalInputTokens += chunk.usage.inputTokens;
+              totalOutputTokens += chunk.usage.outputTokens;
 
-            // Record spending in budget guard
-            const budgetGuard = getBudgetGuard();
-            if (budgetGuard) {
-              budgetGuard.recordSpending(
-                { ...chunk.usage, totalTokens: chunk.usage.inputTokens + chunk.usage.outputTokens },
-                this.config.model.name
-              );
+              // Record spending in budget guard
+              const budgetGuard = getBudgetGuard();
+              if (budgetGuard) {
+                budgetGuard.recordSpending(
+                  { ...chunk.usage, totalTokens: chunk.usage.inputTokens + chunk.usage.outputTokens },
+                  this.config.model.name
+                );
+              }
             }
           }
         }
+      } catch (streamError) {
+        // Log the error for debugging
+        const errorMessage = streamError instanceof Error ? streamError.message : String(streamError);
+        logger.agentResponse(totalInputTokens, totalOutputTokens, Date.now() - startTime, {
+          sessionId: this.context.sessionId,
+          agentName: this.config.name,
+          error: errorMessage,
+        });
+
+        // Yield error to user
+        const errorMsg = `I encountered a connection error: ${errorMessage}. Please try again.`;
+        yield { type: "text", text: errorMsg };
+        this.context.history.push({ role: "assistant", content: errorMsg });
+        break;
       }
 
       // If no tool calls, yield the text and we're done
@@ -290,9 +421,6 @@ export class Agent implements AgentRuntime {
     for (const call of toolCalls) {
       const toolStartTime = Date.now();
 
-      // Log tool call
-      logger.toolCall(call.name, call.arguments, logContext);
-
       const tool = this.toolRegistry.get(call.name);
       if (!tool) {
         const errorResult = `Error: Unknown tool ${call.name}`;
@@ -305,8 +433,25 @@ export class Agent implements AgentRuntime {
         continue;
       }
 
+      // SECURITY: Validate tool arguments against schema before execution
+      const validation = validateToolArguments(tool, call.arguments);
+      if (!validation.valid) {
+        const errorResult = validation.error || "Invalid tool arguments";
+        results.push({
+          toolCallId: call.id,
+          result: errorResult,
+          isError: true,
+        });
+        logger.toolResult(call.name, errorResult, true, Date.now() - toolStartTime, logContext);
+        continue;
+      }
+
+      // SECURITY: Log tool call with sanitized/validated arguments (redact secrets)
+      const safeArguments = sanitizeArgumentsForLogging(validation.sanitizedArguments || call.arguments);
+      logger.toolCall(call.name, safeArguments, logContext);
+
       try {
-        const result = await tool.execute(call.arguments, this.context);
+        const result = await tool.execute(validation.sanitizedArguments || call.arguments, this.context);
         results.push({
           toolCallId: call.id,
           result,

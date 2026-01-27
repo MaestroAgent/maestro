@@ -82,33 +82,25 @@ function isPathWithinProjectsDir(targetPath: string): boolean {
 }
 
 /**
- * Inject GitHub token into HTTPS URL for private repo access
- */
-function injectGitHubToken(url: string): string {
-  const token = process.env.GITHUB_TOKEN;
-
-  if (!token) {
-    return url;
-  }
-
-  // Only inject for GitHub HTTPS URLs
-  // https://github.com/user/repo → https://{token}@github.com/user/repo
-  const githubHttpsPattern = /^https:\/\/github\.com\//;
-
-  if (githubHttpsPattern.test(url)) {
-    return url.replace("https://github.com/", `https://${token}@github.com/`);
-  }
-
-  return url;
-}
-
-/**
  * Sanitize error messages to remove any embedded tokens/credentials
- * Removes patterns like https://TOKEN@github.com/...
+ * Removes patterns like https://TOKEN@host/... and common git credential patterns
+ * SECURITY: Multiple patterns to catch various credential exposure vectors
  */
 function sanitizeErrorMessage(message: string): string {
-  // Remove tokens from URLs (https://TOKEN@host/...)
-  return message.replace(/https:\/\/[^@\s]+@/g, "https://***@");
+  let sanitized = message;
+  // Remove https://TOKEN@host/... patterns
+  sanitized = sanitized.replace(/https:\/\/[^@\s:/]+@/g, "https://***@");
+  // Remove http://TOKEN@host/... patterns
+  sanitized = sanitized.replace(/http:\/\/[^@\s:/]+@/g, "http://***@");
+  // Remove git@... credentials in command output
+  sanitized = sanitized.replace(/git@[^\s]+(:[^@\s]+)?@/g, "git@***@");
+  // Remove Bearer tokens
+  sanitized = sanitized.replace(/Bearer\s+[A-Za-z0-9_-]+/g, "Bearer ***");
+  // Remove personal access tokens (common patterns)
+  sanitized = sanitized.replace(/token[=\s:]+[A-Za-z0-9_-]{20,}/g, "token=***");
+  // Remove git credential helper output
+  sanitized = sanitized.replace(/password[=\s:]+[^\s]*/g, "password=***");
+  return sanitized;
 }
 
 /**
@@ -206,21 +198,25 @@ export const cloneProjectTool: ToolDefinition = defineTool(
     }
 
     try {
-      // Inject GitHub token if available (for private repos)
-      const cloneUrl = injectGitHubToken(repoUrl);
-
+      // SECURITY: Do NOT embed credentials in URLs - use git credential helpers or SSH keys instead
       // Clone using spawnSync to avoid shell injection
-      const result = spawnSync("git", ["clone", cloneUrl, projectPath], {
+      const result = spawnSync("git", ["clone", repoUrl, projectPath], {
         stdio: "pipe",
         timeout: 120000, // 2 minute timeout
         encoding: "utf-8",
+        // Pass environment to enable git credential helpers (SSH keys, credential store, etc.)
+        env: {
+          ...process.env,
+          // Ensure git can use local SSH agents and credential helpers
+          GIT_TERMINAL_PROMPT: "0", // Prevent interactive prompts
+        },
       });
 
       if (result.status !== 0) {
-        // Sanitize error to remove any embedded tokens
+        // Sanitize error to remove any embedded tokens or credentials
         const errorMsg = sanitizeErrorMessage(result.stderr || "Unknown error");
-        const hint = !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
-          ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
+        const hint = repoUrl.includes("github.com") || repoUrl.includes("gitlab.com") || repoUrl.includes("bitbucket.org")
+          ? " Hint: For private repos, use SSH keys or git credentials. Set up: 'git config --global credential.helper' or use SSH key-based authentication."
           : "";
         return {
           success: false,
@@ -239,11 +235,11 @@ export const cloneProjectTool: ToolDefinition = defineTool(
         project_path: projectPath,
       };
     } catch (error) {
-      // Sanitize error to remove any embedded tokens
+      // Sanitize error to remove any embedded tokens or credentials
       const rawErrorMsg = error instanceof Error ? error.message : String(error);
       const errorMsg = sanitizeErrorMessage(rawErrorMsg);
-      const hint = !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
-        ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
+      const hint = repoUrl.includes("github.com") || repoUrl.includes("gitlab.com") || repoUrl.includes("bitbucket.org")
+        ? " Hint: For private repos, use SSH keys or git credentials. Set up: 'git config --global credential.helper' or use SSH key-based authentication."
         : "";
 
       return {

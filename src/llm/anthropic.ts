@@ -73,10 +73,31 @@ export class AnthropicProvider implements LLMProvider {
         }
       } else if (event.type === "content_block_stop") {
         if (currentToolId && currentToolName) {
+          let parsedArguments: Record<string, unknown> = {};
+
+          // SECURITY: Safely parse JSON tool arguments with error handling
+          if (currentToolInput) {
+            try {
+              parsedArguments = JSON.parse(currentToolInput);
+              // Validate that result is an object (not a primitive or array at root)
+              if (typeof parsedArguments !== "object" || parsedArguments === null || Array.isArray(parsedArguments)) {
+                console.error(`Invalid tool arguments for ${currentToolName}: expected object, got ${typeof parsedArguments}`);
+                parsedArguments = {};
+              }
+            } catch (parseError) {
+              // Log the parsing error for debugging but don't crash
+              const parseErrorMsg = parseError instanceof Error ? parseError.message : String(parseError);
+              console.error(`Failed to parse JSON arguments for tool ${currentToolName}: ${parseErrorMsg}`);
+              console.error(`Raw input was: ${currentToolInput.slice(0, 100)}...`);
+              // Return empty arguments - tool will fail gracefully when required args are missing
+              parsedArguments = {};
+            }
+          }
+
           const toolCall: ToolCall = {
             id: currentToolId,
             name: currentToolName,
-            arguments: currentToolInput ? JSON.parse(currentToolInput) : {},
+            arguments: parsedArguments,
           };
           toolCalls.push(toolCall);
           yield { type: "tool_call", toolCall };

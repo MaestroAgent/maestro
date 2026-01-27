@@ -1,14 +1,21 @@
 import { chromium, Browser, BrowserContext, Page } from "playwright";
 
-// Security: Block internal IPs and localhost
+// SECURITY: Block internal IPs, localhost, and cloud metadata endpoints
 const BLOCKED_HOSTS = [
+  // Localhost variants
   "localhost",
   "127.0.0.1",
   "0.0.0.0",
+  // IPv6 localhost and variants
   "::1",
-  "169.254.", // Link-local
-  "10.",      // Private range
-  "172.16.",  // Private range
+  "::ffff:127.0.0.1", // IPv6-mapped IPv4 localhost
+  "::ffff:0:0",       // IPv6-mapped 0.0.0.0
+  // Link-local and special ranges
+  "169.254.",         // Link-local
+  "169.254.169.254",  // AWS metadata service (more specific)
+  // Private ranges
+  "10.",              // Private range 10.0.0.0/8
+  "172.16.",          // Private range 172.16.0.0/12
   "172.17.",
   "172.18.",
   "172.19.",
@@ -24,7 +31,11 @@ const BLOCKED_HOSTS = [
   "172.29.",
   "172.30.",
   "172.31.",
-  "192.168.", // Private range
+  "192.168.",         // Private range 192.168.0.0/16
+  // IPv6 private ranges
+  "fc00:",            // IPv6 Unique Local Addresses (Fc00::/7)
+  "fd00:",
+  "fe80:",            // IPv6 Link-local (fe80::/10)
 ];
 
 export interface BrowserEngineOptions {
@@ -53,15 +64,45 @@ export class BrowserEngine {
       const parsed = new URL(url);
       const hostname = parsed.hostname.toLowerCase();
 
+      // SECURITY: Block file:// and other non-http(s) protocols first
+      if (!parsed.protocol.startsWith("http")) {
+        return true;
+      }
+
+      // SECURITY: Check against blocked hosts list
       for (const blocked of BLOCKED_HOSTS) {
         if (hostname === blocked || hostname.startsWith(blocked)) {
           return true;
         }
       }
 
-      // Also block file:// and other non-http(s) protocols
-      if (!parsed.protocol.startsWith("http")) {
-        return true;
+      // SECURITY: Additional IPv6 checks
+      // Check for IPv6 addresses directly (e.g., ::1, fc00::1, etc.)
+      if (hostname.includes(":")) {
+        // Block localhost IPv6
+        if (hostname === "::1" || hostname.startsWith("::1:") || hostname === "::ffff:127.0.0.1") {
+          return true;
+        }
+        // Block IPv6 private ranges
+        if (hostname.startsWith("fc") || hostname.startsWith("fd") || hostname.startsWith("fe80:")) {
+          return true;
+        }
+        // Block IPv6 link-local
+        if (hostname.startsWith("fe80:")) {
+          return true;
+        }
+      }
+
+      // SECURITY: Block common port scanning attempts
+      const port = parsed.port ? parseInt(parsed.port, 10) : (parsed.protocol === "https:" ? 443 : 80);
+      const commonInternalPorts = [
+        3000, 3001, 3002, 5000, 5001, 8000, 8001, 8008, 8080, 8081, 8443, 9000, 9001, 9090,
+      ];
+      if (commonInternalPorts.includes(port)) {
+        // Only block on localhost-like hosts
+        if (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0" || hostname === "::1") {
+          return true;
+        }
       }
 
       return false;

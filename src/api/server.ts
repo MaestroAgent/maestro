@@ -157,6 +157,7 @@ export class APIServer {
   private setupWebSocket(): void {
     const memoryStore = this.options.memoryStore;
     const WS_AUTH_TIMEOUT_MS = 5000; // 5 seconds to authenticate
+    const MAX_UNAUTHENTICATED_MESSAGES = 5; // Max messages before auth (prevent DoS)
 
     this.app.get(
       "/ws",
@@ -165,6 +166,8 @@ export class APIServer {
         // Clients must authenticate via message payload
         let authenticated = false;
         let authTimeout: ReturnType<typeof setTimeout> | null = null;
+        let unauthenticatedMessageCount = 0;
+        let addedToManager = false;
 
         // Check if auth is disabled globally
         const authDisabled = process.env.MAESTRO_API_AUTH_ENABLED === "false";
@@ -178,22 +181,40 @@ export class APIServer {
               const manager = getWebSocketManager();
               if (manager) {
                 manager.addClient(ws);
+                addedToManager = true;
               }
             } else {
               // Set authentication timeout to prevent connection exhaustion
               authTimeout = setTimeout(() => {
                 if (!authenticated) {
-                  ws.send(JSON.stringify({ type: "error", error: "Authentication timeout" }));
-                  ws.close(4001, "Authentication timeout");
+                  try {
+                    ws.send(JSON.stringify({ type: "error", error: "Authentication timeout" }));
+                    ws.close(4001, "Authentication timeout");
+                  } catch {
+                    // Connection may already be closed
+                  }
                 }
               }, WS_AUTH_TIMEOUT_MS);
 
               // Send auth required message
-              ws.send(JSON.stringify({ type: "auth_required", message: "Send auth message with token" }));
+              try {
+                ws.send(JSON.stringify({ type: "auth_required", message: "Send auth message with token" }));
+              } catch {
+                // Connection error
+              }
             }
           },
           onMessage: (event, ws) => {
             try {
+              // SECURITY: Rate limit unauthenticated messages to prevent DoS
+              if (!authenticated) {
+                unauthenticatedMessageCount++;
+                if (unauthenticatedMessageCount > MAX_UNAUTHENTICATED_MESSAGES) {
+                  ws.close(4029, "Too many unauthenticated messages");
+                  return;
+                }
+              }
+
               const data = JSON.parse(event.data.toString());
 
               // Handle auth message if not yet authenticated
@@ -204,32 +225,55 @@ export class APIServer {
                   authTimeout = null;
                 }
 
+                // SECURITY: validateWebSocketToken should be async but check implementation
                 if (validateWebSocketToken(memoryStore, data.token)) {
                   authenticated = true;
                   const manager = getWebSocketManager();
-                  if (manager) {
+                  if (manager && !addedToManager) {
                     manager.addClient(ws);
+                    addedToManager = true;
                   }
-                  ws.send(JSON.stringify({ type: "auth", success: true }));
+                  try {
+                    ws.send(JSON.stringify({ type: "auth", success: true }));
+                  } catch {
+                    // Connection error
+                  }
                 } else {
-                  ws.send(JSON.stringify({ type: "auth", success: false, error: "Invalid token" }));
+                  try {
+                    ws.send(JSON.stringify({ type: "auth", success: false, error: "Invalid token" }));
+                  } catch {
+                    // Connection error
+                  }
                   ws.close(4001, "Unauthorized");
                 }
                 return;
               }
 
-              // Reject messages from unauthenticated clients
+              // SECURITY: Reject messages from unauthenticated clients
               if (!authenticated) {
-                ws.send(JSON.stringify({ type: "error", error: "Not authenticated" }));
+                try {
+                  ws.send(JSON.stringify({ type: "error", error: "Not authenticated" }));
+                } catch {
+                  // Connection error
+                }
                 return;
               }
 
+              // Handle authenticated messages
               if (data.type === "ping") {
-                ws.send(JSON.stringify({ type: "pong", timestamp: new Date().toISOString() }));
+                try {
+                  ws.send(JSON.stringify({ type: "pong", timestamp: new Date().toISOString() }));
+                } catch {
+                  // Connection error
+                }
               }
-            } catch {
+            } catch (error) {
               // Log malformed messages for security auditing (but don't expose to client)
-              console.warn("WebSocket received malformed message");
+              if (error instanceof SyntaxError) {
+                console.warn("WebSocket received malformed JSON message");
+              } else {
+                console.warn("WebSocket message processing error:", error instanceof Error ? error.message : String(error));
+              }
             }
           },
           onClose: (_event, ws) => {
@@ -239,9 +283,12 @@ export class APIServer {
               authTimeout = null;
             }
 
-            const manager = getWebSocketManager();
-            if (manager) {
-              manager.removeClient(ws);
+            // Remove from manager if added
+            if (addedToManager) {
+              const manager = getWebSocketManager();
+              if (manager) {
+                manager.removeClient(ws);
+              }
             }
           },
           onError: (_event, ws) => {
@@ -251,9 +298,12 @@ export class APIServer {
               authTimeout = null;
             }
 
-            const manager = getWebSocketManager();
-            if (manager) {
-              manager.removeClient(ws);
+            // Remove from manager if added
+            if (addedToManager) {
+              const manager = getWebSocketManager();
+              if (manager) {
+                manager.removeClient(ws);
+              }
             }
           },
         };
