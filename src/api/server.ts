@@ -52,8 +52,11 @@ export class APIServer {
 
   private setupMiddleware(): void {
     // CORS - parse comma-separated origins from env var
+    // SECURITY: Defaults to localhost only, not wildcard, to prevent cross-origin attacks
     const corsOrigins = process.env.MAESTRO_CORS_ORIGINS;
-    const origin = corsOrigins ? corsOrigins.split(",").map((o) => o.trim()) : "*";
+    const origin = corsOrigins
+      ? corsOrigins.split(",").map((o) => o.trim())
+      : ["http://localhost:3000", "http://127.0.0.1:3000"];
 
     this.app.use(
       "*",
@@ -61,6 +64,8 @@ export class APIServer {
         origin,
         allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
         allowHeaders: ["Content-Type", "Authorization"],
+        // Don't send credentials with wildcard origins
+        credentials: corsOrigins !== "*",
       })
     );
 
@@ -148,10 +153,16 @@ export class APIServer {
 
     this.app.get(
       "/ws",
-      this.upgradeWebSocket((c) => {
-        // Get token from query parameter
-        const token = c.req.query("token");
-        let authenticated = validateWebSocketToken(memoryStore, token);
+      this.upgradeWebSocket(() => {
+        // SECURITY: Don't accept token from query parameter (it gets logged in access logs)
+        // Clients must authenticate via message payload
+        let authenticated = false;
+
+        // Check if auth is disabled globally
+        const authDisabled = process.env.MAESTRO_API_AUTH_ENABLED === "false";
+        if (authDisabled) {
+          authenticated = true;
+        }
 
         return {
           onOpen: (_event, ws) => {
@@ -160,6 +171,9 @@ export class APIServer {
               if (manager) {
                 manager.addClient(ws);
               }
+            } else {
+              // Send auth required message
+              ws.send(JSON.stringify({ type: "auth_required", message: "Send auth message with token" }));
             }
           },
           onMessage: (event, ws) => {
@@ -192,7 +206,8 @@ export class APIServer {
                 ws.send(JSON.stringify({ type: "pong", timestamp: new Date().toISOString() }));
               }
             } catch {
-              // Ignore malformed messages
+              // Log malformed messages for security auditing (but don't expose to client)
+              console.warn("WebSocket received malformed message");
             }
           },
           onClose: (_event, ws) => {

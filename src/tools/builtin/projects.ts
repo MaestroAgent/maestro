@@ -103,6 +103,15 @@ function injectGitHubToken(url: string): string {
 }
 
 /**
+ * Sanitize error messages to remove any embedded tokens/credentials
+ * Removes patterns like https://TOKEN@github.com/...
+ */
+function sanitizeErrorMessage(message: string): string {
+  // Remove tokens from URLs (https://TOKEN@host/...)
+  return message.replace(/https:\/\/[^@\s]+@/g, "https://***@");
+}
+
+/**
  * Extract project name from git URL
  */
 function getProjectNameFromUrl(url: string): string {
@@ -208,7 +217,8 @@ export const cloneProjectTool: ToolDefinition = defineTool(
       });
 
       if (result.status !== 0) {
-        const errorMsg = result.stderr || "Unknown error";
+        // Sanitize error to remove any embedded tokens
+        const errorMsg = sanitizeErrorMessage(result.stderr || "Unknown error");
         const hint = !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
           ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
           : "";
@@ -229,7 +239,9 @@ export const cloneProjectTool: ToolDefinition = defineTool(
         project_path: projectPath,
       };
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
+      // Sanitize error to remove any embedded tokens
+      const rawErrorMsg = error instanceof Error ? error.message : String(error);
+      const errorMsg = sanitizeErrorMessage(rawErrorMsg);
       const hint = !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
         ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
         : "";

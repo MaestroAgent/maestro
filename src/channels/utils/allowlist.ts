@@ -2,6 +2,10 @@
  * Allowlist utility for user authorization in channels
  */
 
+// Track whether warnings have been shown to avoid spam
+let telegramWarningShown = false;
+let slackWarningShown = false;
+
 /**
  * Parse a comma-separated allowlist from an environment variable
  * Returns null if the env var is not set or empty (meaning all users allowed)
@@ -21,6 +25,17 @@ export function parseAllowlist(envVar: string | undefined): Set<string> | null {
   }
 
   return new Set(ids);
+}
+
+/**
+ * Log a security warning about empty allowlist
+ */
+function logAllowlistWarning(channel: string, envVarName: string): void {
+  console.warn(
+    `\n⚠️  SECURITY WARNING: No ${channel} allowlist configured (${envVarName} not set).` +
+    `\n   ALL ${channel} users will be able to interact with the bot.` +
+    `\n   Set ${envVarName} to a comma-separated list of allowed user IDs for production use.\n`
+  );
 }
 
 /**
@@ -44,6 +59,11 @@ let slackAllowlist: Set<string> | null | undefined;
 export function isAllowedTelegramUser(chatId: number | string): boolean {
   if (telegramAllowlist === undefined) {
     telegramAllowlist = parseAllowlist(process.env.MAESTRO_TELEGRAM_ALLOWED_USERS);
+    // Show warning on first check if allowlist is empty
+    if (telegramAllowlist === null && !telegramWarningShown) {
+      telegramWarningShown = true;
+      logAllowlistWarning("Telegram", "MAESTRO_TELEGRAM_ALLOWED_USERS");
+    }
   }
   return isAllowed(String(chatId), telegramAllowlist);
 }
@@ -54,6 +74,11 @@ export function isAllowedTelegramUser(chatId: number | string): boolean {
 export function isAllowedSlackUser(userId: string): boolean {
   if (slackAllowlist === undefined) {
     slackAllowlist = parseAllowlist(process.env.MAESTRO_SLACK_ALLOWED_USERS);
+    // Show warning on first check if allowlist is empty
+    if (slackAllowlist === null && !slackWarningShown) {
+      slackWarningShown = true;
+      logAllowlistWarning("Slack", "MAESTRO_SLACK_ALLOWED_USERS");
+    }
   }
   return isAllowed(userId, slackAllowlist);
 }

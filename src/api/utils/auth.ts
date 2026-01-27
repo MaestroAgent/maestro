@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes, timingSafeEqual } from "crypto";
 
 const KEY_PREFIX = "msk_";
 const KEY_LENGTH = 32; // 32 bytes = 64 hex chars
@@ -7,6 +7,20 @@ export interface GeneratedKey {
   key: string;
   keyHash: string;
   keyPrefix: string;
+}
+
+/**
+ * Timing-safe comparison of two strings
+ * Prevents timing attacks on sensitive comparisons
+ */
+export function timingSafeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    // Still do a comparison to maintain constant time even when lengths differ
+    const dummy = Buffer.alloc(a.length);
+    timingSafeEqual(dummy, dummy);
+    return false;
+  }
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
 }
 
 /**

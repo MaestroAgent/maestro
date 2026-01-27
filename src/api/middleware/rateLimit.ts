@@ -9,6 +9,40 @@ interface RateLimitConfig {
 }
 
 /**
+ * Parse trusted proxies from environment variable
+ * Format: comma-separated list of IP addresses or CIDR ranges
+ */
+function parseTrustedProxies(): Set<string> {
+  const proxies = process.env.MAESTRO_TRUSTED_PROXIES;
+  if (!proxies) {
+    return new Set();
+  }
+  return new Set(
+    proxies.split(",").map((p) => p.trim()).filter(Boolean)
+  );
+}
+
+// Cache trusted proxies
+let trustedProxies: Set<string> | null = null;
+
+function getTrustedProxies(): Set<string> {
+  if (trustedProxies === null) {
+    trustedProxies = parseTrustedProxies();
+  }
+  return trustedProxies;
+}
+
+/**
+ * Check if an IP is in the trusted proxies list
+ */
+function isTrustedProxy(ip: string | undefined): boolean {
+  if (!ip) return false;
+  const proxies = getTrustedProxies();
+  if (proxies.size === 0) return false;
+  return proxies.has(ip);
+}
+
+/**
  * Sliding window entry for rate tracking
  */
 interface RateLimitEntry {
@@ -159,9 +193,12 @@ function getRateLimitConfig(method: string, path: string): RateLimitConfig | nul
 /**
  * Extract client identifier for rate limiting
  * Uses API key if authenticated, IP address otherwise
+ *
+ * SECURITY: Only trusts X-Forwarded-For and X-Real-IP headers from configured trusted proxies
+ * to prevent rate limit bypass via header spoofing. Configure MAESTRO_TRUSTED_PROXIES env var.
  */
 function getClientId(c: { req: { header: (name: string) => string | undefined }; env?: { incoming?: { socket?: { remoteAddress?: string } } } }): string {
-  // Try API key first
+  // Try API key first (most reliable identifier)
   const authHeader = c.req.header("Authorization");
   if (authHeader?.startsWith("Bearer ")) {
     const apiKey = authHeader.slice(7);
@@ -170,19 +207,24 @@ function getClientId(c: { req: { header: (name: string) => string | undefined };
     }
   }
 
-  // Fall back to IP address
-  const forwardedFor = c.req.header("X-Forwarded-For");
-  if (forwardedFor) {
-    return `ip:${forwardedFor.split(",")[0].trim()}`;
-  }
-
-  const realIp = c.req.header("X-Real-IP");
-  if (realIp) {
-    return `ip:${realIp}`;
-  }
-
-  // Try to get from socket (may not be available in all environments)
+  // Get direct connection IP
   const remoteAddress = c.env?.incoming?.socket?.remoteAddress;
+
+  // Only trust forwarded headers if request comes from a trusted proxy
+  if (isTrustedProxy(remoteAddress)) {
+    const forwardedFor = c.req.header("X-Forwarded-For");
+    if (forwardedFor) {
+      // Get the first (client) IP from the chain
+      return `ip:${forwardedFor.split(",")[0].trim()}`;
+    }
+
+    const realIp = c.req.header("X-Real-IP");
+    if (realIp) {
+      return `ip:${realIp}`;
+    }
+  }
+
+  // Use direct connection IP
   if (remoteAddress) {
     return `ip:${remoteAddress}`;
   }

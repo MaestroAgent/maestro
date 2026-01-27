@@ -28,6 +28,7 @@ describe("Auth Middleware", () => {
     app.get("/health", (c) => c.json({ message: "healthy" }));
     app.get("/dashboard/test", (c) => c.json({ message: "dashboard" }));
     app.get("/agents", (c) => c.json({ message: "agents" }));
+    app.get("/sessions", (c) => c.json({ message: "sessions" }));
   });
 
   afterEach(() => {
@@ -56,9 +57,10 @@ describe("Auth Middleware", () => {
       expect(res.status).toBe(200);
     });
 
-    it("should allow access to dashboard paths without auth", async () => {
+    // Dashboard is no longer public - requires auth for security (H4)
+    it("should require auth for dashboard paths", async () => {
       const res = await app.request("/dashboard/test");
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(401);
     });
   });
 

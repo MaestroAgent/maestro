@@ -1,29 +1,49 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
+import { randomUUID } from "crypto";
 import { Agent } from "../../core/agent.js";
 import { AgentContext } from "../../core/types.js";
-import { MemoryStore } from "../../memory/store.js";
+import { MemoryStore, ApiKeyRecord } from "../../memory/store.js";
+
+// Type for context with API key
+type Variables = {
+  apiKey?: ApiKeyRecord;
+};
 
 export interface ChatRoutesOptions {
   createOrchestrator: (context: AgentContext) => Agent;
   memoryStore: MemoryStore;
 }
 
-export function createChatRoutes(options: ChatRoutesOptions): Hono {
-  const app = new Hono();
+export function createChatRoutes(options: ChatRoutesOptions): Hono<{ Variables: Variables }> {
+  const app = new Hono<{ Variables: Variables }>();
   const { createOrchestrator, memoryStore } = options;
+
+  /**
+   * Check if user can access a session (owner or admin)
+   */
+  function canAccessSession(session: { apiKeyId?: string }, apiKey: ApiKeyRecord | undefined): boolean {
+    if (!apiKey) {
+      return true;
+    }
+    if (apiKey.isAdmin) {
+      return true;
+    }
+    return session.apiKeyId === apiKey.id;
+  }
 
   /**
    * POST /chat
    * Send a message and get a streaming response
    *
-   * Body: { message: string, sessionId?: string, stream?: boolean }
+   * Body: { message: string, stream?: boolean }
    * Response: SSE stream or JSON
+   *
+   * Note: Session IDs are generated server-side to prevent session fixation attacks
    */
   app.post("/", async (c) => {
     const body = await c.req.json<{
       message: string;
-      sessionId?: string;
       stream?: boolean;
     }>();
 
@@ -31,9 +51,11 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono {
       return c.json({ error: "message is required" }, 400);
     }
 
-    // Get or create session
-    const sessionId = body.sessionId ?? `api-${Date.now()}`;
-    const session = memoryStore.getOrCreateSession("api", sessionId);
+    const apiKey = c.get("apiKey") as ApiKeyRecord | undefined;
+
+    // Generate session ID server-side (prevents session fixation)
+    const userId = `api-${randomUUID()}`;
+    const session = memoryStore.getOrCreateSession("api", userId, apiKey?.id);
     const context = memoryStore.createContext(session);
 
     const orchestrator = createOrchestrator(context);
@@ -113,11 +135,18 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono {
    */
   app.get("/:sessionId", async (c) => {
     const sessionId = c.req.param("sessionId");
+    const apiKey = c.get("apiKey") as ApiKeyRecord | undefined;
 
-    const history = memoryStore.loadHistory(sessionId);
-    if (history.length === 0) {
+    const session = memoryStore.getSession(sessionId);
+    if (!session) {
       return c.json({ error: "Session not found" }, 404);
     }
+
+    if (!canAccessSession(session, apiKey)) {
+      return c.json({ error: "Access denied" }, 403);
+    }
+
+    const history = memoryStore.loadHistory(sessionId);
 
     return c.json({
       sessionId,
@@ -131,6 +160,16 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono {
    */
   app.delete("/:sessionId", async (c) => {
     const sessionId = c.req.param("sessionId");
+    const apiKey = c.get("apiKey") as ApiKeyRecord | undefined;
+
+    const session = memoryStore.getSession(sessionId);
+    if (!session) {
+      return c.json({ error: "Session not found" }, 404);
+    }
+
+    if (!canAccessSession(session, apiKey)) {
+      return c.json({ error: "Access denied" }, 403);
+    }
 
     memoryStore.clearSession(sessionId);
 

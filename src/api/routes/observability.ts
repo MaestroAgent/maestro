@@ -3,6 +3,20 @@ import { streamSSE } from "hono/streaming";
 import { readFileSync, existsSync, statSync, watchFile, unwatchFile } from "fs";
 import { getBudgetGuard } from "../../observability/budget.js";
 import { LogEvent } from "../../observability/types.js";
+import { ApiKeyRecord } from "../../memory/store.js";
+
+// Type for context with API key
+type Variables = {
+  apiKey?: ApiKeyRecord;
+};
+
+// Pagination bounds
+const MIN_TAIL = 1;
+const MAX_TAIL = 1000;
+const DEFAULT_TAIL = 50;
+
+// Budget override limits
+const MAX_OVERRIDE_MINUTES = 480; // 8 hours maximum
 
 export interface ObservabilityRoutesOptions {
   logFile: string;
@@ -10,19 +24,20 @@ export interface ObservabilityRoutesOptions {
 
 export function createObservabilityRoutes(
   options: ObservabilityRoutesOptions
-): Hono {
-  const app = new Hono();
+): Hono<{ Variables: Variables }> {
+  const app = new Hono<{ Variables: Variables }>();
   const { logFile } = options;
 
   /**
    * GET /observability/events
    * Stream log events via SSE
    * Query params:
-   *   - tail: number of recent events to return (default 50)
+   *   - tail: number of recent events to return (default 50, max 1000)
    *   - follow: if "true", stream new events as they arrive
    */
   app.get("/events", async (c) => {
-    const tail = parseInt(c.req.query("tail") ?? "50", 10);
+    const tailParam = parseInt(c.req.query("tail") ?? String(DEFAULT_TAIL), 10);
+    const tail = Math.min(Math.max(tailParam || DEFAULT_TAIL, MIN_TAIL), MAX_TAIL);
     const follow = c.req.query("follow") === "true";
 
     if (!existsSync(logFile)) {
@@ -209,8 +224,16 @@ export function createObservabilityRoutes(
   /**
    * POST /observability/budget/override
    * Override budget limit temporarily
+   * Requires admin API key
    */
   app.post("/budget/override", async (c) => {
+    const apiKey = c.get("apiKey") as ApiKeyRecord | undefined;
+
+    // Require admin privileges for budget override
+    if (apiKey && !apiKey.isAdmin) {
+      return c.json({ error: "Admin privileges required for budget override" }, 403);
+    }
+
     const budgetGuard = getBudgetGuard();
 
     if (!budgetGuard) {
@@ -218,13 +241,18 @@ export function createObservabilityRoutes(
     }
 
     const body = await c.req.json<{ durationMinutes?: number }>().catch(() => ({ durationMinutes: undefined }));
-    const duration = body.durationMinutes ?? 60;
+    // Cap duration at MAX_OVERRIDE_MINUTES to prevent abuse
+    const requestedDuration = body.durationMinutes ?? 60;
+    const duration = Math.min(Math.max(requestedDuration, 1), MAX_OVERRIDE_MINUTES);
 
     budgetGuard.override(duration);
 
     return c.json({
       success: true,
       message: `Budget override active for ${duration} minutes`,
+      requestedDuration,
+      actualDuration: duration,
+      maxAllowed: MAX_OVERRIDE_MINUTES,
     });
   });
 

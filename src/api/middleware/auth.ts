@@ -3,30 +3,24 @@ import { MemoryStore } from "../../memory/store.js";
 import { extractBearerToken, isValidKeyFormat } from "../utils/auth.js";
 
 // Paths that don't require authentication
+// Note: Dashboard removed from public paths for security - requires auth in production
 const PUBLIC_PATHS = ["/", "/health"];
-const PUBLIC_PREFIXES = ["/dashboard"];
 
 /**
  * Check if a path should skip authentication
  */
 function isPublicPath(path: string): boolean {
-  if (PUBLIC_PATHS.includes(path)) {
-    return true;
-  }
-
-  for (const prefix of PUBLIC_PREFIXES) {
-    if (path.startsWith(prefix)) {
-      return true;
-    }
-  }
-
-  return false;
+  return PUBLIC_PATHS.includes(path);
 }
 
 /**
  * Create auth middleware factory
+ *
+ * SECURITY: Auth is ENABLED by default. Set MAESTRO_API_AUTH_ENABLED=false to disable.
+ * This is intentionally opt-out to prevent accidental production deployment without auth.
  */
 export function createAuthMiddleware(memoryStore: MemoryStore) {
+  // Auth enabled by default - must explicitly set to "false" to disable
   const authEnabled = process.env.MAESTRO_API_AUTH_ENABLED !== "false";
 
   return async function authMiddleware(c: Context, next: Next) {

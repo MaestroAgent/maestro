@@ -8,6 +8,39 @@ export interface LoggerOptions {
   console?: boolean;
 }
 
+/**
+ * Sanitize stack traces to remove sensitive file paths
+ * Replaces absolute paths with relative paths from project root
+ */
+function sanitizeStackTrace(stack: string | undefined): string | undefined {
+  if (!stack) return undefined;
+
+  // Get common path prefixes to sanitize
+  const cwd = process.cwd();
+
+  // Replace absolute paths with relative or generic paths
+  let sanitized = stack
+    // Replace CWD with relative path indicator
+    .replace(new RegExp(escapeRegExp(cwd), "g"), ".")
+    // Replace home directory paths
+    .replace(/\/Users\/[^/]+\//g, "~/")
+    .replace(/\/home\/[^/]+\//g, "~/")
+    .replace(/C:\\Users\\[^\\]+\\/gi, "~\\")
+    // Remove node_modules internal paths (keep package name)
+    .replace(/node_modules\/([^/]+)\/[^:]+/g, "node_modules/$1/...")
+    // Remove line numbers from internal node modules to reduce information
+    .replace(/(node:internal\/[^:]+):\d+:\d+/g, "$1");
+
+  return sanitized;
+}
+
+/**
+ * Escape string for use in RegExp
+ */
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 const LOG_LEVELS: Record<LogLevel, number> = {
   debug: 0,
   info: 1,
@@ -129,7 +162,9 @@ export class Logger {
     context?: { sessionId?: string; agentName?: string; additionalContext?: Record<string, unknown> }
   ): void {
     const errorMessage = error instanceof Error ? error.message : error;
-    const stack = error instanceof Error ? error.stack : undefined;
+    // Sanitize stack traces to prevent leaking file paths
+    const rawStack = error instanceof Error ? error.stack : undefined;
+    const stack = sanitizeStackTrace(rawStack);
 
     this.output(
       this.createEvent(
