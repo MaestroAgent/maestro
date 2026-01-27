@@ -42,14 +42,38 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono<{ Variables: 
    * Note: Session IDs are generated server-side to prevent session fixation attacks
    */
   app.post("/", async (c) => {
-    const body = await c.req.json<{
-      message: string;
-      stream?: boolean;
-    }>();
+    // Maximum message size (50KB should handle most legitimate requests)
+    const MAX_MESSAGE_LENGTH = 50000;
 
-    if (!body.message) {
+    const body = await c.req.json<Record<string, unknown>>();
+
+    // Validate message exists and is a string
+    if (body.message === undefined || body.message === null) {
       return c.json({ error: "message is required" }, 400);
     }
+
+    if (typeof body.message !== "string") {
+      return c.json({ error: "message must be a string" }, 400);
+    }
+
+    if (body.message.length === 0) {
+      return c.json({ error: "message cannot be empty" }, 400);
+    }
+
+    if (body.message.length > MAX_MESSAGE_LENGTH) {
+      return c.json(
+        {
+          error: `message exceeds maximum length of ${MAX_MESSAGE_LENGTH} characters`,
+          maxLength: MAX_MESSAGE_LENGTH,
+          actualLength: body.message.length,
+        },
+        413
+      );
+    }
+
+    // Now safe to use
+    const message = body.message;
+    const stream = body.stream !== false; // default to streaming
 
     const apiKey = c.get("apiKey") as ApiKeyRecord | undefined;
 
@@ -61,9 +85,9 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono<{ Variables: 
     const orchestrator = createOrchestrator(context);
 
     // Non-streaming mode
-    if (body.stream === false) {
+    if (!stream) {
       let response = "";
-      for await (const chunk of orchestrator.run(body.message)) {
+      for await (const chunk of orchestrator.run(message)) {
         if (chunk.type === "text") {
           response += chunk.text;
         }
@@ -84,16 +108,16 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono<{ Variables: 
     }
 
     // Streaming mode (default)
-    return streamSSE(c, async (stream) => {
+    return streamSSE(c, async (sseStream) => {
       try {
-        for await (const chunk of orchestrator.run(body.message)) {
+        for await (const chunk of orchestrator.run(message)) {
           if (chunk.type === "text") {
-            await stream.writeSSE({
+            await sseStream.writeSSE({
               event: "text",
               data: JSON.stringify({ text: chunk.text }),
             });
           } else if (chunk.type === "tool_call") {
-            await stream.writeSSE({
+            await sseStream.writeSSE({
               event: "tool_call",
               data: JSON.stringify({
                 name: chunk.toolCall.name,
@@ -101,7 +125,7 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono<{ Variables: 
               }),
             });
           } else if (chunk.type === "done") {
-            await stream.writeSSE({
+            await sseStream.writeSSE({
               event: "done",
               data: JSON.stringify({
                 sessionId: context.sessionId,
@@ -119,7 +143,7 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono<{ Variables: 
           memoryStore.updateSessionMetadata(context.sessionId, context.metadata);
         }
       } catch (error) {
-        await stream.writeSSE({
+        await sseStream.writeSSE({
           event: "error",
           data: JSON.stringify({
             error: error instanceof Error ? error.message : String(error),

@@ -240,9 +240,21 @@ export function createObservabilityRoutes(
       return c.json({ error: "Budget guard not initialized" }, 500);
     }
 
-    const body = await c.req.json<{ durationMinutes?: number }>().catch(() => ({ durationMinutes: undefined }));
+    const body = await c.req
+      .json<{ durationMinutes?: unknown }>()
+      .catch(() => ({} as { durationMinutes?: unknown }));
+
+    // Validate durationMinutes is a valid number
+    const rawDuration = body.durationMinutes;
+    if (rawDuration !== undefined && rawDuration !== null) {
+      if (typeof rawDuration !== "number" || !Number.isFinite(rawDuration) || rawDuration < 0) {
+        return c.json({ error: "durationMinutes must be a positive number" }, 400);
+      }
+    }
+
     // Cap duration at MAX_OVERRIDE_MINUTES to prevent abuse
-    const requestedDuration = body.durationMinutes ?? 60;
+    const requestedDuration =
+      typeof rawDuration === "number" && Number.isFinite(rawDuration) ? rawDuration : 60;
     const duration = Math.min(Math.max(requestedDuration, 1), MAX_OVERRIDE_MINUTES);
 
     budgetGuard.override(duration);

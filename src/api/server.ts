@@ -54,18 +54,24 @@ export class APIServer {
     // CORS - parse comma-separated origins from env var
     // SECURITY: Defaults to localhost only, not wildcard, to prevent cross-origin attacks
     const corsOrigins = process.env.MAESTRO_CORS_ORIGINS;
-    const origin = corsOrigins
+    const originList = corsOrigins
       ? corsOrigins.split(",").map((o) => o.trim())
       : ["http://localhost:3000", "http://127.0.0.1:3000"];
+
+    // Check if wildcard is used (credentials MUST be false with wildcard)
+    const hasWildcard = originList.includes("*");
+    if (hasWildcard && originList.length > 1) {
+      console.warn("CORS: Wildcard (*) mixed with other origins - using wildcard only");
+    }
 
     this.app.use(
       "*",
       cors({
-        origin,
+        origin: hasWildcard ? "*" : originList,
         allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
         allowHeaders: ["Content-Type", "Authorization"],
-        // Don't send credentials with wildcard origins
-        credentials: corsOrigins !== "*",
+        // SECURITY: Never send credentials with wildcard origin
+        credentials: !hasWildcard,
       })
     );
 
@@ -150,6 +156,7 @@ export class APIServer {
 
   private setupWebSocket(): void {
     const memoryStore = this.options.memoryStore;
+    const WS_AUTH_TIMEOUT_MS = 5000; // 5 seconds to authenticate
 
     this.app.get(
       "/ws",
@@ -157,6 +164,7 @@ export class APIServer {
         // SECURITY: Don't accept token from query parameter (it gets logged in access logs)
         // Clients must authenticate via message payload
         let authenticated = false;
+        let authTimeout: ReturnType<typeof setTimeout> | null = null;
 
         // Check if auth is disabled globally
         const authDisabled = process.env.MAESTRO_API_AUTH_ENABLED === "false";
@@ -172,6 +180,14 @@ export class APIServer {
                 manager.addClient(ws);
               }
             } else {
+              // Set authentication timeout to prevent connection exhaustion
+              authTimeout = setTimeout(() => {
+                if (!authenticated) {
+                  ws.send(JSON.stringify({ type: "error", error: "Authentication timeout" }));
+                  ws.close(4001, "Authentication timeout");
+                }
+              }, WS_AUTH_TIMEOUT_MS);
+
               // Send auth required message
               ws.send(JSON.stringify({ type: "auth_required", message: "Send auth message with token" }));
             }
@@ -182,6 +198,12 @@ export class APIServer {
 
               // Handle auth message if not yet authenticated
               if (!authenticated && data.type === "auth" && data.token) {
+                // Clear timeout on auth attempt
+                if (authTimeout) {
+                  clearTimeout(authTimeout);
+                  authTimeout = null;
+                }
+
                 if (validateWebSocketToken(memoryStore, data.token)) {
                   authenticated = true;
                   const manager = getWebSocketManager();
@@ -211,12 +233,24 @@ export class APIServer {
             }
           },
           onClose: (_event, ws) => {
+            // Clear timeout on close
+            if (authTimeout) {
+              clearTimeout(authTimeout);
+              authTimeout = null;
+            }
+
             const manager = getWebSocketManager();
             if (manager) {
               manager.removeClient(ws);
             }
           },
           onError: (_event, ws) => {
+            // Clear timeout on error
+            if (authTimeout) {
+              clearTimeout(authTimeout);
+              authTimeout = null;
+            }
+
             const manager = getWebSocketManager();
             if (manager) {
               manager.removeClient(ws);

@@ -33,9 +33,25 @@ export function parseAllowlist(envVar: string | undefined): Set<string> | null {
 function logAllowlistWarning(channel: string, envVarName: string): void {
   console.warn(
     `\n⚠️  SECURITY WARNING: No ${channel} allowlist configured (${envVarName} not set).` +
-    `\n   ALL ${channel} users will be able to interact with the bot.` +
-    `\n   Set ${envVarName} to a comma-separated list of allowed user IDs for production use.\n`
+      `\n   ALL ${channel} users will be able to interact with the bot.` +
+      `\n   Set ${envVarName} to a comma-separated list of allowed user IDs for production use.\n`
   );
+}
+
+/**
+ * Check allowlist configuration and log warnings at startup
+ * Call this from application initialization
+ */
+export function checkAllowlistConfiguration(): void {
+  const telegramAllowlist = parseAllowlist(process.env.MAESTRO_TELEGRAM_ALLOWED_USERS);
+  const slackAllowlist = parseAllowlist(process.env.MAESTRO_SLACK_ALLOWED_USERS);
+
+  if (telegramAllowlist === null) {
+    logAllowlistWarning("Telegram", "MAESTRO_TELEGRAM_ALLOWED_USERS");
+  }
+  if (slackAllowlist === null) {
+    logAllowlistWarning("Slack", "MAESTRO_SLACK_ALLOWED_USERS");
+  }
 }
 
 /**

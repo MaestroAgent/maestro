@@ -229,8 +229,15 @@ function getClientId(c: { req: { header: (name: string) => string | undefined };
     return `ip:${remoteAddress}`;
   }
 
+  // Log when we can't determine client IP (suspicious in production)
+  console.warn("Rate limit: Could not determine client IP address");
+
+  // Return unknown identifier - stricter limits will be applied
   return "ip:unknown";
 }
+
+// Stricter rate limits for unknown IPs (10 requests per minute)
+const UNKNOWN_IP_RATE_LIMIT: RateLimitConfig = { limit: 10, windowMs: 60000 };
 
 /**
  * Create rate limiting middleware
@@ -246,7 +253,7 @@ export function createRateLimitMiddleware(): MiddlewareHandler {
     const path = new URL(c.req.url).pathname;
 
     // Get rate limit config for this route
-    const config = getRateLimitConfig(method, path);
+    let config = getRateLimitConfig(method, path);
     if (!config) {
       return next();
     }
@@ -255,6 +262,11 @@ export function createRateLimitMiddleware(): MiddlewareHandler {
     const store = getStore();
     const routeKey = `${method}:${path}`;
     const storeKey = `${clientId}:${routeKey}`;
+
+    // Apply stricter limits for unidentified clients
+    if (clientId === "ip:unknown") {
+      config = UNKNOWN_IP_RATE_LIMIT;
+    }
 
     const result = store.check(storeKey, config.limit, config.windowMs);
 

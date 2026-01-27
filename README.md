@@ -197,11 +197,37 @@ tools:
 | `DAILY_BUDGET_LIMIT` | No | Maximum daily API cost in USD |
 | `MONTHLY_BUDGET_LIMIT` | No | Maximum monthly API cost in USD |
 
-## Security Note
+## Security
 
-The REST API does not include authentication by default. For production deployments:
-- Run behind a reverse proxy with authentication (nginx, Cloudflare Access, etc.)
-- Or use the CLI/Telegram/Slack channels which have their own auth
+### API Authentication
+
+The REST API requires API key authentication by default. Generate keys using the admin interface or seed via environment variable:
+
+```bash
+# Set a pre-generated API key (format: msk_<64 hex chars>)
+MAESTRO_API_KEY=msk_abc123...
+
+# Disable auth for development only (NOT recommended for production)
+MAESTRO_API_AUTH_ENABLED=false
+```
+
+Pass the API key in requests:
+```bash
+curl http://localhost:3000/chat \
+  -H "Authorization: Bearer msk_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello"}'
+```
+
+### Breaking Changes (v0.2.0)
+
+**Dashboard Authentication Required**
+
+The `/dashboard` route now requires API key authentication. Previously it was publicly accessible.
+
+**Migration:**
+- Ensure API key is passed when accessing dashboard
+- For development, set `MAESTRO_API_AUTH_ENABLED=false` to disable auth (not for production)
 
 ## API Reference
 
