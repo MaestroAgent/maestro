@@ -14,8 +14,17 @@ const DEFAULT_LIMIT = 50;
 /**
  * Validate and bound pagination parameters
  */
-function boundPagination(limitStr: string | undefined, offsetStr: string | undefined): { limit: number; offset: number } {
-  const limit = Math.min(Math.max(parseInt(limitStr ?? String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT, MIN_LIMIT), MAX_LIMIT);
+function boundPagination(
+  limitStr: string | undefined,
+  offsetStr: string | undefined
+): { limit: number; offset: number } {
+  const limit = Math.min(
+    Math.max(
+      parseInt(limitStr ?? String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT,
+      MIN_LIMIT
+    ),
+    MAX_LIMIT
+  );
   const offset = Math.max(parseInt(offsetStr ?? "0", 10) || 0, 0);
   return { limit, offset };
 }
@@ -24,14 +33,19 @@ export interface SessionRoutesOptions {
   memoryStore: MemoryStore;
 }
 
-export function createSessionRoutes(options: SessionRoutesOptions): Hono<{ Variables: Variables }> {
+export function createSessionRoutes(
+  options: SessionRoutesOptions
+): Hono<{ Variables: Variables }> {
   const app = new Hono<{ Variables: Variables }>();
   const { memoryStore } = options;
 
   /**
    * Check if user can access a session (owner or admin)
    */
-  function canAccessSession(session: { apiKeyId?: string }, apiKey: ApiKeyRecord | undefined): boolean {
+  function canAccessSession(
+    session: { apiKeyId?: string },
+    apiKey: ApiKeyRecord | undefined
+  ): boolean {
     if (!apiKey) {
       // Auth disabled, allow access
       return true;
@@ -103,7 +117,10 @@ export function createSessionRoutes(options: SessionRoutesOptions): Hono<{ Varia
   app.get("/:id/messages", async (c) => {
     const sessionId = c.req.param("id");
     const apiKey = c.get("apiKey") as ApiKeyRecord | undefined;
-    const { limit, offset } = boundPagination(c.req.query("limit"), c.req.query("offset"));
+    const { limit, offset } = boundPagination(
+      c.req.query("limit"),
+      c.req.query("offset")
+    );
 
     const session = memoryStore.getSession(sessionId);
     if (!session) {

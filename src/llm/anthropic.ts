@@ -138,7 +138,9 @@ export class AnthropicProvider implements LLMProvider {
 // Helper to extract tool calls from a final response
 export function extractToolCalls(response: Anthropic.Message): ToolCall[] {
   return response.content
-    .filter((block): block is Anthropic.ToolUseBlock => block.type === "tool_use")
+    .filter(
+      (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
+    )
     .map((block) => ({
       id: block.id,
       name: block.name,

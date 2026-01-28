@@ -121,15 +121,12 @@ export function createAgentTools(
         value: {
           type: "string",
           description:
-            "New value for the field. For tools, provide a JSON array like [\"calculator\", \"datetime\"]",
+            'New value for the field. For tools, provide a JSON array like ["calculator", "datetime"]',
         },
       },
       required: ["name", "field", "value"],
     },
-    execute: async (
-      args: Record<string, unknown>,
-      context: AgentContext
-    ) => {
+    execute: async (args: Record<string, unknown>, context: AgentContext) => {
       const name = args.name as string;
       const field = args.field as string;
       const value = args.value as string;

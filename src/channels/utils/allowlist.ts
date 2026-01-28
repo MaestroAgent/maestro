@@ -43,8 +43,12 @@ function logAllowlistWarning(channel: string, envVarName: string): void {
  * Call this from application initialization
  */
 export function checkAllowlistConfiguration(): void {
-  const telegramAllowlist = parseAllowlist(process.env.MAESTRO_TELEGRAM_ALLOWED_USERS);
-  const slackAllowlist = parseAllowlist(process.env.MAESTRO_SLACK_ALLOWED_USERS);
+  const telegramAllowlist = parseAllowlist(
+    process.env.MAESTRO_TELEGRAM_ALLOWED_USERS
+  );
+  const slackAllowlist = parseAllowlist(
+    process.env.MAESTRO_SLACK_ALLOWED_USERS
+  );
 
   if (telegramAllowlist === null) {
     logAllowlistWarning("Telegram", "MAESTRO_TELEGRAM_ALLOWED_USERS");
@@ -74,7 +78,9 @@ let slackAllowlist: Set<string> | null | undefined;
  */
 export function isAllowedTelegramUser(chatId: number | string): boolean {
   if (telegramAllowlist === undefined) {
-    telegramAllowlist = parseAllowlist(process.env.MAESTRO_TELEGRAM_ALLOWED_USERS);
+    telegramAllowlist = parseAllowlist(
+      process.env.MAESTRO_TELEGRAM_ALLOWED_USERS
+    );
     // Show warning on first check if allowlist is empty
     if (telegramAllowlist === null && !telegramWarningShown) {
       telegramWarningShown = true;

@@ -7,8 +7,8 @@ const BLOCKED_HOSTS = [
   "0.0.0.0",
   "::1",
   "169.254.", // Link-local
-  "10.",      // Private range
-  "172.16.",  // Private range
+  "10.", // Private range
+  "172.16.", // Private range
   "172.17.",
   "172.18.",
   "172.19.",
@@ -103,7 +103,9 @@ export class BrowserEngine {
     }
   }
 
-  private async getOrCreatePage(pageId?: string): Promise<{ page: Page; id: string }> {
+  private async getOrCreatePage(
+    pageId?: string
+  ): Promise<{ page: Page; id: string }> {
     await this.initialize();
 
     if (pageId && this.pages.has(pageId)) {
@@ -128,7 +130,10 @@ export class BrowserEngine {
     return { page: newPage, id: newId };
   }
 
-  async navigate(url: string, pageId?: string): Promise<{
+  async navigate(
+    url: string,
+    pageId?: string
+  ): Promise<{
     success: boolean;
     pageId: string;
     title?: string;
@@ -138,7 +143,8 @@ export class BrowserEngine {
       return {
         success: false,
         pageId: pageId || "",
-        error: "URL is blocked for security reasons (internal network or invalid protocol)",
+        error:
+          "URL is blocked for security reasons (internal network or invalid protocol)",
       };
     }
 
@@ -183,7 +189,9 @@ export class BrowserEngine {
 
           // Remove script and style tags
           const clone = body.cloneNode(true) as HTMLElement;
-          clone.querySelectorAll("script, style, noscript").forEach((el) => el.remove());
+          clone
+            .querySelectorAll("script, style, noscript")
+            .forEach((el) => el.remove());
 
           // Get text with newlines for block elements
           const text = clone.innerText || clone.textContent || "";
@@ -205,7 +213,10 @@ export class BrowserEngine {
     }
   }
 
-  async click(pageId: string, selector: string): Promise<{
+  async click(
+    pageId: string,
+    selector: string
+  ): Promise<{
     success: boolean;
     error?: string;
   }> {
@@ -225,7 +236,11 @@ export class BrowserEngine {
     }
   }
 
-  async type(pageId: string, selector: string, text: string): Promise<{
+  async type(
+    pageId: string,
+    selector: string,
+    text: string
+  ): Promise<{
     success: boolean;
     error?: string;
   }> {
@@ -245,7 +260,10 @@ export class BrowserEngine {
     }
   }
 
-  async screenshot(pageId: string, fullPage: boolean = false): Promise<{
+  async screenshot(
+    pageId: string,
+    fullPage: boolean = false
+  ): Promise<{
     success: boolean;
     screenshot?: string; // Base64 encoded
     error?: string;
@@ -310,7 +328,11 @@ export class BrowserEngine {
     }
   }
 
-  async waitForSelector(pageId: string, selector: string, timeout?: number): Promise<{
+  async waitForSelector(
+    pageId: string,
+    selector: string,
+    timeout?: number
+  ): Promise<{
     success: boolean;
     error?: string;
   }> {
@@ -349,7 +371,9 @@ export class BrowserEngine {
 // Global browser engine instance
 let browserEngine: BrowserEngine | null = null;
 
-export function initBrowserEngine(options?: BrowserEngineOptions): BrowserEngine {
+export function initBrowserEngine(
+  options?: BrowserEngineOptions
+): BrowserEngine {
   if (browserEngine) {
     browserEngine.close();
   }

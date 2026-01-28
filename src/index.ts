@@ -66,13 +66,16 @@ interface AppContext {
   provider: AnthropicProvider;
   toolRegistry: ToolRegistry;
   memoryStore: MemoryStore;
-  createOrchestrator: (context: AgentContext) => ReturnType<typeof createOrchestratorAgent>;
+  createOrchestrator: (
+    context: AgentContext
+  ) => ReturnType<typeof createOrchestratorAgent>;
 }
 
 function setupApp(mode: Mode): AppContext {
   // Initialize logger
   initLogger({
-    level: process.env.LOG_LEVEL as "debug" | "info" | "warn" | "error" ?? "info",
+    level:
+      (process.env.LOG_LEVEL as "debug" | "info" | "warn" | "error") ?? "info",
     logFile: join(LOGS_DIR, "maestro.jsonl"),
     console: mode === "cli" ? false : true, // Suppress console in CLI mode
   });
@@ -93,7 +96,9 @@ function setupApp(mode: Mode): AppContext {
   // Create tool registry and register built-in tools
   const tools = createToolRegistry();
   tools.registerAll(builtinTools);
-  console.log(`Registered ${tools.list().length} tool(s): ${tools.list().join(", ")}`);
+  console.log(
+    `Registered ${tools.list().length} tool(s): ${tools.list().join(", ")}`
+  );
   const toolRegistry = tools.registry;
 
   // Create memory store
@@ -111,12 +116,17 @@ function setupApp(mode: Mode): AppContext {
       memoryStore.createApiKey("Default API Key", keyHash, keyPrefix);
       console.log(`API key seeded from MAESTRO_API_KEY (prefix: ${keyPrefix})`);
     } else {
-      console.warn("MAESTRO_API_KEY is set but has invalid format (expected: msk_<64 hex chars>)");
+      console.warn(
+        "MAESTRO_API_KEY is set but has invalid format (expected: msk_<64 hex chars>)"
+      );
     }
   }
 
   // Create dynamic agent registry (merges static + SQLite agents)
-  const agentRegistry = new DynamicAgentRegistry(staticAgentConfigs, memoryStore);
+  const agentRegistry = new DynamicAgentRegistry(
+    staticAgentConfigs,
+    memoryStore
+  );
   const dynamicAgents = memoryStore.getAllAgents();
   if (dynamicAgents.length > 0) {
     console.log(

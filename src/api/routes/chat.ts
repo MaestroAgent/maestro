@@ -15,14 +15,19 @@ export interface ChatRoutesOptions {
   memoryStore: MemoryStore;
 }
 
-export function createChatRoutes(options: ChatRoutesOptions): Hono<{ Variables: Variables }> {
+export function createChatRoutes(
+  options: ChatRoutesOptions
+): Hono<{ Variables: Variables }> {
   const app = new Hono<{ Variables: Variables }>();
   const { createOrchestrator, memoryStore } = options;
 
   /**
    * Check if user can access a session (owner or admin)
    */
-  function canAccessSession(session: { apiKeyId?: string }, apiKey: ApiKeyRecord | undefined): boolean {
+  function canAccessSession(
+    session: { apiKeyId?: string },
+    apiKey: ApiKeyRecord | undefined
+  ): boolean {
     if (!apiKey) {
       return true;
     }
@@ -140,7 +145,10 @@ export function createChatRoutes(options: ChatRoutesOptions): Hono<{ Variables: 
 
         // Also sync metadata (for things like currentProject)
         if (context.metadata) {
-          memoryStore.updateSessionMetadata(context.sessionId, context.metadata);
+          memoryStore.updateSessionMetadata(
+            context.sessionId,
+            context.metadata
+          );
         }
       } catch (error) {
         await sseStream.writeSSE({

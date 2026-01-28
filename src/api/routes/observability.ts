@@ -37,7 +37,10 @@ export function createObservabilityRoutes(
    */
   app.get("/events", async (c) => {
     const tailParam = parseInt(c.req.query("tail") ?? String(DEFAULT_TAIL), 10);
-    const tail = Math.min(Math.max(tailParam || DEFAULT_TAIL, MIN_TAIL), MAX_TAIL);
+    const tail = Math.min(
+      Math.max(tailParam || DEFAULT_TAIL, MIN_TAIL),
+      MAX_TAIL
+    );
     const follow = c.req.query("follow") === "true";
 
     if (!existsSync(logFile)) {
@@ -231,7 +234,10 @@ export function createObservabilityRoutes(
 
     // Require admin privileges for budget override
     if (apiKey && !apiKey.isAdmin) {
-      return c.json({ error: "Admin privileges required for budget override" }, 403);
+      return c.json(
+        { error: "Admin privileges required for budget override" },
+        403
+      );
     }
 
     const budgetGuard = getBudgetGuard();
@@ -242,20 +248,32 @@ export function createObservabilityRoutes(
 
     const body = await c.req
       .json<{ durationMinutes?: unknown }>()
-      .catch(() => ({} as { durationMinutes?: unknown }));
+      .catch(() => ({}) as { durationMinutes?: unknown });
 
     // Validate durationMinutes is a valid number
     const rawDuration = body.durationMinutes;
     if (rawDuration !== undefined && rawDuration !== null) {
-      if (typeof rawDuration !== "number" || !Number.isFinite(rawDuration) || rawDuration < 0) {
-        return c.json({ error: "durationMinutes must be a positive number" }, 400);
+      if (
+        typeof rawDuration !== "number" ||
+        !Number.isFinite(rawDuration) ||
+        rawDuration < 0
+      ) {
+        return c.json(
+          { error: "durationMinutes must be a positive number" },
+          400
+        );
       }
     }
 
     // Cap duration at MAX_OVERRIDE_MINUTES to prevent abuse
     const requestedDuration =
-      typeof rawDuration === "number" && Number.isFinite(rawDuration) ? rawDuration : 60;
-    const duration = Math.min(Math.max(requestedDuration, 1), MAX_OVERRIDE_MINUTES);
+      typeof rawDuration === "number" && Number.isFinite(rawDuration)
+        ? rawDuration
+        : 60;
+    const duration = Math.min(
+      Math.max(requestedDuration, 1),
+      MAX_OVERRIDE_MINUTES
+    );
 
     budgetGuard.override(duration);
 

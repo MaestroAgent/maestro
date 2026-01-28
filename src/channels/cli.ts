@@ -2,7 +2,11 @@ import * as readline from "readline";
 import { Agent } from "../core/agent.js";
 import { AgentContext } from "../core/types.js";
 import { MemoryStore } from "../memory/store.js";
-import { getCostTracker, clearCostTracker, getBudgetGuard } from "../observability/index.js";
+import {
+  getCostTracker,
+  clearCostTracker,
+  getBudgetGuard,
+} from "../observability/index.js";
 
 export interface CLIAdapterOptions {
   createOrchestrator: (context: AgentContext) => Agent;
@@ -190,7 +194,10 @@ export class CLIAdapter {
 
       // Also sync metadata (for things like currentProject)
       if (this.context.metadata) {
-        this.memoryStore.updateSessionMetadata(this.context.sessionId, this.context.metadata);
+        this.memoryStore.updateSessionMetadata(
+          this.context.sessionId,
+          this.context.metadata
+        );
       }
 
       console.log("\n");
@@ -222,7 +229,10 @@ export class CLIAdapter {
 
       // Also sync metadata (for things like currentProject)
       if (this.context.metadata) {
-        this.memoryStore.updateSessionMetadata(this.context.sessionId, this.context.metadata);
+        this.memoryStore.updateSessionMetadata(
+          this.context.sessionId,
+          this.context.metadata
+        );
       }
     } catch (error) {
       response = `Error: ${error instanceof Error ? error.message : String(error)}`;

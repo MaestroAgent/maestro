@@ -18,7 +18,10 @@ function parseTrustedProxies(): Set<string> {
     return new Set();
   }
   return new Set(
-    proxies.split(",").map((p) => p.trim()).filter(Boolean)
+    proxies
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean)
   );
 }
 
@@ -64,7 +67,11 @@ class RateLimitStore {
   /**
    * Check if request is allowed and record it
    */
-  check(key: string, limit: number, windowMs: number): { allowed: boolean; remaining: number; resetMs: number } {
+  check(
+    key: string,
+    limit: number,
+    windowMs: number
+  ): { allowed: boolean; remaining: number; resetMs: number } {
     const now = Date.now();
     const windowStart = now - windowMs;
 
@@ -154,7 +161,10 @@ function getStore(): RateLimitStore {
 /**
  * Get rate limit config for a route
  */
-function getRateLimitConfig(method: string, path: string): RateLimitConfig | null {
+function getRateLimitConfig(
+  method: string,
+  path: string
+): RateLimitConfig | null {
   // Check for exempt paths
   for (const exempt of exemptPaths) {
     if (path === exempt || path.startsWith(exempt + "/")) {
@@ -197,7 +207,10 @@ function getRateLimitConfig(method: string, path: string): RateLimitConfig | nul
  * SECURITY: Only trusts X-Forwarded-For and X-Real-IP headers from configured trusted proxies
  * to prevent rate limit bypass via header spoofing. Configure MAESTRO_TRUSTED_PROXIES env var.
  */
-function getClientId(c: { req: { header: (name: string) => string | undefined }; env?: { incoming?: { socket?: { remoteAddress?: string } } } }): string {
+function getClientId(c: {
+  req: { header: (name: string) => string | undefined };
+  env?: { incoming?: { socket?: { remoteAddress?: string } } };
+}): string {
   // Try API key first (most reliable identifier)
   const authHeader = c.req.header("Authorization");
   if (authHeader?.startsWith("Bearer ")) {
@@ -273,7 +286,10 @@ export function createRateLimitMiddleware(): MiddlewareHandler {
     // Set rate limit headers
     c.header("X-RateLimit-Limit", String(config.limit));
     c.header("X-RateLimit-Remaining", String(result.remaining));
-    c.header("X-RateLimit-Reset", String(Math.ceil((Date.now() + result.resetMs) / 1000)));
+    c.header(
+      "X-RateLimit-Reset",
+      String(Math.ceil((Date.now() + result.resetMs) / 1000))
+    );
 
     if (!result.allowed) {
       c.header("Retry-After", String(Math.ceil(result.resetMs / 1000)));

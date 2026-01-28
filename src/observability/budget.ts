@@ -62,7 +62,9 @@ export class BudgetGuard {
     const cost = calculateCost(usage, model);
 
     // Upsert daily spending
-    this.db.prepare(`
+    this.db
+      .prepare(
+        `
       INSERT INTO daily_spending (date, total_cost_usd, total_input_tokens, total_output_tokens, request_count, updated_at)
       VALUES (?, ?, ?, ?, 1, ?)
       ON CONFLICT(date) DO UPDATE SET
@@ -71,7 +73,9 @@ export class BudgetGuard {
         total_output_tokens = total_output_tokens + excluded.total_output_tokens,
         request_count = request_count + 1,
         updated_at = excluded.updated_at
-    `).run(today, cost.totalCost, usage.inputTokens, usage.outputTokens, now);
+    `
+      )
+      .run(today, cost.totalCost, usage.inputTokens, usage.outputTokens, now);
   }
 
   /**
@@ -80,13 +84,18 @@ export class BudgetGuard {
   getStatus(): BudgetStatus {
     const today = this.getTodayDate();
 
-    const row = this.db.prepare(`
+    const row = this.db
+      .prepare(
+        `
       SELECT total_cost_usd FROM daily_spending WHERE date = ?
-    `).get(today) as { total_cost_usd: number } | undefined;
+    `
+      )
+      .get(today) as { total_cost_usd: number } | undefined;
 
     const dailySpent = row?.total_cost_usd ?? 0;
     const remaining = Math.max(0, this.dailyLimitUsd - dailySpent);
-    const percentUsed = this.dailyLimitUsd > 0 ? (dailySpent / this.dailyLimitUsd) * 100 : 0;
+    const percentUsed =
+      this.dailyLimitUsd > 0 ? (dailySpent / this.dailyLimitUsd) * 100 : 0;
 
     return {
       dailySpent: Math.round(dailySpent * 1000000) / 1000000,
@@ -113,7 +122,8 @@ export class BudgetGuard {
     if (status.isExceeded) {
       return {
         allowed: false,
-        message: `Daily budget limit of $${status.dailyLimit.toFixed(2)} has been reached. ` +
+        message:
+          `Daily budget limit of $${status.dailyLimit.toFixed(2)} has been reached. ` +
           `Today's spending: $${status.dailySpent.toFixed(4)}. ` +
           `Reply with "/budget override" to continue for the next hour, or wait until tomorrow.`,
         status,
@@ -161,18 +171,22 @@ export class BudgetGuard {
     totalCost: number;
     requestCount: number;
   }> {
-    const rows = this.db.prepare(`
+    const rows = this.db
+      .prepare(
+        `
       SELECT date, total_cost_usd, request_count
       FROM daily_spending
       ORDER BY date DESC
       LIMIT ?
-    `).all(days) as Array<{
+    `
+      )
+      .all(days) as Array<{
       date: string;
       total_cost_usd: number;
       request_count: number;
     }>;
 
-    return rows.map(r => ({
+    return rows.map((r) => ({
       date: r.date,
       totalCost: r.total_cost_usd,
       requestCount: r.request_count,

@@ -18,7 +18,9 @@ export class DynamicAgentRegistry {
    * Get an agent by name (static takes precedence over dynamic)
    */
   get(name: string): AgentConfig | undefined {
-    return this.staticAgents.get(name) ?? this.store.getAgent(name) ?? undefined;
+    return (
+      this.staticAgents.get(name) ?? this.store.getAgent(name) ?? undefined
+    );
   }
 
   /**

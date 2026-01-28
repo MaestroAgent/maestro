@@ -139,19 +139,28 @@ export class Logger {
   }
 
   // Convenience methods
-  debug(message: string, context?: { sessionId?: string; agentName?: string }): void {
+  debug(
+    message: string,
+    context?: { sessionId?: string; agentName?: string }
+  ): void {
     if (this.shouldLog("debug")) {
       this.output(this.createEvent("debug", "debug", { message }, context));
     }
   }
 
-  info(message: string, context?: { sessionId?: string; agentName?: string }): void {
+  info(
+    message: string,
+    context?: { sessionId?: string; agentName?: string }
+  ): void {
     if (this.shouldLog("info")) {
       this.output(this.createEvent("info", "info", { message }, context));
     }
   }
 
-  warn(message: string, context?: { sessionId?: string; agentName?: string }): void {
+  warn(
+    message: string,
+    context?: { sessionId?: string; agentName?: string }
+  ): void {
     if (this.shouldLog("warn")) {
       this.output(this.createEvent("warn", "warn", { message }, context));
     }
@@ -159,7 +168,11 @@ export class Logger {
 
   error(
     error: Error | string,
-    context?: { sessionId?: string; agentName?: string; additionalContext?: Record<string, unknown> }
+    context?: {
+      sessionId?: string;
+      agentName?: string;
+      additionalContext?: Record<string, unknown>;
+    }
   ): void {
     const errorMessage = error instanceof Error ? error.message : error;
     // Sanitize stack traces to prevent leaking file paths
@@ -206,7 +219,12 @@ export class Logger {
     context: { sessionId: string; agentName: string }
   ): void {
     this.output(
-      this.createEvent("debug", "tool.call", { toolName, arguments: args }, context)
+      this.createEvent(
+        "debug",
+        "tool.call",
+        { toolName, arguments: args },
+        context
+      )
     );
   }
 
@@ -227,13 +245,14 @@ export class Logger {
     );
   }
 
-  sessionStart(
-    sessionId: string,
-    channel: string,
-    userId: string
-  ): void {
+  sessionStart(sessionId: string, channel: string, userId: string): void {
     this.output(
-      this.createEvent("info", "session.start", { channel, userId }, { sessionId })
+      this.createEvent(
+        "info",
+        "session.start",
+        { channel, userId },
+        { sessionId }
+      )
     );
   }
 

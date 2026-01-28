@@ -75,7 +75,9 @@ export class TelegramAdapter {
 
       if (args[0] === "override") {
         budgetGuard.override(60); // 1 hour override
-        await ctx.reply("Budget limit overridden for the next hour. Use responsibly!");
+        await ctx.reply(
+          "Budget limit overridden for the next hour. Use responsibly!"
+        );
         return;
       }
 
@@ -149,7 +151,10 @@ export class TelegramAdapter {
 
       // Also sync metadata (for things like currentProject)
       if (session.metadata) {
-        this.memoryStore.updateSessionMetadata(session.sessionId, session.metadata);
+        this.memoryStore.updateSessionMetadata(
+          session.sessionId,
+          session.metadata
+        );
       }
 
       // Send response (Telegram has 4096 char limit)
