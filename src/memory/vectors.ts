@@ -1,4 +1,5 @@
-import { IndexFlatL2 } from "faiss-node";
+import faissNode from "faiss-node";
+const { IndexFlatL2 } = faissNode;
 import Database from "better-sqlite3";
 import { randomUUID } from "crypto";
 import { EmbeddingProvider, SemanticMemory, MemorySearchResult, MemoryType } from "./types.js";
@@ -11,7 +12,7 @@ export interface VectorStoreOptions {
 
 export class VectorStore {
   private db: Database.Database;
-  private index: IndexFlatL2;
+  private index: InstanceType<typeof IndexFlatL2>;
   private embedder: EmbeddingProvider;
   private idMap: Map<number, string> = new Map(); // FAISS index -> memory ID
   private nextFaissId: number = 0;
