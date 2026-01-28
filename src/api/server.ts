@@ -13,8 +13,14 @@ import { createAgentRoutes } from "./routes/agents.js";
 import { createSessionRoutes } from "./routes/sessions.js";
 import { createObservabilityRoutes } from "./routes/observability.js";
 import { initWebSocketManager, getWebSocketManager } from "./websocket.js";
-import { createAuthMiddleware, validateWebSocketToken } from "./middleware/auth.js";
-import { createRateLimitMiddleware, stopRateLimitStore } from "./middleware/rateLimit.js";
+import {
+  createAuthMiddleware,
+  validateWebSocketToken,
+} from "./middleware/auth.js";
+import {
+  createRateLimitMiddleware,
+  stopRateLimitStore,
+} from "./middleware/rateLimit.js";
 
 export interface APIServerOptions {
   port?: number;
@@ -29,15 +35,21 @@ export class APIServer {
   private app: Hono;
   private options: APIServerOptions;
   private server: ReturnType<typeof serve> | null = null;
-  private injectWebSocket: ReturnType<typeof createNodeWebSocket>["injectWebSocket"];
-  private upgradeWebSocket: ReturnType<typeof createNodeWebSocket>["upgradeWebSocket"];
+  private injectWebSocket: ReturnType<
+    typeof createNodeWebSocket
+  >["injectWebSocket"];
+  private upgradeWebSocket: ReturnType<
+    typeof createNodeWebSocket
+  >["upgradeWebSocket"];
 
   constructor(options: APIServerOptions) {
     this.options = options;
     this.app = new Hono();
 
     // Initialize WebSocket
-    const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app: this.app });
+    const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({
+      app: this.app,
+    });
     this.injectWebSocket = injectWebSocket;
     this.upgradeWebSocket = upgradeWebSocket;
 
@@ -61,7 +73,9 @@ export class APIServer {
     // Check if wildcard is used (credentials MUST be false with wildcard)
     const hasWildcard = originList.includes("*");
     if (hasWildcard && originList.length > 1) {
-      console.warn("CORS: Wildcard (*) mixed with other origins - using wildcard only");
+      console.warn(
+        "CORS: Wildcard (*) mixed with other origins - using wildcard only"
+      );
     }
 
     this.app.use(
@@ -147,10 +161,7 @@ export class APIServer {
     // Error handler
     this.app.onError((err, c) => {
       console.error("API Error:", err);
-      return c.json(
-        { error: err.message || "Internal server error" },
-        500
-      );
+      return c.json({ error: err.message || "Internal server error" }, 500);
     });
   }
 
@@ -183,13 +194,23 @@ export class APIServer {
               // Set authentication timeout to prevent connection exhaustion
               authTimeout = setTimeout(() => {
                 if (!authenticated) {
-                  ws.send(JSON.stringify({ type: "error", error: "Authentication timeout" }));
+                  ws.send(
+                    JSON.stringify({
+                      type: "error",
+                      error: "Authentication timeout",
+                    })
+                  );
                   ws.close(4001, "Authentication timeout");
                 }
               }, WS_AUTH_TIMEOUT_MS);
 
               // Send auth required message
-              ws.send(JSON.stringify({ type: "auth_required", message: "Send auth message with token" }));
+              ws.send(
+                JSON.stringify({
+                  type: "auth_required",
+                  message: "Send auth message with token",
+                })
+              );
             }
           },
           onMessage: (event, ws) => {
@@ -212,7 +233,13 @@ export class APIServer {
                   }
                   ws.send(JSON.stringify({ type: "auth", success: true }));
                 } else {
-                  ws.send(JSON.stringify({ type: "auth", success: false, error: "Invalid token" }));
+                  ws.send(
+                    JSON.stringify({
+                      type: "auth",
+                      success: false,
+                      error: "Invalid token",
+                    })
+                  );
                   ws.close(4001, "Unauthorized");
                 }
                 return;
@@ -220,12 +247,19 @@ export class APIServer {
 
               // Reject messages from unauthenticated clients
               if (!authenticated) {
-                ws.send(JSON.stringify({ type: "error", error: "Not authenticated" }));
+                ws.send(
+                  JSON.stringify({ type: "error", error: "Not authenticated" })
+                );
                 return;
               }
 
               if (data.type === "ping") {
-                ws.send(JSON.stringify({ type: "pong", timestamp: new Date().toISOString() }));
+                ws.send(
+                  JSON.stringify({
+                    type: "pong",
+                    timestamp: new Date().toISOString(),
+                  })
+                );
               }
             } catch {
               // Log malformed messages for security auditing (but don't expose to client)

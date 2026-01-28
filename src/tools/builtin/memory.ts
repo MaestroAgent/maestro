@@ -1,6 +1,11 @@
 import { defineTool } from "../registry.js";
 import { getVectorStore } from "../../memory/vectors.js";
 import { MemoryType } from "../../memory/types.js";
+import {
+  flushMemories,
+  shouldFlush,
+  estimateHistoryTokens,
+} from "../../memory/flush.js";
 
 export const rememberTool = defineTool(
   "remember",
@@ -10,16 +15,19 @@ export const rememberTool = defineTool(
     properties: {
       content: {
         type: "string",
-        description: "The information to remember. Should be a clear, self-contained statement.",
+        description:
+          "The information to remember. Should be a clear, self-contained statement.",
       },
       type: {
         type: "string",
         enum: ["fact", "preference", "context", "learning"],
-        description: "The type of memory: 'fact' for factual information, 'preference' for user preferences, 'context' for situational context, 'learning' for insights or lessons learned.",
+        description:
+          "The type of memory: 'fact' for factual information, 'preference' for user preferences, 'context' for situational context, 'learning' for insights or lessons learned.",
       },
       confidence: {
         type: "number",
-        description: "Confidence level from 0 to 1 (default 1.0). Lower confidence for uncertain information.",
+        description:
+          "Confidence level from 0 to 1 (default 1.0). Lower confidence for uncertain information.",
       },
     },
     required: ["content", "type"],
@@ -40,7 +48,8 @@ export const rememberTool = defineTool(
       return {
         success: false,
         error: "Similar memory already exists",
-        suggestion: "Use 'recall' to find existing memories or rephrase the content.",
+        suggestion:
+          "Use 'recall' to find existing memories or rephrase the content.",
       };
     }
 
@@ -68,7 +77,8 @@ export const recallTool = defineTool(
     properties: {
       query: {
         type: "string",
-        description: "What to search for in memory. Can be a question or keywords.",
+        description:
+          "What to search for in memory. Can be a question or keywords.",
       },
       limit: {
         type: "number",
@@ -77,7 +87,18 @@ export const recallTool = defineTool(
       type: {
         type: "string",
         enum: ["fact", "preference", "context", "learning"],
-        description: "Filter by a single memory type. If not specified, searches all types.",
+        description:
+          "Filter by a single memory type. If not specified, searches all types.",
+      },
+      hybrid: {
+        type: "boolean",
+        description:
+          "Use hybrid search combining semantic similarity with keyword matching. Better for exact IDs, code symbols, and error messages. Default: false.",
+      },
+      global: {
+        type: "boolean",
+        description:
+          "Search across all sessions, not just the current session. Useful for finding memories from past conversations. Default: false.",
       },
     },
     required: ["query"],
@@ -92,8 +113,16 @@ export const recallTool = defineTool(
     const limit = (args.limit as number) ?? 5;
     const type = args.type as MemoryType | undefined;
     const types = type ? [type] : undefined;
+    const useHybrid = (args.hybrid as boolean) ?? false;
+    const globalSearch = (args.global as boolean) ?? false;
 
-    const results = await vectorStore.search(query, limit, context.sessionId, types);
+    // Use undefined for sessionId to search globally, or current session
+    const sessionId = globalSearch ? undefined : context.sessionId;
+
+    // Choose search method
+    const results = useHybrid
+      ? await vectorStore.searchHybrid(query, limit, sessionId, types)
+      : await vectorStore.search(query, limit, sessionId, types);
 
     if (results.length === 0) {
       return {
@@ -112,8 +141,11 @@ export const recallTool = defineTool(
         confidence: r.memory.confidence,
         relevance: Math.round(r.score * 100),
         createdAt: r.memory.createdAt,
+        sessionId: r.memory.sessionId,
       })),
       message: `Found ${results.length} relevant ${results.length === 1 ? "memory" : "memories"}.`,
+      searchMode: useHybrid ? "hybrid" : "semantic",
+      scope: globalSearch ? "global" : "session",
     };
   }
 );
@@ -179,8 +211,86 @@ export const memoryStatsTool = defineTool(
       totalMemories: stats.total,
       byType: stats.byType,
       sessionsWithMemories: Object.keys(stats.bySession).length,
+      features: {
+        hybridSearch: stats.ftsEnabled,
+        globalSearch: true,
+      },
     };
   }
 );
 
-export const memoryTools = [rememberTool, recallTool, forgetTool, memoryStatsTool];
+export const consolidateMemoriesTool = defineTool(
+  "consolidate_memories",
+  "Consolidate important facts from the current conversation into durable memory. Use this before context limits are reached to preserve important information. Automatically extracts and stores preferences, context, and learnings.",
+  {
+    type: "object",
+    properties: {
+      reason: {
+        type: "string",
+        enum: ["approaching_limit", "manual", "session_end"],
+        description: "Why memories are being consolidated. Default: 'manual'.",
+      },
+    },
+  },
+  async (args, context) => {
+    const reason =
+      (args.reason as "approaching_limit" | "manual" | "session_end") ??
+      "manual";
+
+    // Map reason to flush reason
+    const flushReason = reason === "approaching_limit" ? "soft" : "manual";
+
+    const result = await flushMemories(context, flushReason);
+
+    if (result.stored === 0) {
+      return {
+        success: true,
+        stored: 0,
+        message: "No new important facts found to consolidate.",
+      };
+    }
+
+    return {
+      success: true,
+      stored: result.stored,
+      facts: result.facts,
+      message: `Consolidated ${result.stored} important ${result.stored === 1 ? "fact" : "facts"} into durable memory.`,
+    };
+  }
+);
+
+export const checkMemoryStatusTool = defineTool(
+  "check_memory_status",
+  "Check if memory consolidation is needed based on conversation length and token usage.",
+  {
+    type: "object",
+    properties: {},
+  },
+  async (_args, context) => {
+    const estimatedTokens = estimateHistoryTokens(context.history);
+    const flushStatus = shouldFlush(context.sessionId, estimatedTokens);
+
+    return {
+      success: true,
+      estimatedTokens,
+      historyLength: context.history.length,
+      flushRecommended: flushStatus !== "none",
+      flushUrgency: flushStatus,
+      message:
+        flushStatus === "hard"
+          ? "Context limit approaching. Memory consolidation strongly recommended."
+          : flushStatus === "soft"
+            ? "Consider consolidating memories soon."
+            : "Memory status healthy.",
+    };
+  }
+);
+
+export const memoryTools = [
+  rememberTool,
+  recallTool,
+  forgetTool,
+  memoryStatsTool,
+  consolidateMemoriesTool,
+  checkMemoryStatusTool,
+];

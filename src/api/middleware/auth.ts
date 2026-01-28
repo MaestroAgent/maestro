@@ -39,13 +39,17 @@ export function createAuthMiddleware(memoryStore: MemoryStore) {
     const token = extractBearerToken(authHeader);
 
     if (!token) {
-      console.warn(`Auth failure: Missing token for ${c.req.method} ${c.req.path}`);
+      console.warn(
+        `Auth failure: Missing token for ${c.req.method} ${c.req.path}`
+      );
       return c.json({ error: "Missing API key" }, 401);
     }
 
     // Validate key format
     if (!isValidKeyFormat(token)) {
-      console.warn(`Auth failure: Invalid key format for ${c.req.method} ${c.req.path}`);
+      console.warn(
+        `Auth failure: Invalid key format for ${c.req.method} ${c.req.path}`
+      );
       return c.json({ error: "Invalid API key format" }, 401);
     }
 
@@ -53,13 +57,17 @@ export function createAuthMiddleware(memoryStore: MemoryStore) {
     const apiKey = memoryStore.validateApiKey(token);
 
     if (!apiKey) {
-      console.warn(`Auth failure: Invalid key for ${c.req.method} ${c.req.path}`);
+      console.warn(
+        `Auth failure: Invalid key for ${c.req.method} ${c.req.path}`
+      );
       return c.json({ error: "Invalid API key" }, 401);
     }
 
     // Check if key is revoked
     if (apiKey.revokedAt) {
-      console.warn(`Auth failure: Revoked key ${apiKey.keyPrefix} for ${c.req.method} ${c.req.path}`);
+      console.warn(
+        `Auth failure: Revoked key ${apiKey.keyPrefix} for ${c.req.method} ${c.req.path}`
+      );
       return c.json({ error: "API key has been revoked" }, 403);
     }
 

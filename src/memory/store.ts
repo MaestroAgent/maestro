@@ -1,6 +1,11 @@
 import Database from "better-sqlite3";
 import { randomUUID } from "crypto";
-import { AgentContext, AgentConfig, Message, MessageRole } from "../core/types.js";
+import {
+  AgentContext,
+  AgentConfig,
+  Message,
+  MessageRole,
+} from "../core/types.js";
 import { MemoryStoreOptions, Session } from "./types.js";
 import { hashApiKey } from "../api/utils/auth.js";
 
@@ -104,15 +109,21 @@ export class MemoryStore {
 
   private migrateSchema(): void {
     // Check if api_key_id column exists in sessions
-    const sessionColumns = this.db.prepare("PRAGMA table_info(sessions)").all() as Array<{ name: string }>;
-    if (!sessionColumns.some(col => col.name === "api_key_id")) {
+    const sessionColumns = this.db
+      .prepare("PRAGMA table_info(sessions)")
+      .all() as Array<{ name: string }>;
+    if (!sessionColumns.some((col) => col.name === "api_key_id")) {
       this.db.exec("ALTER TABLE sessions ADD COLUMN api_key_id TEXT");
     }
 
     // Check if is_admin column exists in api_keys
-    const keyColumns = this.db.prepare("PRAGMA table_info(api_keys)").all() as Array<{ name: string }>;
-    if (!keyColumns.some(col => col.name === "is_admin")) {
-      this.db.exec("ALTER TABLE api_keys ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0");
+    const keyColumns = this.db
+      .prepare("PRAGMA table_info(api_keys)")
+      .all() as Array<{ name: string }>;
+    if (!keyColumns.some((col) => col.name === "is_admin")) {
+      this.db.exec(
+        "ALTER TABLE api_keys ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0"
+      );
     }
   }
 
@@ -133,7 +144,8 @@ export class MemoryStore {
       params.push(apiKeyId);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     const query = `SELECT id, channel, user_id, created_at, updated_at, metadata, api_key_id
                    FROM sessions ${whereClause} ORDER BY updated_at DESC`;
 
@@ -211,7 +223,10 @@ export class MemoryStore {
     sessionId: string,
     limit: number = 50,
     offset: number = 0
-  ): { messages: Array<Message & { id: number; createdAt: string }>; total: number } {
+  ): {
+    messages: Array<Message & { id: number; createdAt: string }>;
+    total: number;
+  } {
     const total = this.getMessageCount(sessionId);
 
     const rows = this.db
@@ -222,11 +237,11 @@ export class MemoryStore {
          LIMIT ? OFFSET ?`
       )
       .all(sessionId, limit, offset) as Array<{
-        id: number;
-        role: string;
-        content: string;
-        created_at: string;
-      }>;
+      id: number;
+      role: string;
+      content: string;
+      created_at: string;
+    }>;
 
     return {
       messages: rows.map((row) => ({
@@ -242,7 +257,11 @@ export class MemoryStore {
   /**
    * Get or create a session for a channel + user combination
    */
-  getOrCreateSession(channel: string, userId: string, apiKeyId?: string): Session {
+  getOrCreateSession(
+    channel: string,
+    userId: string,
+    apiKeyId?: string
+  ): Session {
     const now = new Date().toISOString();
 
     // Try to get existing session
@@ -401,9 +420,7 @@ export class MemoryStore {
    * Clear all messages for a session
    */
   clearSession(sessionId: string): void {
-    this.db
-      .prepare(`DELETE FROM messages WHERE session_id = ?`)
-      .run(sessionId);
+    this.db.prepare(`DELETE FROM messages WHERE session_id = ?`).run(sessionId);
   }
 
   /**
@@ -621,7 +638,12 @@ export class MemoryStore {
   /**
    * Create a new API key record
    */
-  createApiKey(name: string, keyHash: string, keyPrefix: string, isAdmin: boolean = false): ApiKeyRecord {
+  createApiKey(
+    name: string,
+    keyHash: string,
+    keyPrefix: string,
+    isAdmin: boolean = false
+  ): ApiKeyRecord {
     const id = randomUUID();
     const now = new Date().toISOString();
 
@@ -657,16 +679,18 @@ export class MemoryStore {
         `SELECT id, name, key_hash, key_prefix, created_at, last_used_at, revoked_at, is_admin
          FROM api_keys WHERE key_hash = ?`
       )
-      .get(keyHash) as {
-        id: string;
-        name: string;
-        key_hash: string;
-        key_prefix: string;
-        created_at: string;
-        last_used_at: string | null;
-        revoked_at: string | null;
-        is_admin: number;
-      } | undefined;
+      .get(keyHash) as
+      | {
+          id: string;
+          name: string;
+          key_hash: string;
+          key_prefix: string;
+          created_at: string;
+          last_used_at: string | null;
+          revoked_at: string | null;
+          is_admin: number;
+        }
+      | undefined;
 
     if (!row) {
       return null;
@@ -700,7 +724,9 @@ export class MemoryStore {
   revokeApiKey(id: string): boolean {
     const now = new Date().toISOString();
     const result = this.db
-      .prepare(`UPDATE api_keys SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL`)
+      .prepare(
+        `UPDATE api_keys SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL`
+      )
       .run(now, id);
 
     return result.changes > 0;
@@ -716,15 +742,15 @@ export class MemoryStore {
          FROM api_keys ORDER BY created_at DESC`
       )
       .all() as Array<{
-        id: string;
-        name: string;
-        key_hash: string;
-        key_prefix: string;
-        created_at: string;
-        last_used_at: string | null;
-        revoked_at: string | null;
-        is_admin: number;
-      }>;
+      id: string;
+      name: string;
+      key_hash: string;
+      key_prefix: string;
+      created_at: string;
+      last_used_at: string | null;
+      revoked_at: string | null;
+      is_admin: number;
+    }>;
 
     return rows.map((row) => ({
       id: row.id,
@@ -742,9 +768,7 @@ export class MemoryStore {
    * Check if any API keys exist
    */
   hasApiKeys(): boolean {
-    const result = this.db
-      .prepare(`SELECT 1 FROM api_keys LIMIT 1`)
-      .get();
+    const result = this.db.prepare(`SELECT 1 FROM api_keys LIMIT 1`).get();
     return result !== undefined;
   }
 

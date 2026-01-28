@@ -10,7 +10,14 @@ import { defineTool } from "../registry.js";
  */
 
 type Token = {
-  type: "number" | "operator" | "function" | "lparen" | "rparen" | "comma" | "constant";
+  type:
+    | "number"
+    | "operator"
+    | "function"
+    | "lparen"
+    | "rparen"
+    | "comma"
+    | "constant";
   value: string | number;
 };
 
@@ -165,8 +172,10 @@ class Parser {
   private expr(): number {
     let left = this.term();
 
-    while (this.current()?.type === "operator" &&
-           (this.current()?.value === "+" || this.current()?.value === "-")) {
+    while (
+      this.current()?.type === "operator" &&
+      (this.current()?.value === "+" || this.current()?.value === "-")
+    ) {
       const op = this.consume().value;
       const right = this.term();
       left = op === "+" ? left + right : left - right;
@@ -178,8 +187,10 @@ class Parser {
   private term(): number {
     let left = this.power();
 
-    while (this.current()?.type === "operator" &&
-           (this.current()?.value === "*" || this.current()?.value === "/")) {
+    while (
+      this.current()?.type === "operator" &&
+      (this.current()?.value === "*" || this.current()?.value === "/")
+    ) {
       const op = this.consume().value;
       const right = this.power();
       left = op === "*" ? left * right : left / right;
@@ -330,8 +341,9 @@ export const calculatorTool: ToolDefinition = defineTool(
       const result = evaluateExpression(expression);
 
       // Format result nicely
-      const formatted =
-        Number.isInteger(result) ? result.toString() : result.toPrecision(10);
+      const formatted = Number.isInteger(result)
+        ? result.toString()
+        : result.toPrecision(10);
 
       return {
         expression,

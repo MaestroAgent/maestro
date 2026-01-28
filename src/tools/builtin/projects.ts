@@ -78,7 +78,9 @@ function isValidGitUrl(url: string): boolean {
 function isPathWithinProjectsDir(targetPath: string): boolean {
   const resolved = resolve(targetPath);
   const projectsResolved = resolve(PROJECTS_DIR);
-  return resolved.startsWith(projectsResolved + "/") || resolved === projectsResolved;
+  return (
+    resolved.startsWith(projectsResolved + "/") || resolved === projectsResolved
+  );
 }
 
 /**
@@ -164,7 +166,8 @@ export const cloneProjectTool: ToolDefinition = defineTool(
     if (!isValidGitUrl(repoUrl)) {
       return {
         success: false,
-        error: "Invalid repository URL. Only HTTPS URLs from GitHub, GitLab, or Bitbucket are allowed.",
+        error:
+          "Invalid repository URL. Only HTTPS URLs from GitHub, GitLab, or Bitbucket are allowed.",
       };
     }
 
@@ -174,7 +177,8 @@ export const cloneProjectTool: ToolDefinition = defineTool(
     if (!isValidProjectName(projectName)) {
       return {
         success: false,
-        error: "Invalid project name. Use only alphanumeric characters, dashes, underscores, and dots.",
+        error:
+          "Invalid project name. Use only alphanumeric characters, dashes, underscores, and dots.",
       };
     }
 
@@ -219,9 +223,10 @@ export const cloneProjectTool: ToolDefinition = defineTool(
       if (result.status !== 0) {
         // Sanitize error to remove any embedded tokens
         const errorMsg = sanitizeErrorMessage(result.stderr || "Unknown error");
-        const hint = !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
-          ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
-          : "";
+        const hint =
+          !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
+            ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
+            : "";
         return {
           success: false,
           error: `Failed to clone repository: ${errorMsg}${hint}`,
@@ -240,11 +245,13 @@ export const cloneProjectTool: ToolDefinition = defineTool(
       };
     } catch (error) {
       // Sanitize error to remove any embedded tokens
-      const rawErrorMsg = error instanceof Error ? error.message : String(error);
+      const rawErrorMsg =
+        error instanceof Error ? error.message : String(error);
       const errorMsg = sanitizeErrorMessage(rawErrorMsg);
-      const hint = !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
-        ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
-        : "";
+      const hint =
+        !process.env.GITHUB_TOKEN && repoUrl.includes("github.com")
+          ? " Hint: For private repos, set GITHUB_TOKEN in your .env file."
+          : "";
 
       return {
         success: false,
@@ -348,7 +355,9 @@ export const listProjectsTool: ToolDefinition = defineTool(
 
     if (existsSync(PROJECTS_DIR)) {
       const entries = readdirSync(PROJECTS_DIR);
-      const currentProject = context.metadata.currentProject as string | undefined;
+      const currentProject = context.metadata.currentProject as
+        | string
+        | undefined;
 
       for (const entry of entries) {
         const fullPath = join(PROJECTS_DIR, entry);
@@ -362,7 +371,9 @@ export const listProjectsTool: ToolDefinition = defineTool(
       }
     }
 
-    const currentProject = context.metadata.currentProject as string | undefined;
+    const currentProject = context.metadata.currentProject as
+      | string
+      | undefined;
 
     return {
       projects,
@@ -384,13 +395,18 @@ export const currentProjectTool: ToolDefinition = defineTool(
     required: [],
   },
   async (_args, context: AgentContext) => {
-    const currentProject = context.metadata.currentProject as string | undefined;
-    const currentProjectPath = context.metadata.currentProjectPath as string | undefined;
+    const currentProject = context.metadata.currentProject as
+      | string
+      | undefined;
+    const currentProjectPath = context.metadata.currentProjectPath as
+      | string
+      | undefined;
 
     if (!currentProject) {
       return {
         has_project: false,
-        message: "No project is currently active. Use clone_project to clone a repository first.",
+        message:
+          "No project is currently active. Use clone_project to clone a repository first.",
       };
     }
 

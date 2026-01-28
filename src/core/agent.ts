@@ -9,7 +9,11 @@ import {
   ToolResult,
 } from "./types.js";
 import { LLMProvider } from "../llm/provider.js";
-import { getLogger, getCostTracker, getBudgetGuard } from "../observability/index.js";
+import {
+  getLogger,
+  getCostTracker,
+  getBudgetGuard,
+} from "../observability/index.js";
 
 export interface AgentRuntime {
   id: string;
@@ -56,7 +60,10 @@ export class Agent implements AgentRuntime {
 
   async *run(input: string): AsyncGenerator<StreamChunk, string, unknown> {
     const logger = getLogger();
-    const costTracker = getCostTracker(this.context.sessionId, this.config.model.name);
+    const costTracker = getCostTracker(
+      this.context.sessionId,
+      this.config.model.name
+    );
     const startTime = Date.now();
 
     // Track current agent in context
@@ -100,7 +107,8 @@ export class Agent implements AgentRuntime {
       if (budgetGuard) {
         const budgetCheck = budgetGuard.checkBudget();
         if (!budgetCheck.allowed) {
-          const budgetMsg = budgetCheck.message || "Daily budget limit reached.";
+          const budgetMsg =
+            budgetCheck.message || "Daily budget limit reached.";
           yield { type: "text", text: budgetMsg };
           this.context.history.push({ role: "assistant", content: budgetMsg });
           break;
@@ -144,7 +152,11 @@ export class Agent implements AgentRuntime {
             const budgetGuard = getBudgetGuard();
             if (budgetGuard) {
               budgetGuard.recordSpending(
-                { ...chunk.usage, totalTokens: chunk.usage.inputTokens + chunk.usage.outputTokens },
+                {
+                  ...chunk.usage,
+                  totalTokens:
+                    chunk.usage.inputTokens + chunk.usage.outputTokens,
+                },
                 this.config.model.name
               );
             }
@@ -159,7 +171,10 @@ export class Agent implements AgentRuntime {
           yield chunk;
         }
         if (currentText) {
-          this.context.history.push({ role: "assistant", content: currentText });
+          this.context.history.push({
+            role: "assistant",
+            content: currentText,
+          });
         }
         break;
       }
@@ -171,7 +186,7 @@ export class Agent implements AgentRuntime {
       const toolResults = await this.executeToolCalls(currentToolCalls);
 
       // Track consecutive errors
-      const hasErrors = toolResults.some(r => r.isError);
+      const hasErrors = toolResults.some((r) => r.isError);
       if (hasErrors) {
         consecutiveErrors++;
         if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
@@ -272,8 +287,16 @@ export class Agent implements AgentRuntime {
   /**
    * Check if a tool's permission level is allowed given the agent's max level
    */
-  private isToolAllowed(toolLevel: ToolPermissionLevel, maxLevel: ToolPermissionLevel): boolean {
-    const levelOrder: ToolPermissionLevel[] = ["low", "medium", "high", "critical"];
+  private isToolAllowed(
+    toolLevel: ToolPermissionLevel,
+    maxLevel: ToolPermissionLevel
+  ): boolean {
+    const levelOrder: ToolPermissionLevel[] = [
+      "low",
+      "medium",
+      "high",
+      "critical",
+    ];
     const toolIndex = levelOrder.indexOf(toolLevel);
     const maxIndex = levelOrder.indexOf(maxLevel);
     return toolIndex <= maxIndex;
@@ -301,7 +324,13 @@ export class Agent implements AgentRuntime {
           result: errorResult,
           isError: true,
         });
-        logger.toolResult(call.name, errorResult, true, Date.now() - toolStartTime, logContext);
+        logger.toolResult(
+          call.name,
+          errorResult,
+          true,
+          Date.now() - toolStartTime,
+          logContext
+        );
         continue;
       }
 
@@ -311,15 +340,28 @@ export class Agent implements AgentRuntime {
           toolCallId: call.id,
           result,
         });
-        logger.toolResult(call.name, result, false, Date.now() - toolStartTime, logContext);
+        logger.toolResult(
+          call.name,
+          result,
+          false,
+          Date.now() - toolStartTime,
+          logContext
+        );
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
         results.push({
           toolCallId: call.id,
           result: `Error: ${errorMessage}`,
           isError: true,
         });
-        logger.toolResult(call.name, errorMessage, true, Date.now() - toolStartTime, logContext);
+        logger.toolResult(
+          call.name,
+          errorMessage,
+          true,
+          Date.now() - toolStartTime,
+          logContext
+        );
       }
     }
 
@@ -336,19 +378,18 @@ export class Agent implements AgentRuntime {
       return text;
     }
     // If no text, just note that tools were used (without the parseable format)
-    return `(used ${toolCalls.map(c => c.name).join(", ")})`;
+    return `(used ${toolCalls.map((c) => c.name).join(", ")})`;
   }
 
   private formatToolResultsForHistory(results: ToolResult[]): string {
     // Format results in a way that's useful but won't be mimicked as syntax
     return results
       .map((r) => {
-        const resultStr = typeof r.result === "string"
-          ? r.result
-          : JSON.stringify(r.result, null, 2);
-        return r.isError
-          ? `Error: ${resultStr}`
-          : resultStr;
+        const resultStr =
+          typeof r.result === "string"
+            ? r.result
+            : JSON.stringify(r.result, null, 2);
+        return r.isError ? `Error: ${resultStr}` : resultStr;
       })
       .join("\n\n");
   }

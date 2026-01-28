@@ -16,15 +16,19 @@ async function executeClaudeCode(
 ): Promise<{ output: string; exitCode: number }> {
   return new Promise((resolve, reject) => {
     // Get allowed tools from environment or use restricted default
-    const allowedTools = process.env.MAESTRO_CLAUDE_CODE_ALLOWED_TOOLS || DEFAULT_ALLOWED_TOOLS;
+    const allowedTools =
+      process.env.MAESTRO_CLAUDE_CODE_ALLOWED_TOOLS || DEFAULT_ALLOWED_TOOLS;
 
     // -p for non-interactive print mode
     // --allowedTools restricts what operations Claude Code can perform
     // --max-turns limits the number of agentic turns to prevent runaway loops
     const args = [
-      "-p", task,
-      "--allowedTools", allowedTools,
-      "--max-turns", String(maxTurns),
+      "-p",
+      task,
+      "--allowedTools",
+      allowedTools,
+      "--max-turns",
+      String(maxTurns),
     ];
 
     const proc = spawn("claude", args, {
@@ -46,7 +50,9 @@ async function executeClaudeCode(
 
     const timeout = setTimeout(() => {
       proc.kill("SIGTERM");
-      reject(new Error(`Claude Code timed out after ${timeoutMs / 1000} seconds`));
+      reject(
+        new Error(`Claude Code timed out after ${timeoutMs / 1000} seconds`)
+      );
     }, timeoutMs);
 
     proc.on("close", (code) => {
@@ -100,10 +106,15 @@ export const claudeCodeTool: ToolDefinition = defineTool(
   async (args, context: AgentContext) => {
     const task = args.task as string;
     const explicitWorkingDir = args.working_directory as string | undefined;
-    const timeoutSeconds = Math.min((args.timeout_seconds as number) || 300, 600);
+    const timeoutSeconds = Math.min(
+      (args.timeout_seconds as number) || 300,
+      600
+    );
 
     // Use explicit working_directory, or fall back to current project from context
-    const currentProjectPath = context.metadata.currentProjectPath as string | undefined;
+    const currentProjectPath = context.metadata.currentProjectPath as
+      | string
+      | undefined;
     const workingDir = explicitWorkingDir || currentProjectPath;
 
     if (!task || typeof task !== "string") {
@@ -112,14 +123,16 @@ export const claudeCodeTool: ToolDefinition = defineTool(
 
     if (task.length < 10) {
       return {
-        error: "Task description is too short. Please provide a clear, specific task.",
+        error:
+          "Task description is too short. Please provide a clear, specific task.",
       };
     }
 
     // Warn if no project is set
     if (!workingDir) {
       return {
-        error: "No project is currently active. Use clone_project to clone a repository first, or specify a working_directory.",
+        error:
+          "No project is currently active. Use clone_project to clone a repository first, or specify a working_directory.",
         suggestion: "Try: clone_project with a repository URL",
       };
     }
@@ -131,7 +144,9 @@ export const claudeCodeTool: ToolDefinition = defineTool(
         timeoutSeconds * 1000
       );
 
-      const currentProject = context.metadata.currentProject as string | undefined;
+      const currentProject = context.metadata.currentProject as
+        | string
+        | undefined;
 
       return {
         task,

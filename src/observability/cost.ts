@@ -25,10 +25,7 @@ function getPricing(model: string): { input: number; output: number } {
 /**
  * Calculate cost for token usage
  */
-export function calculateCost(
-  usage: TokenUsage,
-  model: string
-): CostEstimate {
+export function calculateCost(usage: TokenUsage, model: string): CostEstimate {
   const pricing = getPricing(model);
 
   // Convert from per-million to actual cost
@@ -65,10 +62,7 @@ export class CostTracker {
   /**
    * Record token usage for a request
    */
-  record(
-    usage: TokenUsage,
-    agentName: string = "unknown"
-  ): void {
+  record(usage: TokenUsage, agentName: string = "unknown"): void {
     this.requests++;
     this.totalInputTokens += usage.inputTokens;
     this.totalOutputTokens += usage.outputTokens;
@@ -171,10 +165,7 @@ export class CostTracker {
 // Global cost trackers by session
 const sessionTrackers = new Map<string, CostTracker>();
 
-export function getCostTracker(
-  sessionId: string,
-  model?: string
-): CostTracker {
+export function getCostTracker(sessionId: string, model?: string): CostTracker {
   let tracker = sessionTrackers.get(sessionId);
   if (!tracker) {
     tracker = new CostTracker(sessionId, model);

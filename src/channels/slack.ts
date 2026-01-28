@@ -41,7 +41,12 @@ export class SlackAdapter {
     this.setupAppHome();
   }
 
-  private getSessionKey(teamId: string, channelId: string, userId: string, threadTs?: string): string {
+  private getSessionKey(
+    teamId: string,
+    channelId: string,
+    userId: string,
+    threadTs?: string
+  ): string {
     // Use thread timestamp to maintain separate sessions per thread
     if (threadTs) {
       return `${teamId}-${channelId}-${threadTs}`;
@@ -49,7 +54,12 @@ export class SlackAdapter {
     return `${teamId}-${channelId}-${userId}`;
   }
 
-  private getOrCreateSession(teamId: string, channelId: string, userId: string, threadTs?: string): AgentContext {
+  private getOrCreateSession(
+    teamId: string,
+    channelId: string,
+    userId: string,
+    threadTs?: string
+  ): AgentContext {
     const key = this.getSessionKey(teamId, channelId, userId, threadTs);
 
     // Check in-memory cache first
@@ -118,7 +128,10 @@ export class SlackAdapter {
 
         this.memoryStore.syncContext(session);
         if (session.metadata) {
-          this.memoryStore.updateSessionMetadata(session.sessionId, session.metadata);
+          this.memoryStore.updateSessionMetadata(
+            session.sessionId,
+            session.metadata
+          );
         }
 
         // Update the thinking message with the response
@@ -151,7 +164,11 @@ export class SlackAdapter {
         return;
       }
 
-      const key = this.getSessionKey(command.team_id, command.channel_id, command.user_id);
+      const key = this.getSessionKey(
+        command.team_id,
+        command.channel_id,
+        command.user_id
+      );
       const session = this.sessions.get(key);
 
       if (session) {
@@ -211,10 +228,22 @@ export class SlackAdapter {
           {
             type: "section",
             fields: [
-              { type: "mrkdwn", text: `*Today's Spending:*\n$${status.dailySpent.toFixed(4)}` },
-              { type: "mrkdwn", text: `*Daily Limit:*\n$${status.dailyLimit.toFixed(2)}` },
-              { type: "mrkdwn", text: `*Remaining:*\n$${status.remaining.toFixed(4)}` },
-              { type: "mrkdwn", text: `*Usage:*\n${status.percentUsed.toFixed(1)}%` },
+              {
+                type: "mrkdwn",
+                text: `*Today's Spending:*\n$${status.dailySpent.toFixed(4)}`,
+              },
+              {
+                type: "mrkdwn",
+                text: `*Daily Limit:*\n$${status.dailyLimit.toFixed(2)}`,
+              },
+              {
+                type: "mrkdwn",
+                text: `*Remaining:*\n$${status.remaining.toFixed(4)}`,
+              },
+              {
+                type: "mrkdwn",
+                text: `*Usage:*\n${status.percentUsed.toFixed(1)}%`,
+              },
             ],
           },
           {
@@ -225,8 +254,8 @@ export class SlackAdapter {
                 text: status.isExceeded
                   ? ":warning: *Limit exceeded!* Use `/maestro-budget override` to continue."
                   : status.percentUsed >= 80
-                  ? ":warning: Approaching daily limit"
-                  : ":white_check_mark: Budget OK",
+                    ? ":warning: Approaching daily limit"
+                    : ":white_check_mark: Budget OK",
               },
             ],
           },
@@ -237,10 +266,14 @@ export class SlackAdapter {
                   type: "section" as const,
                   text: {
                     type: "mrkdwn" as const,
-                    text: "*Recent History:*\n" +
+                    text:
+                      "*Recent History:*\n" +
                       history
                         .slice(0, 5)
-                        .map((h) => `• ${h.date}: $${h.totalCost.toFixed(4)} (${h.requestCount} requests)`)
+                        .map(
+                          (h) =>
+                            `• ${h.date}: $${h.totalCost.toFixed(4)} (${h.requestCount} requests)`
+                        )
                         .join("\n"),
                   },
                 },
@@ -288,8 +321,15 @@ export class SlackAdapter {
             },
             accessory: {
               type: "button" as const,
-              text: { type: "plain_text" as const, text: this.agentRegistry!.isDynamic(agent.name) ? "Dynamic" : "Static" },
-              style: this.agentRegistry!.isDynamic(agent.name) ? "primary" as const : undefined,
+              text: {
+                type: "plain_text" as const,
+                text: this.agentRegistry!.isDynamic(agent.name)
+                  ? "Dynamic"
+                  : "Static",
+              },
+              style: this.agentRegistry!.isDynamic(agent.name)
+                ? ("primary" as const)
+                : undefined,
             },
           })),
         ],
@@ -336,7 +376,12 @@ export class SlackAdapter {
       }
 
       try {
-        const session = this.getOrCreateSession(teamId, channelId, userId, threadTs);
+        const session = this.getOrCreateSession(
+          teamId,
+          channelId,
+          userId,
+          threadTs
+        );
         const orchestrator = this.createOrchestrator(session);
 
         let response = "";
@@ -348,11 +393,18 @@ export class SlackAdapter {
 
         this.memoryStore.syncContext(session);
         if (session.metadata) {
-          this.memoryStore.updateSessionMetadata(session.sessionId, session.metadata);
+          this.memoryStore.updateSessionMetadata(
+            session.sessionId,
+            session.metadata
+          );
         }
 
         // Send response in thread
-        await this.sendLongMessage(say, response || "I processed your request.", threadTs);
+        await this.sendLongMessage(
+          say,
+          response || "I processed your request.",
+          threadTs
+        );
 
         // Update reaction to show completion
         try {
@@ -381,7 +433,15 @@ export class SlackAdapter {
     // Handle direct messages
     this.app.event("message", async ({ event, say, client }) => {
       // Only handle DMs (channel type "im")
-      const msg = event as { channel_type?: string; user?: string; text?: string; bot_id?: string; team?: string; channel?: string; ts?: string };
+      const msg = event as {
+        channel_type?: string;
+        user?: string;
+        text?: string;
+        bot_id?: string;
+        team?: string;
+        channel?: string;
+        ts?: string;
+      };
       if (msg.channel_type !== "im" || msg.bot_id || !msg.text) {
         return;
       }
@@ -421,10 +481,16 @@ export class SlackAdapter {
 
         this.memoryStore.syncContext(session);
         if (session.metadata) {
-          this.memoryStore.updateSessionMetadata(session.sessionId, session.metadata);
+          this.memoryStore.updateSessionMetadata(
+            session.sessionId,
+            session.metadata
+          );
         }
 
-        await this.sendLongMessage(say, response || "I processed your request.");
+        await this.sendLongMessage(
+          say,
+          response || "I processed your request."
+        );
 
         // Update reaction to show completion
         try {
@@ -476,7 +542,8 @@ export class SlackAdapter {
                 type: "section",
                 text: {
                   type: "mrkdwn",
-                  text: "*Commands:*\n" +
+                  text:
+                    "*Commands:*\n" +
                     "• `/maestro <message>` - Ask me anything\n" +
                     "• `/maestro-clear` - Clear conversation history\n" +
                     "• `/maestro-budget` - Check budget status\n" +
@@ -563,7 +630,9 @@ export class SlackAdapter {
   }
 
   private async sendLongMessage(
-    say: (msg: string | { text: string; thread_ts?: string; blocks?: object[] }) => Promise<unknown>,
+    say: (
+      msg: string | { text: string; thread_ts?: string; blocks?: object[] }
+    ) => Promise<unknown>,
     text: string,
     threadTs?: string
   ): Promise<void> {

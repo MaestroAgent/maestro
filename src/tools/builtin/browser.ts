@@ -19,8 +19,17 @@ export const browseWebTool = defineTool(
     properties: {
       action: {
         type: "string",
-        enum: ["navigate", "read", "click", "type", "screenshot", "extract", "close"],
-        description: "The action to perform: 'navigate' to go to a URL, 'read' to get page content, 'click' to click an element, 'type' to enter text, 'screenshot' to capture the page, 'extract' to get data from elements, 'close' to close a page.",
+        enum: [
+          "navigate",
+          "read",
+          "click",
+          "type",
+          "screenshot",
+          "extract",
+          "close",
+        ],
+        description:
+          "The action to perform: 'navigate' to go to a URL, 'read' to get page content, 'click' to click an element, 'type' to enter text, 'screenshot' to capture the page, 'extract' to get data from elements, 'close' to close a page.",
       },
       url: {
         type: "string",
@@ -28,24 +37,29 @@ export const browseWebTool = defineTool(
       },
       pageId: {
         type: "string",
-        description: "ID of an existing page to interact with. If not provided for 'navigate', a new page is created.",
+        description:
+          "ID of an existing page to interact with. If not provided for 'navigate', a new page is created.",
       },
       selector: {
         type: "string",
-        description: "CSS selector for the element to interact with (required for 'click', 'type', 'extract' actions).",
+        description:
+          "CSS selector for the element to interact with (required for 'click', 'type', 'extract' actions).",
       },
       text: {
         type: "string",
-        description: "Text to type into the element (required for 'type' action).",
+        description:
+          "Text to type into the element (required for 'type' action).",
       },
       attribute: {
         type: "string",
-        description: "Attribute to extract from elements (optional for 'extract' action, defaults to text content).",
+        description:
+          "Attribute to extract from elements (optional for 'extract' action, defaults to text content).",
       },
       fullPage: {
         type: "string",
         enum: ["true", "false"],
-        description: "Whether to capture full page screenshot (optional for 'screenshot' action).",
+        description:
+          "Whether to capture full page screenshot (optional for 'screenshot' action).",
       },
     },
     required: ["action"],
@@ -65,7 +79,10 @@ export const browseWebTool = defineTool(
       switch (action) {
         case "navigate": {
           if (!url) {
-            return { success: false, error: "URL is required for navigate action" };
+            return {
+              success: false,
+              error: "URL is required for navigate action",
+            };
           }
           const result = await engine.navigate(url, pageId);
           return result;
@@ -73,22 +90,32 @@ export const browseWebTool = defineTool(
 
         case "read": {
           if (!pageId) {
-            return { success: false, error: "pageId is required for read action" };
+            return {
+              success: false,
+              error: "pageId is required for read action",
+            };
           }
           const result = await engine.readPage(pageId);
           // Truncate content for reasonable response size
           if (result.content && result.content.length > 10000) {
-            result.content = result.content.slice(0, 10000) + "\n\n... (content truncated)";
+            result.content =
+              result.content.slice(0, 10000) + "\n\n... (content truncated)";
           }
           return result;
         }
 
         case "click": {
           if (!pageId) {
-            return { success: false, error: "pageId is required for click action" };
+            return {
+              success: false,
+              error: "pageId is required for click action",
+            };
           }
           if (!selector) {
-            return { success: false, error: "selector is required for click action" };
+            return {
+              success: false,
+              error: "selector is required for click action",
+            };
           }
           const result = await engine.click(pageId, selector);
           return result;
@@ -96,13 +123,22 @@ export const browseWebTool = defineTool(
 
         case "type": {
           if (!pageId) {
-            return { success: false, error: "pageId is required for type action" };
+            return {
+              success: false,
+              error: "pageId is required for type action",
+            };
           }
           if (!selector) {
-            return { success: false, error: "selector is required for type action" };
+            return {
+              success: false,
+              error: "selector is required for type action",
+            };
           }
           if (!text) {
-            return { success: false, error: "text is required for type action" };
+            return {
+              success: false,
+              error: "text is required for type action",
+            };
           }
           const result = await engine.type(pageId, selector, text);
           return result;
@@ -110,7 +146,10 @@ export const browseWebTool = defineTool(
 
         case "screenshot": {
           if (!pageId) {
-            return { success: false, error: "pageId is required for screenshot action" };
+            return {
+              success: false,
+              error: "pageId is required for screenshot action",
+            };
           }
           const result = await engine.screenshot(pageId, fullPage);
           if (result.success && result.screenshot) {
@@ -118,7 +157,7 @@ export const browseWebTool = defineTool(
             return {
               success: true,
               message: "Screenshot captured successfully",
-              size: `${Math.round(result.screenshot.length * 0.75 / 1024)}KB`,
+              size: `${Math.round((result.screenshot.length * 0.75) / 1024)}KB`,
               format: "PNG",
             };
           }
@@ -127,10 +166,16 @@ export const browseWebTool = defineTool(
 
         case "extract": {
           if (!pageId) {
-            return { success: false, error: "pageId is required for extract action" };
+            return {
+              success: false,
+              error: "pageId is required for extract action",
+            };
           }
           if (!selector) {
-            return { success: false, error: "selector is required for extract action" };
+            return {
+              success: false,
+              error: "selector is required for extract action",
+            };
           }
           const result = await engine.extractData(pageId, selector, attribute);
           return result;
@@ -138,7 +183,10 @@ export const browseWebTool = defineTool(
 
         case "close": {
           if (!pageId) {
-            return { success: false, error: "pageId is required for close action" };
+            return {
+              success: false,
+              error: "pageId is required for close action",
+            };
           }
           const closed = await engine.closePage(pageId);
           return {
@@ -175,7 +223,8 @@ export const listBrowserPagesTool = defineTool(
       return {
         success: true,
         pages: [],
-        message: "Browser not initialized. Use browse_web with 'navigate' action to open a page.",
+        message:
+          "Browser not initialized. Use browse_web with 'navigate' action to open a page.",
       };
     }
 
