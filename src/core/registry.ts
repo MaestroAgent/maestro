@@ -51,6 +51,26 @@ export class DynamicAgentRegistry {
   }
 
   /**
+   * Get agents by category
+   */
+  getByCategory(category: string): AgentConfig[] {
+    return this.getAll().filter((a) => a.category === category);
+  }
+
+  /**
+   * Get all unique categories
+   */
+  getCategories(): string[] {
+    const categories = new Set<string>();
+    for (const agent of this.getAll()) {
+      if (agent.category) {
+        categories.add(agent.category);
+      }
+    }
+    return [...categories].sort();
+  }
+
+  /**
    * Check if an agent is dynamic (not from YAML)
    */
   isDynamic(name: string): boolean {

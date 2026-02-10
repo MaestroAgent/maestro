@@ -5,31 +5,47 @@
 <h1 align="center">Maestro</h1>
 
 <p align="center">
-  <strong>Orchestrate your AI agents</strong>
+  <strong>Your AI marketing team</strong>
 </p>
 
 <p align="center">
-  Deploy any agent to any interface. Maestro handles routing, memory, tools, and observability — so you can focus on what your agents do.
+  32 specialized marketing agents that work as a coordinated team. Like having a full marketing department — content writers, SEO specialists, CRO analysts, paid ads managers, social media strategists — available on demand.
 </p>
 
 <p align="center">
-  <a href="https://maestro.is">Website</a> •
-  <a href="https://maestro.is/getting-started/introduction">Documentation</a> •
-  <a href="https://maestro.is/getting-started/quickstart">Quick Start</a>
+  <a href="https://maestro.so">Website</a> •
+  <a href="./AGENTS.md">Agent Roster</a> •
+  <a href="#quick-start">Quick Start</a>
 </p>
 
 ---
 
 ## What is Maestro?
 
-Maestro is infrastructure for running AI agents. It handles the hard parts—routing, memory, tools, observability—so you can focus on what your agents do.
+Maestro is a platform of deeply specialized marketing AI agents built on a multi-agent orchestration runtime. Each agent is an expert in its domain — from SEO audits to email deliverability to pricing strategy — and they can consult each other laterally, just like a real marketing team.
 
-- **Multi-agent orchestration**: Route requests to specialized agents (coder, assistant, researcher)
-- **Channel abstraction**: One agent, many interfaces (Telegram, CLI, REST API)
-- **Persistent memory**: Conversations survive restarts via SQLite
-- **Tool system**: Give agents capabilities (calculator, datetime, Claude Code integration)
-- **Project management**: Clone repos, switch between projects, work on multiple codebases
-- **Observability**: Structured logging, token tracking, cost estimation
+- **32 marketing specialists** across 8 categories (content, SEO, CRO, paid, social, email, strategy, growth)
+- **Smart routing**: describe what you need, the orchestrator finds the right specialist
+- **Agent-to-agent delegation**: any agent can consult any other agent directly
+- **Marketing tool integrations**: Google Search Console, GA4, Kit, Stripe
+- **Channel abstraction**: CLI, REST API, Telegram, Slack
+- **Persistent memory**: conversations survive restarts via SQLite
+- **Cost tracking**: per-agent, per-session token spend and budget guards
+
+## Agent Roster
+
+| Category | Agents | Focus |
+|----------|--------|-------|
+| **Content** | blog-writer, email-sequence, landing-page, social-content, video-script, newsletter-writer | Copy and content creation |
+| **SEO** | seo-auditor, keyword-researcher, programmatic-seo, competitor-analyzer | Search visibility and organic growth |
+| **CRO** | page-optimizer, signup-flow, onboarding, pricing-strategist | Conversion and monetization |
+| **Paid** | campaign-builder, creative-tester, audience-targeter, budget-optimizer | Paid advertising |
+| **Social** | reddit-strategist, youtube-optimizer, linkedin-content, twitter-content | Platform-specific social |
+| **Email** | sequence-builder, deliverability, segmentation | Email marketing |
+| **Strategy** | marketing-strategist, content-calendar, campaign-planner, analytics-interpreter | Planning and analysis |
+| **Growth** | referral-program, free-tool-strategy, viral-loop | Growth engineering |
+
+See [AGENTS.md](./AGENTS.md) for detailed descriptions and trigger phrases.
 
 ## Quick Start
 
@@ -41,27 +57,22 @@ Maestro is infrastructure for running AI agents. It handles the hard parts—rou
 ### Docker (Recommended)
 
 ```bash
-# Clone the repository
-git clone https://github.com/MaestroAgent/maestro.git
+git clone https://github.com/founderlevel/maestro.git
 cd maestro
 
-# Configure
 cp .env.example .env
 # Edit .env with your ANTHROPIC_API_KEY
 
-# Build and run
 docker compose up -d --build
 ```
 
 ### Local Development
 
 ```bash
-# Clone and install
-git clone https://github.com/MaestroAgent/maestro.git
+git clone https://github.com/founderlevel/maestro.git
 cd maestro
 npm install
 
-# Configure
 cp .env.example .env
 # Edit .env with your ANTHROPIC_API_KEY
 
@@ -80,154 +91,90 @@ npm run api
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        CHANNELS                              │
-│              [Telegram]  [CLI]  [REST API]                   │
+│              [Telegram]  [CLI]  [REST API]  [Slack]          │
 └─────────────────────────────┬───────────────────────────────┘
                               │
 ┌─────────────────────────────▼───────────────────────────────┐
 │                      ORCHESTRATOR                            │
-│              Routes requests to specialized agents           │
+│              Routes requests to the right specialist          │
 └─────────────────────────────┬───────────────────────────────┘
                               │
 ┌─────────────────────────────▼───────────────────────────────┐
-│                         AGENTS                               │
-│    [Personal Assistant]  [Coder]  [Marketing]  [+ Custom]    │
+│                    32 MARKETING AGENTS                        │
+│   [Content]  [SEO]  [CRO]  [Paid]  [Social]  [Email]       │
+│              [Strategy]  [Growth]                             │
+│         ↕ agents consult each other laterally ↕              │
 └─────────────────────────────┬───────────────────────────────┘
                               │
 ┌─────────────────────────────▼───────────────────────────────┐
 │                    INFRASTRUCTURE                            │
-│   [Memory/SQLite]  [Tools]  [Projects]  [Observability]      │
+│  [Memory/SQLite]  [Tools]  [Marketing Integrations]         │
+│  [Cost Tracking]  [References]  [Observability]             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Features
+### Flat Agent Architecture
 
-### Multi-Agent Routing
+Agents are peers, not a hierarchy. The orchestrator's only job is initial routing. After that:
 
-The orchestrator analyzes requests and delegates to specialized agents:
+- Any agent can delegate to any other agent via `delegate_to_agent`
+- Users can talk to any agent directly (bypass orchestrator if they know what they need)
+- No bottleneck — agents consult each other as needed
 
-- **Personal Assistant**: General conversation, questions, planning
-- **Coder Agent**: Programming tasks, code execution via Claude Code
-- **Marketing Agent**: CRO, copywriting, SEO, paid ads, analytics, and growth
-- **Dynamic Agents**: Create custom agents through conversation
+## Marketing Tool Integrations
 
-### Dynamic Agent Creation
+| Tool | Purpose | Used By |
+|------|---------|---------|
+| Google Search Console | SEO data, search analytics | seo-auditor, keyword-researcher |
+| Google Analytics (GA4) | Traffic, conversions, user behavior | analytics-interpreter, page-optimizer |
+| Kit (ConvertKit) | Email subscribers, sequences, tags | email-sequence, sequence-builder |
+| Stripe | Revenue, subscriptions, churn | pricing-strategist, analytics-interpreter |
 
-Create, configure, and manage agents through natural conversation:
+Configure via environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Anthropic API key (required) |
+| `GSC_SERVICE_ACCOUNT_KEY` | Google Search Console service account JSON |
+| `GA4_SERVICE_ACCOUNT_KEY` | Google Analytics service account JSON |
+| `GA4_PROPERTY_ID` | GA4 property ID |
+| `KIT_API_SECRET` | Kit (ConvertKit) API secret |
+| `STRIPE_SECRET_KEY` | Stripe secret key |
+| `TELEGRAM_BOT_TOKEN` | Telegram bot token |
+| `DAILY_BUDGET_LIMIT` | Maximum daily API cost in USD |
+| `MONTHLY_BUDGET_LIMIT` | Maximum monthly API cost in USD |
+
+## Project Structure
 
 ```
-You: Create an agent called research-assistant that helps me research topics
-Maestro: Created research-assistant. What system prompt should it use?
-
-You: It should search the web, summarize findings, and cite sources
-Maestro: Updated system prompt. What tools should it have?
-
-You: Give it calculator and datetime
-Maestro: Done. research-assistant is now available.
-
-[Later]
-You: Help me research the history of Unix
-[Orchestrator routes to research-assistant]
+maestro/
+├── agents/                    # 32 marketing agent YAML definitions
+│   ├── orchestrator.yaml      # Marketing-focused router
+│   ├── content/               # Blog, email, landing page, social, video, newsletter
+│   ├── seo/                   # Auditor, keywords, programmatic, competitor
+│   ├── cro/                   # Page optimizer, signup, onboarding, pricing
+│   ├── paid/                  # Campaigns, creative, audiences, budget
+│   ├── social/                # Reddit, YouTube, LinkedIn, Twitter
+│   ├── email/                 # Sequences, deliverability, segmentation
+│   ├── strategy/              # Strategist, calendar, campaigns, analytics
+│   └── growth/                # Referral, free tools, viral loops
+├── references/                # Deep reference docs loaded on demand
+│   ├── content/               # Copy frameworks, email templates, headlines
+│   ├── seo/                   # Audit checklist, programmatic playbooks, schema
+│   └── cro/                   # Experiment library, pricing models
+├── src/
+│   ├── agents/                # Agent runtime
+│   ├── api/                   # REST API (Hono)
+│   ├── channels/              # Telegram, CLI adapters
+│   ├── core/                  # Agent runtime, types, config, registry
+│   ├── llm/                   # LLM provider (Anthropic)
+│   ├── memory/                # SQLite persistence
+│   ├── observability/         # Logging, cost tracking
+│   └── tools/                 # Tool registry + marketing integrations
+├── config/                    # Runtime config + archived agents
+├── docker-compose.yml
+└── AGENTS.md                  # Full agent roster documentation
 ```
-
-Dynamic agents are:
-- **Persistent**: Stored in SQLite, survive restarts
-- **Immediately available**: No restart required after creation
-- **Fully configurable**: System prompt, model, temperature, tools
-
-### Claude Code Integration
-
-The coder agent can execute real coding tasks:
-- Read and write files
-- Run tests and commands
-- Create git commits
-- Refactor code
-
-### Built-in Tools
-
-| Tool | Description |
-|------|-------------|
-| `calculator` | Evaluate math expressions |
-| `datetime` | Get current time/date with timezone |
-| `clone_project` | Clone a git repository |
-| `switch_project` | Switch between projects |
-| `list_projects` | List all cloned projects |
-| `current_project` | Show active project |
-| `claude_code` | Execute coding tasks via Claude Code |
-| `create_agent` | Create a new dynamic agent |
-| `update_agent` | Update agent config (prompt, tools, etc.) |
-| `list_agents` | List all available agents |
-| `delete_agent` | Delete a dynamic agent |
-
-## Configuration
-
-### Agent Configuration
-
-**Static agents** are configured via YAML files in `config/`:
-
-```yaml
-# config/personal-assistant.yaml
-name: personal-assistant
-description: General-purpose assistant
-
-model:
-  provider: anthropic
-  name: claude-sonnet-4-20250514
-  temperature: 0.7
-  max_tokens: 4096
-
-system_prompt: |
-  You are a helpful personal assistant...
-
-tools:
-  - calculator
-  - datetime
-```
-
-**Dynamic agents** are created through conversation and stored in SQLite. They have the same configuration options but can be created, updated, and deleted at runtime without restarting the application.
-
-### Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | Anthropic API key |
-| `TELEGRAM_BOT_TOKEN` | For Telegram | Telegram bot token from @BotFather |
-| `GITHUB_TOKEN` | For private repos | GitHub classic token with `repo` scope |
-| `PORT` | No | API port (default: 3000) |
-| `LOG_LEVEL` | No | Logging level (default: info) |
-| `DAILY_BUDGET_LIMIT` | No | Maximum daily API cost in USD |
-| `MONTHLY_BUDGET_LIMIT` | No | Maximum monthly API cost in USD |
-
-## Security
-
-### API Authentication
-
-The REST API requires API key authentication by default. Generate keys using the admin interface or seed via environment variable:
-
-```bash
-# Set a pre-generated API key (format: msk_<64 hex chars>)
-MAESTRO_API_KEY=msk_abc123...
-
-# Disable auth for development only (NOT recommended for production)
-MAESTRO_API_AUTH_ENABLED=false
-```
-
-Pass the API key in requests:
-```bash
-curl http://localhost:3000/chat \
-  -H "Authorization: Bearer msk_your_key_here" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello"}'
-```
-
-### Breaking Changes (v0.2.0)
-
-**Dashboard Authentication Required**
-
-The `/dashboard` route now requires API key authentication. Previously it was publicly accessible.
-
-**Migration:**
-- Ensure API key is passed when accessing dashboard
-- For development, set `MAESTRO_API_AUTH_ENABLED=false` to disable auth (not for production)
 
 ## API Reference
 
@@ -236,8 +183,9 @@ The `/dashboard` route now requires API key authentication. Previously it was pu
 ```bash
 # Chat (streaming SSE)
 curl -X POST http://localhost:3000/chat \
+  -H "Authorization: Bearer msk_your_key_here" \
   -H "Content-Type: application/json" \
-  -d '{"message": "Hello", "sessionId": "user-123"}'
+  -d '{"message": "Run an SEO audit on my site", "sessionId": "user-123"}'
 
 # Chat (JSON response)
 curl -X POST http://localhost:3000/chat \
@@ -260,49 +208,13 @@ curl http://localhost:3000/agents
 /quit   - Exit CLI
 ```
 
-## Documentation
+## Contributing
 
-Full documentation is available at [maestro.is](https://maestro.is):
-
-- [Introduction](https://maestro.is/getting-started/introduction)
-- [Quick Start](https://maestro.is/getting-started/quickstart)
-- [Configuration](https://maestro.is/getting-started/configuration)
-- [Architecture](https://maestro.is/concepts/architecture)
-- [Creating Agents](https://maestro.is/guides/creating-agents)
-- [API Reference](https://maestro.is/reference/api)
-
-## Project Structure
-
-```
-maestro/
-├── config/                 # Agent YAML configurations (static agents)
-├── src/
-│   ├── agents/            # Orchestrator agent
-│   ├── api/               # REST API (Hono)
-│   ├── channels/          # Telegram, CLI adapters
-│   ├── core/              # Agent runtime, types, config, registry
-│   ├── llm/               # LLM provider (Anthropic)
-│   ├── memory/            # SQLite persistence (sessions + dynamic agents)
-│   ├── observability/     # Logging, cost tracking
-│   └── tools/             # Tool registry, built-ins
-├── assets/brand/          # Brand assets (Enzo, logos)
-├── projects/              # Cloned repositories (gitignored)
-├── data/                  # SQLite database (gitignored)
-└── logs/                  # Log files (gitignored)
-```
-
-## Roadmap
-
-| Phase | Status | Description |
-|-------|--------|-------------|
-| Phase 1: Foundation | Done | Agent runtime, CLI, API, tools, memory |
-| Phase 2: Channels | Partial | Telegram done, Slack/Discord planned |
-| Phase 3: Orchestration | Done | Multi-agent routing, dynamic agent creation |
-| Phase 4: Observability | Partial | Logging done, web dashboard planned |
+See [AGENTS.md](./AGENTS.md) for how agent YAML files are structured and how to contribute new agents.
 
 ## Acknowledgments
 
-- **Marketing Agent**: Built on frameworks from [Marketing Skills for Claude Code](https://github.com/coreyhaines31/marketingskills) by [Corey Haines](https://github.com/coreyhaines31) - an excellent collection of 23 marketing skills for CRO, copywriting, SEO, and growth strategy.
+- **Marketing Agent**: Originally built on frameworks from [Marketing Skills for Claude Code](https://github.com/coreyhaines31/marketingskills) by [Corey Haines](https://github.com/coreyhaines31).
 
 ## License
 

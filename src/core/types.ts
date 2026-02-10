@@ -76,6 +76,7 @@ export interface ToolDefinition {
 // Agent config schema (loaded from YAML)
 export const AgentConfigSchema = z.object({
   name: z.string(),
+  category: z.string().optional(),
   description: z.string(),
   model: z.object({
     provider: z.enum(["anthropic"]),
@@ -85,6 +86,8 @@ export const AgentConfigSchema = z.object({
   }),
   systemPrompt: z.string(),
   tools: z.array(z.string()).default([]),
+  references: z.array(z.string()).default([]),
+  relatedAgents: z.array(z.string()).default([]),
   // Maximum tool permission level this agent can access
   // low: calculator, datetime, memory tools
   // medium: browse_web

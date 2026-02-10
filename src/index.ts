@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { loadAllAgentConfigs } from "./core/config.js";
+import { loadAllAgentConfigs, loadAgentConfigsRecursive } from "./core/config.js";
 import { AgentContext } from "./core/types.js";
 import { ToolRegistry } from "./core/agent.js";
 import { DynamicAgentRegistry } from "./core/registry.js";
@@ -11,7 +11,7 @@ import { TelegramAdapter } from "./channels/telegram.js";
 import { SlackAdapter } from "./channels/slack.js";
 import { CLIAdapter } from "./channels/cli.js";
 import { MemoryStore } from "./memory/store.js";
-import { createToolRegistry, builtinTools } from "./tools/index.js";
+import { createToolRegistry, builtinTools, marketingTools } from "./tools/index.js";
 import { initLogger, initBudgetGuard } from "./observability/index.js";
 import { initVectorStore } from "./memory/index.js";
 import { APIServer } from "./api/index.js";
@@ -20,6 +20,7 @@ import { checkAllowlistConfiguration } from "./channels/utils/allowlist.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_DIR = join(__dirname, "..", "config");
+const AGENTS_DIR = join(__dirname, "..", "agents");
 const DATA_DIR = join(__dirname, "..", "data");
 const LOGS_DIR = join(__dirname, "..", "logs");
 
@@ -83,9 +84,18 @@ function setupApp(mode: Mode): AppContext {
   // Check allowlist configuration and warn about missing settings
   checkAllowlistConfiguration();
 
-  // Load static agent configs from YAML
+  // Load agent configs from agents/ directory (recursive, by category)
   console.log("Loading agent configurations...");
-  const staticAgentConfigs = loadAllAgentConfigs(CONFIG_DIR);
+  const staticAgentConfigs = loadAgentConfigsRecursive(AGENTS_DIR);
+
+  // Also load any remaining configs from config/ (backward compat)
+  const legacyConfigs = loadAllAgentConfigs(CONFIG_DIR);
+  for (const [name, config] of legacyConfigs) {
+    if (!staticAgentConfigs.has(name)) {
+      staticAgentConfigs.set(name, config);
+    }
+  }
+
   console.log(
     `Loaded ${staticAgentConfigs.size} static agent(s): ${[...staticAgentConfigs.keys()].join(", ")}`
   );
@@ -93,9 +103,10 @@ function setupApp(mode: Mode): AppContext {
   // Create LLM provider
   const provider = new AnthropicProvider();
 
-  // Create tool registry and register built-in tools
+  // Create tool registry and register built-in + marketing tools
   const tools = createToolRegistry();
   tools.registerAll(builtinTools);
+  tools.registerAll(marketingTools);
   console.log(
     `Registered ${tools.list().length} tool(s): ${tools.list().join(", ")}`
   );
