@@ -101,6 +101,26 @@ export class MemoryStore {
       );
 
       CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
+
+      CREATE TABLE IF NOT EXISTS agent_runs (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        agent_name TEXT NOT NULL,
+        category TEXT,
+        input TEXT,
+        output TEXT,
+        tokens_used INTEGER,
+        cost_usd REAL,
+        duration_ms INTEGER,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_agent_runs_session
+        ON agent_runs(session_id, created_at);
+
+      CREATE INDEX IF NOT EXISTS idx_agent_runs_agent
+        ON agent_runs(agent_name, created_at);
     `);
 
     // Migration: Add api_key_id column to sessions if it doesn't exist
@@ -630,7 +650,144 @@ export class MemoryStore {
       },
       systemPrompt: row.system_prompt,
       tools: JSON.parse(row.tools) as string[],
+      references: [],
+      relatedAgents: [],
     };
+  }
+
+  // ========== Agent Run Tracking ==========
+
+  /**
+   * Record an agent run for analytics
+   */
+  recordAgentRun(run: {
+    sessionId: string;
+    agentName: string;
+    category?: string;
+    input?: string;
+    output?: string;
+    tokensUsed?: number;
+    costUsd?: number;
+    durationMs?: number;
+  }): string {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+
+    this.db
+      .prepare(
+        `INSERT INTO agent_runs (id, session_id, agent_name, category, input, output, tokens_used, cost_usd, duration_ms, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        id,
+        run.sessionId,
+        run.agentName,
+        run.category ?? null,
+        run.input ?? null,
+        run.output ?? null,
+        run.tokensUsed ?? null,
+        run.costUsd ?? null,
+        run.durationMs ?? null,
+        now
+      );
+
+    return id;
+  }
+
+  /**
+   * Get agent runs, optionally filtered by session or agent
+   */
+  getAgentRuns(filters?: {
+    sessionId?: string;
+    agentName?: string;
+    limit?: number;
+  }): Array<{
+    id: string;
+    sessionId: string;
+    agentName: string;
+    category: string | null;
+    tokensUsed: number | null;
+    costUsd: number | null;
+    durationMs: number | null;
+    createdAt: string;
+  }> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+
+    if (filters?.sessionId) {
+      conditions.push("session_id = ?");
+      params.push(filters.sessionId);
+    }
+    if (filters?.agentName) {
+      conditions.push("agent_name = ?");
+      params.push(filters.agentName);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const limit = filters?.limit ?? 50;
+
+    const rows = this.db
+      .prepare(
+        `SELECT id, session_id, agent_name, category, tokens_used, cost_usd, duration_ms, created_at
+         FROM agent_runs ${whereClause}
+         ORDER BY created_at DESC LIMIT ?`
+      )
+      .all(...params, limit) as Array<{
+        id: string;
+        session_id: string;
+        agent_name: string;
+        category: string | null;
+        tokens_used: number | null;
+        cost_usd: number | null;
+        duration_ms: number | null;
+        created_at: string;
+      }>;
+
+    return rows.map((r) => ({
+      id: r.id,
+      sessionId: r.session_id,
+      agentName: r.agent_name,
+      category: r.category,
+      tokensUsed: r.tokens_used,
+      costUsd: r.cost_usd,
+      durationMs: r.duration_ms,
+      createdAt: r.created_at,
+    }));
+  }
+
+  /**
+   * Get aggregate stats by agent category
+   */
+  getAgentRunsByCategory(): Array<{
+    category: string;
+    runCount: number;
+    totalTokens: number;
+    totalCost: number;
+  }> {
+    const rows = this.db
+      .prepare(
+        `SELECT
+           COALESCE(category, 'uncategorized') as category,
+           COUNT(*) as run_count,
+           COALESCE(SUM(tokens_used), 0) as total_tokens,
+           COALESCE(SUM(cost_usd), 0) as total_cost
+         FROM agent_runs
+         GROUP BY category
+         ORDER BY run_count DESC`
+      )
+      .all() as Array<{
+        category: string;
+        run_count: number;
+        total_tokens: number;
+        total_cost: number;
+      }>;
+
+    return rows.map((r) => ({
+      category: r.category,
+      runCount: r.run_count,
+      totalTokens: r.total_tokens,
+      totalCost: r.total_cost,
+    }));
   }
 
   // ========== API Key Management ==========
