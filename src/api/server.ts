@@ -12,6 +12,7 @@ import { createChatRoutes } from "./routes/chat.js";
 import { createAgentRoutes } from "./routes/agents.js";
 import { createSessionRoutes } from "./routes/sessions.js";
 import { createObservabilityRoutes } from "./routes/observability.js";
+import { createCrmRoutes } from "./routes/crm.js";
 import { initWebSocketManager, getWebSocketManager } from "./websocket.js";
 import {
   createAuthMiddleware,
@@ -29,6 +30,7 @@ export interface APIServerOptions {
   agentRegistry: DynamicAgentRegistry;
   logFile?: string;
   dashboardPath?: string;
+  crmStore?: import("../crm/index.js").CrmStore;
 }
 
 export class APIServer {
@@ -123,6 +125,11 @@ export class APIServer {
           observabilityEvents: "GET /observability/events",
           observabilityCosts: "GET /observability/costs",
           observabilityBudget: "GET /observability/budget",
+          crmCompanies: "GET /crm/companies",
+          crmContacts: "GET /crm/contacts",
+          crmDeals: "GET /crm/deals",
+          crmActivities: "GET /crm/activities",
+          crmPipeline: "GET /crm/pipeline/summary",
           websocket: "WS /ws",
           dashboard: "GET /dashboard",
         },
@@ -145,6 +152,13 @@ export class APIServer {
       memoryStore: this.options.memoryStore,
     });
     this.app.route("/sessions", sessionRoutes);
+
+    if (this.options.crmStore) {
+      const crmRoutes = createCrmRoutes({
+        crmStore: this.options.crmStore,
+      });
+      this.app.route("/crm", crmRoutes);
+    }
 
     if (this.options.logFile) {
       const observabilityRoutes = createObservabilityRoutes({

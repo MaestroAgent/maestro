@@ -11,9 +11,10 @@ import { TelegramAdapter } from "./channels/telegram.js";
 import { SlackAdapter } from "./channels/slack.js";
 import { CLIAdapter } from "./channels/cli.js";
 import { MemoryStore } from "./memory/store.js";
-import { createToolRegistry, builtinTools, marketingTools } from "./tools/index.js";
+import { createToolRegistry, builtinTools, marketingTools, crmTools } from "./tools/index.js";
 import { initLogger, initBudgetGuard } from "./observability/index.js";
 import { initVectorStore } from "./memory/index.js";
+import { CrmStore, initCrmStore } from "./crm/index.js";
 import { APIServer } from "./api/index.js";
 import { hashApiKey, isValidKeyFormat } from "./api/utils/auth.js";
 import { checkAllowlistConfiguration } from "./channels/utils/allowlist.js";
@@ -67,6 +68,7 @@ interface AppContext {
   provider: AnthropicProvider;
   toolRegistry: ToolRegistry;
   memoryStore: MemoryStore;
+  crmStore: CrmStore;
   createOrchestrator: (
     context: AgentContext
   ) => ReturnType<typeof createOrchestratorAgent>;
@@ -103,14 +105,19 @@ function setupApp(mode: Mode): AppContext {
   // Create LLM provider
   const provider = new AnthropicProvider();
 
-  // Create tool registry and register built-in + marketing tools
+  // Create tool registry and register built-in + marketing + CRM tools
   const tools = createToolRegistry();
   tools.registerAll(builtinTools);
   tools.registerAll(marketingTools);
+  tools.registerAll(crmTools);
   console.log(
     `Registered ${tools.list().length} tool(s): ${tools.list().join(", ")}`
   );
   const toolRegistry = tools.registry;
+
+  // Initialize CRM store
+  const crmStore = initCrmStore({ dbPath: join(DATA_DIR, "maestro.db") });
+  console.log("CRM initialized");
 
   // Create memory store
   const memoryStore = new MemoryStore({
@@ -181,6 +188,7 @@ function setupApp(mode: Mode): AppContext {
     provider,
     toolRegistry,
     memoryStore,
+    crmStore,
     createOrchestrator,
   };
 }
@@ -254,6 +262,7 @@ async function runAPI(app: AppContext): Promise<void> {
     createOrchestrator: app.createOrchestrator,
     memoryStore: app.memoryStore,
     agentRegistry: app.agentRegistry,
+    crmStore: app.crmStore,
     logFile: join(LOGS_DIR, "maestro.jsonl"),
     dashboardPath: join(__dirname, "..", "dashboard", "dist"),
   });

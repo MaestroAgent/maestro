@@ -1,6 +1,6 @@
 # Maestro Agent Roster
 
-32 specialized marketing agents organized into 8 categories. Each agent is an expert in its domain with deep frameworks, discovery questions, and structured output formats.
+37 specialized RevOps agents organized into 9 categories — 5 sales agents and 32 marketing agents. Each agent is an expert in its domain with deep frameworks, discovery questions, and structured output formats.
 
 ## How Agents Work
 
@@ -39,6 +39,65 @@ related_agents:          # Cross-referencing for lateral delegation
 
 max_tool_level: medium
 ```
+
+---
+
+## Sales (5 agents)
+
+### pipeline-manager
+Pipeline health, deal progression, revenue forecasting, and stalled deal identification.
+
+**Triggers:** "pipeline review", "deal pipeline", "revenue forecast", "stalled deals", "pipeline health"
+
+**Frameworks:** Pipeline Health Scorecard, Deal Velocity, Pipeline Coverage Ratio (3x rule), At-Risk Deal Identification
+
+**Tools:** crm_deals, crm_pipeline, crm_activities, calculator
+
+**Related agents:** deal-coach, lead-qualifier, prospector, analytics-interpreter
+
+### lead-qualifier
+Lead scoring, qualification assessment, and routing based on ICP fit and buying signals.
+
+**Triggers:** "qualify this lead", "lead scoring", "is this a good lead", "ICP fit"
+
+**Frameworks:** BANT Assessment (scored 1-5), ICP Fit Matrix (scored 0-2), Lead Source Quality, Qualification-to-Routing
+
+**Tools:** crm_contacts, crm_companies, crm_deals, crm_activities
+
+**Related agents:** prospector, pipeline-manager, deal-coach, email-sequence
+
+### deal-coach
+Deal strategy, objection handling, and next-step coaching for specific deals.
+
+**Triggers:** "help with this deal", "deal strategy", "objection handling", "how to close", "deal stuck"
+
+**Frameworks:** MEDDIC Deal Assessment, Objection Handling (LAER), Stakeholder Mapping, Stage-Specific Playbooks
+
+**Tools:** crm_deals, crm_contacts, crm_companies, crm_activities
+
+**Related agents:** pipeline-manager, meeting-prep, lead-qualifier
+
+### meeting-prep
+Pre-meeting research briefs compiling contact history, company context, deal status, and talking points.
+
+**Triggers:** "meeting prep", "prepare for call", "pre-call research", "brief me on", "I have a meeting with"
+
+**Frameworks:** Meeting Type Playbooks (discovery/demo/proposal/negotiation/check-in), Activity History Analysis
+
+**Tools:** crm_contacts, crm_companies, crm_deals, crm_activities
+
+**Related agents:** deal-coach, lead-qualifier, prospector
+
+### prospector
+Outbound prospecting strategy, target account identification, and outreach sequence design.
+
+**Triggers:** "prospecting", "outbound strategy", "find leads", "target accounts", "cold outreach"
+
+**Frameworks:** Target Account Selection, Multi-Touch Outreach Sequence (14-day), Personalization Tiers, First-Touch Email Angles
+
+**Tools:** crm_companies, crm_contacts, crm_deals, crm_activities
+
+**Related agents:** lead-qualifier, meeting-prep, email-sequence, linkedin-content
 
 ---
 
@@ -394,6 +453,7 @@ Agents load these deep reference materials on demand:
 
 | Reference | Used By | Content |
 |-----------|---------|---------|
+| `sales/sales-methodology.md` | Sales agents | Pipeline stages, MEDDIC, BANT, objection handling, metrics, email templates |
 | `content/copy-frameworks.md` | Content agents | AIDA, PAS, BAB, headline formulas, CTA patterns |
 | `content/email-templates.md` | Email agents | Welcome, sales, re-engagement email templates |
 | `content/headline-formulas.md` | Content agents | 10 headline archetypes, platform-specific rules |
