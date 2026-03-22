@@ -1,5 +1,5 @@
 import { AgentConfig, AgentContext } from "../core/types.js";
-import { Agent, AgentRegistry, ToolRegistry } from "../core/agent.js";
+import { Agent, AgentRegistry, ToolRegistry, AgentServices } from "../core/agent.js";
 import { LLMProvider } from "../llm/provider.js";
 
 // Create personal assistant agent (no special tools, uses config as-is)
@@ -8,7 +8,15 @@ export function createPersonalAssistantAgent(
   provider: LLMProvider,
   agentRegistry: AgentRegistry,
   toolRegistry: ToolRegistry,
+  services: AgentServices,
   context?: AgentContext
 ): Agent {
-  return new Agent(config, provider, agentRegistry, toolRegistry, context);
+  return new Agent({
+    config,
+    provider,
+    agentRegistry,
+    toolRegistry,
+    services,
+    context,
+  });
 }
