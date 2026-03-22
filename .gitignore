@@ -13,9 +13,12 @@ build/
 .env.local
 .env.*.local
 
-# IDE
+# IDE & tooling
 .idea/
 .vscode/
+.claude/
+.agents/
+skills-lock.json
 *.swp
 *.swo
 
