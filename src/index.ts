@@ -3,7 +3,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { loadAllAgentConfigs, loadAgentConfigsRecursive } from "./core/config.js";
 import { AgentContext } from "./core/types.js";
-import { ToolRegistry } from "./core/agent.js";
+import { ToolRegistry, AgentServices } from "./core/agent.js";
 import { DynamicAgentRegistry } from "./core/registry.js";
 import { AnthropicProvider } from "./llm/anthropic.js";
 import { createOrchestratorAgent } from "./agents/orchestrator.js";
@@ -12,7 +12,7 @@ import { SlackAdapter } from "./channels/slack.js";
 import { CLIAdapter } from "./channels/cli.js";
 import { MemoryStore } from "./memory/store.js";
 import { createToolRegistry, builtinTools, marketingTools, crmTools } from "./tools/index.js";
-import { initLogger, initBudgetGuard } from "./observability/index.js";
+import { initLogger, initBudgetGuard, getLogger, getBudgetGuard, getCostTracker } from "./observability/index.js";
 import { initVectorStore } from "./memory/index.js";
 import { CrmStore, initCrmStore } from "./crm/index.js";
 import { APIServer } from "./api/index.js";
@@ -174,11 +174,17 @@ function setupApp(mode: Mode): AppContext {
 
   // Factory function to create orchestrator with fresh dynamic prompt each time
   const createOrchestrator = (context: AgentContext) => {
+    const services: AgentServices = {
+      logger: getLogger(),
+      costTracker: getCostTracker(context.sessionId, orchestratorConfig.model.name),
+      budgetGuard: getBudgetGuard() ?? undefined,
+    };
     return createOrchestratorAgent(
       orchestratorConfig,
       provider,
       agentRegistry,
       toolRegistry,
+      services,
       context
     );
   };

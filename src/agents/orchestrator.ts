@@ -1,5 +1,5 @@
 import { ToolDefinition, AgentContext, AgentConfig } from "../core/types.js";
-import { Agent, ToolRegistry } from "../core/agent.js";
+import { Agent, ToolRegistry, AgentServices } from "../core/agent.js";
 import { DynamicAgentRegistry } from "../core/registry.js";
 import { LLMProvider } from "../llm/provider.js";
 import { createAgentTools } from "../tools/builtin/agents.js";
@@ -80,6 +80,7 @@ export function createOrchestratorAgent(
   provider: LLMProvider,
   registry: DynamicAgentRegistry,
   baseToolRegistry: ToolRegistry,
+  services: AgentServices,
   context?: AgentContext
 ): Agent {
   // Use a holder object so we can set the agent reference after creation
@@ -125,13 +126,14 @@ export function createOrchestratorAgent(
   contextWithMeta.metadata.availableTools = [...baseToolRegistry.keys()];
 
   // Create the agent with complete tool registry
-  const agent = new Agent(
-    dynamicConfig,
+  const agent = new Agent({
+    config: dynamicConfig,
     provider,
-    agentRegistryMap,
+    agentRegistry: agentRegistryMap,
     toolRegistry,
-    contextWithMeta
-  );
+    services,
+    context: contextWithMeta,
+  });
 
   // Set the reference for the deferred spawner
   agentHolder.agent = agent;

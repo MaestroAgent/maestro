@@ -9,11 +9,9 @@ import {
   ToolResult,
 } from "./types.js";
 import { LLMProvider } from "../llm/provider.js";
-import {
-  getLogger,
-  getCostTracker,
-  getBudgetGuard,
-} from "../observability/index.js";
+import type { Logger } from "../observability/logger.js";
+import type { CostTracker } from "../observability/cost.js";
+import type { BudgetGuard } from "../observability/budget.js";
 
 export interface AgentRuntime {
   id: string;
@@ -25,6 +23,22 @@ export interface AgentRuntime {
 export type AgentRegistry = Map<string, AgentConfig>;
 export type ToolRegistry = Map<string, ToolDefinition>;
 
+export interface AgentServices {
+  logger: Logger;
+  costTracker: CostTracker;
+  budgetGuard?: BudgetGuard;
+}
+
+export interface AgentOptions {
+  config: AgentConfig;
+  provider: LLMProvider;
+  agentRegistry: AgentRegistry;
+  toolRegistry: ToolRegistry;
+  services: AgentServices;
+  context?: AgentContext;
+  superior?: AgentRuntime;
+}
+
 export class Agent implements AgentRuntime {
   id: string;
   config: AgentConfig;
@@ -34,24 +48,19 @@ export class Agent implements AgentRuntime {
   private provider: LLMProvider;
   private agentRegistry: AgentRegistry;
   private toolRegistry: ToolRegistry;
+  private services: AgentServices;
 
-  constructor(
-    config: AgentConfig,
-    provider: LLMProvider,
-    agentRegistry: AgentRegistry,
-    toolRegistry: ToolRegistry,
-    context?: AgentContext,
-    superior?: AgentRuntime
-  ) {
+  constructor(options: AgentOptions) {
     this.id = randomUUID();
-    this.config = config;
-    this.provider = provider;
-    this.agentRegistry = agentRegistry;
-    this.toolRegistry = toolRegistry;
-    this.superior = superior;
+    this.config = options.config;
+    this.provider = options.provider;
+    this.agentRegistry = options.agentRegistry;
+    this.toolRegistry = options.toolRegistry;
+    this.services = options.services;
+    this.superior = options.superior;
 
     // Use provided context or create new one
-    this.context = context ?? {
+    this.context = options.context ?? {
       sessionId: randomUUID(),
       history: [],
       metadata: {},
@@ -59,11 +68,7 @@ export class Agent implements AgentRuntime {
   }
 
   async *run(input: string): AsyncGenerator<StreamChunk, string, unknown> {
-    const logger = getLogger();
-    const costTracker = getCostTracker(
-      this.context.sessionId,
-      this.config.model.name
-    );
+    const { logger, costTracker, budgetGuard } = this.services;
     const startTime = Date.now();
 
     // Track current agent in context
@@ -103,7 +108,6 @@ export class Agent implements AgentRuntime {
       }
 
       // Check budget before making API call
-      const budgetGuard = getBudgetGuard();
       if (budgetGuard) {
         const budgetCheck = budgetGuard.checkBudget();
         if (!budgetCheck.allowed) {
@@ -149,7 +153,6 @@ export class Agent implements AgentRuntime {
             totalOutputTokens += chunk.usage.outputTokens;
 
             // Record spending in budget guard
-            const budgetGuard = getBudgetGuard();
             if (budgetGuard) {
               budgetGuard.recordSpending(
                 {
@@ -245,14 +248,15 @@ export class Agent implements AgentRuntime {
       throw new Error(`Unknown agent: ${agentName}`);
     }
 
-    const subordinate = new Agent(
-      subConfig,
-      this.provider,
-      this.agentRegistry,
-      this.toolRegistry,
-      this.context, // Share context with subordinate
-      this
-    );
+    const subordinate = new Agent({
+      config: subConfig,
+      provider: this.provider,
+      agentRegistry: this.agentRegistry,
+      toolRegistry: this.toolRegistry,
+      services: this.services,
+      context: this.context, // Share context with subordinate
+      superior: this,
+    });
 
     let result = "";
     for await (const chunk of subordinate.run(input)) {
@@ -303,7 +307,7 @@ export class Agent implements AgentRuntime {
   }
 
   private async executeToolCalls(toolCalls: ToolCall[]): Promise<ToolResult[]> {
-    const logger = getLogger();
+    const logger = this.services.logger;
     const results: ToolResult[] = [];
     const logContext = {
       sessionId: this.context.sessionId,
@@ -393,15 +397,4 @@ export class Agent implements AgentRuntime {
       })
       .join("\n\n");
   }
-}
-
-// Factory function to create agents
-export function createAgent(
-  config: AgentConfig,
-  provider: LLMProvider,
-  agentRegistry: AgentRegistry,
-  toolRegistry: ToolRegistry,
-  context?: AgentContext
-): Agent {
-  return new Agent(config, provider, agentRegistry, toolRegistry, context);
 }
