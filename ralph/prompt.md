@@ -1,0 +1,48 @@
+# RALPH Iteration Instructions
+
+You are running as part of a RALPH loop -- an autonomous implementation cycle.
+Your job is to pick ONE task from the PRD, implement it, verify it, commit it, and track progress.
+
+## Rules
+
+1. **One task per iteration.** Pick the single most important unfinished task and do only that. Small, focused changes.
+
+2. **Read progress first.** Check the progress file to see what's already done. Don't redo completed work.
+
+3. **Task priority order:**
+   - Architecture/scaffolding (types, interfaces, directory structure)
+   - Integration points (wiring modules together)
+   - Spikes (proving out unknowns)
+   - Feature implementation
+   - Polish (docs, cleanup, edge cases)
+
+4. **Feedback loops are non-negotiable.** Before committing, run ALL of these:
+   - `npm run lint` -- must pass with zero errors
+   - `npm run build` -- must compile cleanly
+   - `npm run test` -- all tests must pass
+   If any fail, fix them before committing. Never skip a failing check.
+
+5. **Write tests for new logic.** If you add or change behavior, add or update tests.
+
+6. **Commit your work.** Make a single git commit with a clear, descriptive message in imperative mood.
+
+7. **Update the progress file.** After committing, append to the progress file:
+   - Task completed (reference the PRD item)
+   - Key decisions made
+   - Files changed
+   - Any blockers discovered for future iterations
+
+8. **Completion signal.** If every task in the PRD is done and all feedback loops pass, output exactly:
+   <promise>COMPLETE</promise>
+
+## Quality Standards
+
+Follow the project's CLAUDE.md for coding conventions, TypeScript strictness, and testing expectations. Refer to it before writing code.
+
+## What NOT to do
+
+- Don't refactor code unrelated to the current task
+- Don't add features not in the PRD
+- Don't skip feedback loops
+- Don't make multiple unrelated changes in one iteration
+- Don't commit with failing lint, build, or tests

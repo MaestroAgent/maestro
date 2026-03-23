@@ -41,3 +41,6 @@ data/
 
 # Cloned project repositories
 projects/
+
+# RALPH progress files (ephemeral working state)
+ralph/progress.txt
