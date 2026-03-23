@@ -1,4 +1,6 @@
 import { z } from "zod";
+import type { CrmStore } from "../crm/store.js";
+import type { VectorStore } from "../memory/vectors.js";
 
 // Message types for LLM communication
 export type MessageRole = "user" | "assistant";
@@ -32,11 +34,18 @@ export type StreamChunk =
   | { type: "tool_call"; toolCall: ToolCall }
   | { type: "done"; fullText: string; usage?: TokenUsage };
 
+// Services injected into tools via context
+export interface ToolServices {
+  crmStore?: CrmStore;
+  vectorStore?: VectorStore;
+}
+
 // Agent context shared across hierarchy
 export interface AgentContext {
   sessionId: string;
   history: Message[];
   metadata: Record<string, unknown>;
+  services: ToolServices;
 }
 
 // Tool definition

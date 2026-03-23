@@ -122,6 +122,7 @@ export function createOrchestratorAgent(
     sessionId: "",
     history: [],
     metadata: {},
+    services: {},
   };
   contextWithMeta.metadata.availableTools = [...baseToolRegistry.keys()];
 

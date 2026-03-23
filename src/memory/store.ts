@@ -414,6 +414,7 @@ export class MemoryStore {
         userId: session.userId,
         ...session.metadata,
       },
+      services: {},
     };
   }
 
