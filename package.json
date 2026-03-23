@@ -35,7 +35,8 @@
     "lint": "eslint src/",
     "format": "prettier --write src/",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "husky"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -54,6 +55,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.12.0",
     "eslint": "^9.18.0",
+    "husky": "^9.1.7",
     "prettier": "^3.4.2",
     "sharp": "^0.34.5",
     "svgo": "^4.0.0",
