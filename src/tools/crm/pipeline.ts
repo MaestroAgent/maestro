@@ -1,6 +1,5 @@
 import { ToolDefinition } from "../../core/types.js";
 import { defineTool } from "../registry.js";
-import { getCrmStore } from "../../crm/index.js";
 
 export const crmPipelineTool: ToolDefinition = defineTool(
   "crm_pipeline",
@@ -22,8 +21,8 @@ export const crmPipelineTool: ToolDefinition = defineTool(
     },
     required: ["action"],
   },
-  async (args) => {
-    const store = getCrmStore();
+  async (args, context) => {
+    const store = context.services.crmStore;
     if (!store) {
       return { error: "CRM not initialized" };
     }

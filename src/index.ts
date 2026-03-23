@@ -13,7 +13,7 @@ import { CLIAdapter } from "./channels/cli.js";
 import { MemoryStore } from "./memory/store.js";
 import { createToolRegistry, builtinTools, marketingTools, crmTools } from "./tools/index.js";
 import { initLogger, initBudgetGuard, getLogger, getBudgetGuard, getCostTracker } from "./observability/index.js";
-import { initVectorStore } from "./memory/index.js";
+import { initVectorStore, getVectorStore } from "./memory/index.js";
 import { CrmStore, initCrmStore } from "./crm/index.js";
 import { APIServer } from "./api/index.js";
 import { hashApiKey, isValidKeyFormat } from "./api/utils/auth.js";
@@ -178,6 +178,8 @@ function setupApp(mode: Mode): AppContext {
       logger: getLogger(),
       costTracker: getCostTracker(context.sessionId, orchestratorConfig.model.name),
       budgetGuard: getBudgetGuard() ?? undefined,
+      crmStore,
+      vectorStore: getVectorStore() ?? undefined,
     };
     return createOrchestratorAgent(
       orchestratorConfig,

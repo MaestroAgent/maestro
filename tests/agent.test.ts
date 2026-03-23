@@ -61,6 +61,7 @@ function createTestContext(): AgentContext {
     sessionId: "test-session",
     history: [],
     metadata: {},
+    services: {},
   };
 }
 

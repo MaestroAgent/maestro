@@ -1,4 +1,3 @@
-import { getVectorStore } from "./vectors.js";
 import { Message, AgentContext } from "../core/types.js";
 
 /**
@@ -164,7 +163,7 @@ export async function flushMemories(
   context: AgentContext,
   reason: "soft" | "hard" | "manual" = "manual"
 ): Promise<{ stored: number; facts: string[] }> {
-  const vectorStore = getVectorStore();
+  const vectorStore = context.services.vectorStore;
   if (!vectorStore) {
     return { stored: 0, facts: [] };
   }

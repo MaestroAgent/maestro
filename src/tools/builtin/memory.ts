@@ -1,5 +1,4 @@
 import { defineTool } from "../registry.js";
-import { getVectorStore } from "../../memory/vectors.js";
 import { MemoryType } from "../../memory/types.js";
 import {
   flushMemories,
@@ -33,7 +32,7 @@ export const rememberTool = defineTool(
     required: ["content", "type"],
   },
   async (args, context) => {
-    const vectorStore = getVectorStore();
+    const vectorStore = context.services.vectorStore;
     if (!vectorStore) {
       return { success: false, error: "Memory system not initialized" };
     }
@@ -104,7 +103,7 @@ export const recallTool = defineTool(
     required: ["query"],
   },
   async (args, context) => {
-    const vectorStore = getVectorStore();
+    const vectorStore = context.services.vectorStore;
     if (!vectorStore) {
       return { success: false, error: "Memory system not initialized" };
     }
@@ -163,8 +162,8 @@ export const forgetTool = defineTool(
     },
     required: ["memoryId"],
   },
-  async (args) => {
-    const vectorStore = getVectorStore();
+  async (args, context) => {
+    const vectorStore = context.services.vectorStore;
     if (!vectorStore) {
       return { success: false, error: "Memory system not initialized" };
     }
@@ -198,8 +197,8 @@ export const memoryStatsTool = defineTool(
     type: "object",
     properties: {},
   },
-  async () => {
-    const vectorStore = getVectorStore();
+  async (_args, context) => {
+    const vectorStore = context.services.vectorStore;
     if (!vectorStore) {
       return { success: false, error: "Memory system not initialized" };
     }

@@ -27,6 +27,8 @@ export interface AgentServices {
   logger: Logger;
   costTracker: CostTracker;
   budgetGuard?: BudgetGuard;
+  crmStore?: import("../crm/store.js").CrmStore;
+  vectorStore?: import("../memory/vectors.js").VectorStore;
 }
 
 export interface AgentOptions {
@@ -64,6 +66,15 @@ export class Agent implements AgentRuntime {
       sessionId: randomUUID(),
       history: [],
       metadata: {},
+      services: {},
+    };
+
+    // Populate context.services from AgentServices
+    this.context.services = {
+      ...this.context.services,
+      crmStore: options.services.crmStore ?? this.context.services.crmStore,
+      vectorStore:
+        options.services.vectorStore ?? this.context.services.vectorStore,
     };
   }
 
