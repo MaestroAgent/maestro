@@ -13,8 +13,41 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 
 cd "$REPO_ROOT"
 
+# Inject credentials into the Docker sandbox.
+# - Claude OAuth: macOS Keychain -> .credentials.json (docker/for-mac#7842)
+# - GitHub CLI: gh auth token -> GH_TOKEN env var
+inject_sandbox_credentials() {
+  local creds gh_token
+
+  # Claude OAuth
+  creds=$(security find-generic-password -s "Claude Code-credentials" -w 2>/dev/null) || true
+  if [[ -n "$creds" ]]; then
+    docker sandbox exec "$SANDBOX_NAME" bash -c "cat > /home/agent/.claude/.credentials.json << 'ENDCREDS'
+${creds}
+ENDCREDS" 2>/dev/null
+    echo "Injected Claude OAuth credentials into sandbox"
+  fi
+
+  # GitHub CLI
+  gh_token=$(gh auth token 2>/dev/null) || true
+  if [[ -n "$gh_token" ]]; then
+    docker sandbox exec "$SANDBOX_NAME" bash -c \
+      "grep -q GH_TOKEN /etc/sandbox-persistent.sh 2>/dev/null || echo 'export GH_TOKEN=${gh_token}' >> /etc/sandbox-persistent.sh" 2>/dev/null
+    echo "Injected GitHub token into sandbox"
+  fi
+}
+
+SANDBOX_NAME="claude-$(basename "$REPO_ROOT")"
+
 echo "Starting AFK RALPH: PRD #${PRD_ISSUE}, $MAX_ITERATIONS max iterations"
 echo ""
+
+# Ensure sandbox exists and has OAuth credentials before the loop
+if ! docker sandbox ls 2>/dev/null | awk 'NR>1 {print $1}' | grep -q "^${SANDBOX_NAME}$"; then
+  echo "Creating sandbox '${SANDBOX_NAME}'..."
+  docker sandbox create --name "$SANDBOX_NAME" claude "$REPO_ROOT"
+fi
+inject_sandbox_credentials
 
 for ((i=1; i<=MAX_ITERATIONS; i++)); do
   echo "=== RALPH iteration $i / $MAX_ITERATIONS ==="
@@ -49,6 +82,9 @@ for ((i=1; i<=MAX_ITERATIONS; i++)); do
 
   echo "$open_count open sub-issue(s) remaining."
 
+  # Ensure OAuth credentials are available in the sandbox
+  inject_sandbox_credentials
+
   # Fetch each sub-issue's full details
   sub_issues=""
   for num in $sub_issue_numbers; do
@@ -57,7 +93,7 @@ for ((i=1; i<=MAX_ITERATIONS; i++)); do
     sub_issues="${sub_issues}\n${detail}"
   done
 
-  result=$(docker sandbox run claude "$REPO_ROOT" -- \
+  result=$(docker sandbox run "$SANDBOX_NAME" -- \
     -p \
     --permission-mode bypassPermissions \
     "@ralph/prompt.md
