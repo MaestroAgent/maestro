@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import Database from "better-sqlite3";
+import type BetterSqlite3 from "better-sqlite3";
+import { MaestroDatabase } from "../../src/core/database.js";
 import { initCrmSchema } from "../../src/crm/schema.js";
 import { PipelineRepo } from "../../src/crm/pipeline-repo.js";
 import { randomUUID } from "crypto";
 
 function insertDeal(
-  db: Database.Database,
+  db: BetterSqlite3.Database,
   overrides: {
     stageId: string;
     value?: number;
@@ -33,11 +34,13 @@ function insertDeal(
 }
 
 describe("PipelineRepo", () => {
-  let db: Database.Database;
+  let database: MaestroDatabase;
+  let db: BetterSqlite3.Database;
   let repo: PipelineRepo;
 
   beforeEach(() => {
-    db = new Database(":memory:");
+    database = new MaestroDatabase(":memory:");
+    db = database.db;
     initCrmSchema(db);
     repo = new PipelineRepo(db);
   });

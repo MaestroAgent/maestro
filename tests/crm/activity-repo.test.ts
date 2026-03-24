@@ -1,22 +1,22 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import Database from "better-sqlite3";
+import { MaestroDatabase } from "../../src/core/database.js";
 import { initCrmSchema } from "../../src/crm/schema.js";
 import { ActivityRepo } from "../../src/crm/activity-repo.js";
 import { ContactRepo } from "../../src/crm/contact-repo.js";
 import { CompanyRepo } from "../../src/crm/company-repo.js";
 
 describe("ActivityRepo", () => {
-  let db: Database.Database;
+  let database: MaestroDatabase;
   let repo: ActivityRepo;
   let contactRepo: ContactRepo;
   let companyRepo: CompanyRepo;
 
   beforeEach(() => {
-    db = new Database(":memory:");
-    initCrmSchema(db);
-    repo = new ActivityRepo(db);
-    contactRepo = new ContactRepo(db);
-    companyRepo = new CompanyRepo(db);
+    database = new MaestroDatabase(":memory:");
+    initCrmSchema(database.db);
+    repo = new ActivityRepo(database.db);
+    contactRepo = new ContactRepo(database.db);
+    companyRepo = new CompanyRepo(database.db);
   });
 
   describe("logActivity + getActivity", () => {
@@ -143,12 +143,12 @@ describe("ActivityRepo", () => {
 
     it("filters by deal id", () => {
       // Create a deal to associate with an activity
-      const stages = db
+      const stages = database.db
         .prepare("SELECT id FROM crm_pipeline_stages LIMIT 1")
         .get() as { id: string };
 
       const dealId = "test-deal-id";
-      db.prepare(
+      database.db.prepare(
         `INSERT INTO crm_deals (id, title, stage_id, currency, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?)`,
       ).run(dealId, "Test Deal", stages.id, "USD", new Date().toISOString(), new Date().toISOString());

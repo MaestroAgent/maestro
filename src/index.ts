@@ -14,7 +14,7 @@ import { MemoryStore } from "./memory/store.js";
 import { createToolRegistry, builtinTools, marketingTools, crmTools } from "./tools/index.js";
 import { initLogger, initBudgetGuard, getLogger, getBudgetGuard, getCostTracker } from "./observability/index.js";
 import { initVectorStore, getVectorStore } from "./memory/index.js";
-import Database from "better-sqlite3";
+import { MaestroDatabase } from "./core/database.js";
 import {
   initCrmSchema,
   CompanyRepo,
@@ -124,16 +124,17 @@ function setupApp(mode: Mode): AppContext {
   );
   const toolRegistry = tools.registry;
 
+  // Initialize shared database connection
+  const database = new MaestroDatabase(join(DATA_DIR, "maestro.db"));
+
   // Initialize CRM
-  const crmDb = new Database(join(DATA_DIR, "maestro.db"));
-  crmDb.pragma("journal_mode = WAL");
-  initCrmSchema(crmDb);
-  const activityRepo = new ActivityRepo(crmDb);
-  const pipelineRepo = new PipelineRepo(crmDb);
+  initCrmSchema(database.db);
+  const activityRepo = new ActivityRepo(database.db);
+  const pipelineRepo = new PipelineRepo(database.db);
   const crm: CrmServices = {
-    companies: new CompanyRepo(crmDb),
-    contacts: new ContactRepo(crmDb),
-    deals: new DealRepo(crmDb, activityRepo, pipelineRepo),
+    companies: new CompanyRepo(database.db),
+    contacts: new ContactRepo(database.db),
+    deals: new DealRepo(database.db, activityRepo, pipelineRepo),
     activities: activityRepo,
     pipeline: pipelineRepo,
   };
