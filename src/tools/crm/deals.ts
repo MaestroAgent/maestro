@@ -67,8 +67,8 @@ export const crmDealsTool: ToolDefinition = defineTool(
     required: ["action"],
   },
   async (args, context) => {
-    const store = context.services.crmStore;
-    if (!store) {
+    const crm = context.services.crm;
+    if (!crm) {
       return { error: "CRM not initialized" };
     }
 
@@ -80,11 +80,11 @@ export const crmDealsTool: ToolDefinition = defineTool(
         const stageName = args.stage as string | undefined;
         let stageId: string | undefined;
         if (stageName) {
-          const stage = store.getStageByName(stageName);
+          const stage = crm.pipeline.getStageByName(stageName);
           if (!stage) return { error: `Unknown stage: ${stageName}` };
           stageId = stage.id;
         }
-        const result = store.searchDeals({
+        const result = crm.deals.searchDeals({
           query: args.query as string | undefined,
           stageId,
           companyId: args.company_id as string | undefined,
@@ -101,14 +101,14 @@ export const crmDealsTool: ToolDefinition = defineTool(
       case "get": {
         const id = args.id as string;
         if (!id) return { error: "id is required for 'get'" };
-        const deal = store.getDeal(id);
+        const deal = crm.deals.getDeal(id);
         if (!deal) return { error: `Deal not found: ${id}` };
 
         // Enrich with stage name, company name, contact name
-        const stages = store.getStages();
+        const stages = crm.pipeline.getStages();
         const stage = stages.find((s) => s.id === deal.stageId);
-        const company = deal.companyId ? store.getCompany(deal.companyId) : null;
-        const contact = deal.contactId ? store.getContact(deal.contactId) : null;
+        const company = deal.companyId ? crm.companies.getCompany(deal.companyId) : null;
+        const contact = deal.contactId ? crm.contacts.getContact(deal.contactId) : null;
 
         return {
           ...deal,
@@ -125,11 +125,11 @@ export const crmDealsTool: ToolDefinition = defineTool(
         const stageName = (args.stage as string) || "Lead";
         if (!title) return { error: "title is required for 'create'" };
 
-        const stage = store.getStageByName(stageName);
+        const stage = crm.pipeline.getStageByName(stageName);
         if (!stage) return { error: `Unknown stage: ${stageName}` };
 
         const value = args.value ? parseFloat(args.value as string) : undefined;
-        const deal = store.createDeal({
+        const deal = crm.deals.createDeal({
           title,
           stageId: stage.id,
           companyId: args.company_id as string | undefined,
@@ -153,7 +153,7 @@ export const crmDealsTool: ToolDefinition = defineTool(
         if (args.currency !== undefined) updates.currency = args.currency;
         if (args.expected_close_date !== undefined)
           updates.expectedCloseDate = args.expected_close_date;
-        const deal = store.updateDeal(id, updates);
+        const deal = crm.deals.updateDeal(id, updates);
         if (!deal) return { error: `Deal not found: ${id}` };
         return { success: true, deal };
       }
@@ -164,10 +164,10 @@ export const crmDealsTool: ToolDefinition = defineTool(
         if (!id) return { error: "id is required for 'move_stage'" };
         if (!stageName) return { error: "stage is required for 'move_stage'" };
 
-        const stage = store.getStageByName(stageName);
+        const stage = crm.pipeline.getStageByName(stageName);
         if (!stage) return { error: `Unknown stage: ${stageName}` };
 
-        const deal = store.moveDealStage(id, stage.id);
+        const deal = crm.deals.moveDealStage(id, stage.id);
         if (!deal) return { error: `Deal not found: ${id}` };
         return { success: true, deal, newStage: stage.name };
       }
@@ -181,7 +181,7 @@ export const crmDealsTool: ToolDefinition = defineTool(
 
         const won = wonStr === "true";
         const lostReason = args.lost_reason as string | undefined;
-        const deal = store.closeDeal(id, won, lostReason);
+        const deal = crm.deals.closeDeal(id, won, lostReason);
         if (!deal) return { error: `Deal not found: ${id}` };
         return {
           success: true,

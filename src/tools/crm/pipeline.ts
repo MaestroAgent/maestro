@@ -22,8 +22,8 @@ export const crmPipelineTool: ToolDefinition = defineTool(
     required: ["action"],
   },
   async (args, context) => {
-    const store = context.services.crmStore;
-    if (!store) {
+    const crm = context.services.crm;
+    if (!crm) {
       return { error: "CRM not initialized" };
     }
 
@@ -31,7 +31,7 @@ export const crmPipelineTool: ToolDefinition = defineTool(
 
     switch (action) {
       case "summary": {
-        const stages = store.getPipelineSummary();
+        const stages = crm.pipeline.getPipelineSummary();
         const totalDeals = stages.reduce((sum, s) => sum + s.dealCount, 0);
         const totalValue = stages.reduce((sum, s) => sum + s.totalValue, 0);
         return {
@@ -43,11 +43,11 @@ export const crmPipelineTool: ToolDefinition = defineTool(
 
       case "forecast": {
         const period = (args.period as string) || "this_month";
-        return store.getDealForecast(period);
+        return crm.pipeline.getDealForecast(period);
       }
 
       case "stages": {
-        return { stages: store.getStages() };
+        return { stages: crm.pipeline.getStages() };
       }
 
       default:

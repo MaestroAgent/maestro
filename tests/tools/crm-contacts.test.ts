@@ -4,7 +4,7 @@ import { AgentContext } from "../../src/core/types.js";
 
 // --- Mock helpers ---
 
-function createMockCrmStore() {
+function createMockContactsRepo() {
   return {
     searchContacts: ({ query, companyId, limit }: {
       query?: string;
@@ -81,13 +81,15 @@ function createMockCrmStore() {
 }
 
 function createContext(
-  crmStore?: ReturnType<typeof createMockCrmStore>
+  contactsRepo?: ReturnType<typeof createMockContactsRepo>,
 ): AgentContext {
   return {
     sessionId: "test-session",
     history: [],
     metadata: {},
-    services: { crmStore: crmStore as AgentContext["services"]["crmStore"] },
+    services: contactsRepo
+      ? { crm: { contacts: contactsRepo } as AgentContext["services"]["crm"] }
+      : {},
   };
 }
 
@@ -96,10 +98,10 @@ function createContext(
 describe("crm_contacts tool", () => {
   describe("search", () => {
     it("returns matching contacts", async () => {
-      const store = createMockCrmStore();
+      const repo = createMockContactsRepo();
       const result = (await crmContactsTool.execute(
         { action: "search", query: "Jane" },
-        createContext(store)
+        createContext(repo),
       )) as { contacts: unknown[]; total: number; showing: number };
 
       expect(result.contacts).toHaveLength(1);
@@ -110,10 +112,10 @@ describe("crm_contacts tool", () => {
 
   describe("get", () => {
     it("returns contact by ID", async () => {
-      const store = createMockCrmStore();
+      const repo = createMockContactsRepo();
       const result = (await crmContactsTool.execute(
         { action: "get", id: "c1" },
-        createContext(store)
+        createContext(repo),
       )) as { id: string; firstName: string };
 
       expect(result.id).toBe("c1");
@@ -121,10 +123,10 @@ describe("crm_contacts tool", () => {
     });
 
     it("returns error when contact not found", async () => {
-      const store = createMockCrmStore();
+      const repo = createMockContactsRepo();
       const result = (await crmContactsTool.execute(
         { action: "get", id: "nonexistent" },
-        createContext(store)
+        createContext(repo),
       )) as { error: string };
 
       expect(result.error).toContain("not found");
@@ -133,10 +135,10 @@ describe("crm_contacts tool", () => {
 
   describe("create", () => {
     it("creates contact with required fields", async () => {
-      const store = createMockCrmStore();
+      const repo = createMockContactsRepo();
       const result = (await crmContactsTool.execute(
         { action: "create", first_name: "John", last_name: "Smith" },
-        createContext(store)
+        createContext(repo),
       )) as { success: boolean; contact: { id: string } };
 
       expect(result.success).toBe(true);
@@ -144,10 +146,10 @@ describe("crm_contacts tool", () => {
     });
 
     it("returns error when required fields missing", async () => {
-      const store = createMockCrmStore();
+      const repo = createMockContactsRepo();
       const result = (await crmContactsTool.execute(
         { action: "create" },
-        createContext(store)
+        createContext(repo),
       )) as { error: string };
 
       expect(result.error).toContain("first_name and last_name are required");
@@ -156,10 +158,10 @@ describe("crm_contacts tool", () => {
 
   describe("update", () => {
     it("updates existing contact", async () => {
-      const store = createMockCrmStore();
+      const repo = createMockContactsRepo();
       const result = (await crmContactsTool.execute(
         { action: "update", id: "c1", title: "CEO" },
-        createContext(store)
+        createContext(repo),
       )) as { success: boolean; contact: { title: string } };
 
       expect(result.success).toBe(true);
@@ -167,10 +169,10 @@ describe("crm_contacts tool", () => {
     });
 
     it("returns error when contact not found", async () => {
-      const store = createMockCrmStore();
+      const repo = createMockContactsRepo();
       const result = (await crmContactsTool.execute(
         { action: "update", id: "nonexistent", title: "CEO" },
-        createContext(store)
+        createContext(repo),
       )) as { error: string };
 
       expect(result.error).toContain("not found");
@@ -181,17 +183,17 @@ describe("crm_contacts tool", () => {
     it("returns error when store not provided", async () => {
       const result = (await crmContactsTool.execute(
         { action: "search" },
-        createContext()
+        createContext(),
       )) as { error: string };
 
       expect(result.error).toBe("CRM not initialized");
     });
 
     it("returns error for unknown action", async () => {
-      const store = createMockCrmStore();
+      const repo = createMockContactsRepo();
       const result = (await crmContactsTool.execute(
         { action: "delete" },
-        createContext(store)
+        createContext(repo),
       )) as { error: string };
 
       expect(result.error).toContain("Unknown action");

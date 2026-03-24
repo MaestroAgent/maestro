@@ -1,21 +1,14 @@
-export { CrmStore, initCrmStore, getCrmStore } from "./store.js";
-export type { CrmStoreOptions } from "./store.js";
-
 export { initCrmSchema } from "./schema.js";
 
-import { CompanyRepo } from "./company-repo.js";
 export { CompanyRepo } from "./company-repo.js";
 export type { Company } from "./company-repo.js";
 
-import { ContactRepo } from "./contact-repo.js";
 export { ContactRepo } from "./contact-repo.js";
 export type { Contact } from "./contact-repo.js";
 
-import { ActivityRepo } from "./activity-repo.js";
 export { ActivityRepo } from "./activity-repo.js";
 export type { Activity } from "./activity-repo.js";
 
-import { PipelineRepo } from "./pipeline-repo.js";
 export { PipelineRepo } from "./pipeline-repo.js";
 export type {
   PipelineStage,
@@ -23,9 +16,14 @@ export type {
   ForecastResult,
 } from "./pipeline-repo.js";
 
-import { DealRepo } from "./deal-repo.js";
 export { DealRepo } from "./deal-repo.js";
 export type { Deal } from "./deal-repo.js";
+
+import type { CompanyRepo } from "./company-repo.js";
+import type { ContactRepo } from "./contact-repo.js";
+import type { DealRepo } from "./deal-repo.js";
+import type { ActivityRepo } from "./activity-repo.js";
+import type { PipelineRepo } from "./pipeline-repo.js";
 
 export interface CrmServices {
   companies: CompanyRepo;
