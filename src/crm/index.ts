@@ -1,7 +1,6 @@
 export { CrmStore, initCrmStore, getCrmStore } from "./store.js";
 export type {
   CrmStoreOptions,
-  Company,
   Contact,
   PipelineStage,
   Deal,
@@ -12,10 +11,11 @@ export type {
 
 export { initCrmSchema } from "./schema.js";
 
+import { CompanyRepo } from "./company-repo.js";
+export { CompanyRepo } from "./company-repo.js";
+export type { Company } from "./company-repo.js";
+
 // Placeholder types until individual repo classes are created
-export interface CompanyRepo {
-  createCompany: (...args: unknown[]) => unknown;
-}
 export interface ContactRepo {
   createContact: (...args: unknown[]) => unknown;
 }
