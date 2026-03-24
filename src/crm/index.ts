@@ -1,5 +1,5 @@
 export { CrmStore, initCrmStore, getCrmStore } from "./store.js";
-export type { CrmStoreOptions, Deal } from "./store.js";
+export type { CrmStoreOptions } from "./store.js";
 
 export { initCrmSchema } from "./schema.js";
 
@@ -23,9 +23,9 @@ export type {
   ForecastResult,
 } from "./pipeline-repo.js";
 
-export interface DealRepo {
-  createDeal: (...args: unknown[]) => unknown;
-}
+import { DealRepo } from "./deal-repo.js";
+export { DealRepo } from "./deal-repo.js";
+export type { Deal } from "./deal-repo.js";
 
 export interface CrmServices {
   companies: CompanyRepo;
