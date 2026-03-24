@@ -1,7 +1,6 @@
 import { App, LogLevel } from "@slack/bolt";
 import type { KnownBlock } from "@slack/types";
-import { Agent } from "../core/agent.js";
-import { AgentContext } from "../core/types.js";
+import { ChannelEngine } from "./engine.js";
 import { MemoryStore } from "../memory/store.js";
 import { getBudgetGuard } from "../observability/index.js";
 import { DynamicAgentRegistry } from "../core/registry.js";
@@ -11,17 +10,16 @@ export interface SlackAdapterOptions {
   botToken: string;
   appToken: string;
   signingSecret: string;
-  createOrchestrator: (context: AgentContext) => Agent;
+  engine: ChannelEngine;
   memoryStore: MemoryStore;
   agentRegistry?: DynamicAgentRegistry;
 }
 
 export class SlackAdapter {
   private app: App;
-  private createOrchestrator: (context: AgentContext) => Agent;
+  private engine: ChannelEngine;
   private memoryStore: MemoryStore;
   private agentRegistry?: DynamicAgentRegistry;
-  private sessions: Map<string, AgentContext> = new Map();
 
   constructor(options: SlackAdapterOptions) {
     this.app = new App({
@@ -32,7 +30,7 @@ export class SlackAdapter {
       logLevel: LogLevel.INFO,
     });
 
-    this.createOrchestrator = options.createOrchestrator;
+    this.engine = options.engine;
     this.memoryStore = options.memoryStore;
     this.agentRegistry = options.agentRegistry;
 
@@ -47,39 +45,10 @@ export class SlackAdapter {
     userId: string,
     threadTs?: string
   ): string {
-    // Use thread timestamp to maintain separate sessions per thread
     if (threadTs) {
       return `${teamId}-${channelId}-${threadTs}`;
     }
     return `${teamId}-${channelId}-${userId}`;
-  }
-
-  private getOrCreateSession(
-    teamId: string,
-    channelId: string,
-    userId: string,
-    threadTs?: string
-  ): AgentContext {
-    const key = this.getSessionKey(teamId, channelId, userId, threadTs);
-
-    // Check in-memory cache first
-    let context = this.sessions.get(key);
-    if (context) {
-      return context;
-    }
-
-    // Load from persistent storage
-    const session = this.memoryStore.getOrCreateSession("slack", key);
-    context = this.memoryStore.createContext(session);
-    context.metadata.slackTeamId = teamId;
-    context.metadata.slackChannelId = channelId;
-    context.metadata.slackUserId = userId;
-    if (threadTs) {
-      context.metadata.slackThreadTs = threadTs;
-    }
-
-    this.sessions.set(key, context);
-    return context;
   }
 
   private setupCommands(): void {
@@ -116,22 +85,12 @@ export class SlackAdapter {
       });
 
       try {
-        const session = this.getOrCreateSession(teamId, channelId, userId);
-        const orchestrator = this.createOrchestrator(session);
-
+        const sessionKey = this.getSessionKey(teamId, channelId, userId);
         let response = "";
-        for await (const chunk of orchestrator.run(text)) {
+        for await (const chunk of this.engine.run("slack", sessionKey, text)) {
           if (chunk.type === "text") {
             response += chunk.text;
           }
-        }
-
-        this.memoryStore.syncContext(session);
-        if (session.metadata) {
-          this.memoryStore.updateSessionMetadata(
-            session.sessionId,
-            session.metadata
-          );
         }
 
         // Update the thinking message with the response
@@ -169,13 +128,9 @@ export class SlackAdapter {
         command.channel_id,
         command.user_id
       );
-      const session = this.sessions.get(key);
-
-      if (session) {
-        this.memoryStore.clearSession(session.sessionId);
-        session.history = [];
-      }
-      this.sessions.delete(key);
+      const session = this.memoryStore.getOrCreateSession("slack", key);
+      this.memoryStore.clearSession(session.id);
+      this.engine.clearSession("slack", key);
 
       await say({
         text: ":broom: Session cleared! Starting fresh.",
@@ -376,27 +331,21 @@ export class SlackAdapter {
       }
 
       try {
-        const session = this.getOrCreateSession(
+        const sessionKey = this.getSessionKey(
           teamId,
           channelId,
           userId,
           threadTs
         );
-        const orchestrator = this.createOrchestrator(session);
-
         let response = "";
-        for await (const chunk of orchestrator.run(text)) {
+        for await (const chunk of this.engine.run(
+          "slack",
+          sessionKey,
+          text
+        )) {
           if (chunk.type === "text") {
             response += chunk.text;
           }
-        }
-
-        this.memoryStore.syncContext(session);
-        if (session.metadata) {
-          this.memoryStore.updateSessionMetadata(
-            session.sessionId,
-            session.metadata
-          );
         }
 
         // Send response in thread
@@ -469,22 +418,16 @@ export class SlackAdapter {
       }
 
       try {
-        const session = this.getOrCreateSession(teamId, channelId, userId);
-        const orchestrator = this.createOrchestrator(session);
-
+        const sessionKey = this.getSessionKey(teamId, channelId, userId);
         let response = "";
-        for await (const chunk of orchestrator.run(text)) {
+        for await (const chunk of this.engine.run(
+          "slack",
+          sessionKey,
+          text
+        )) {
           if (chunk.type === "text") {
             response += chunk.text;
           }
-        }
-
-        this.memoryStore.syncContext(session);
-        if (session.metadata) {
-          this.memoryStore.updateSessionMetadata(
-            session.sessionId,
-            session.metadata
-          );
         }
 
         await this.sendLongMessage(

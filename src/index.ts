@@ -10,6 +10,7 @@ import { createOrchestratorAgent } from "./agents/orchestrator.js";
 import { TelegramAdapter } from "./channels/telegram.js";
 import { SlackAdapter } from "./channels/slack.js";
 import { CLIAdapter } from "./channels/cli.js";
+import { ChannelEngine } from "./channels/engine.js";
 import { MemoryStore } from "./memory/store.js";
 import { createToolRegistry, builtinTools, marketingTools, crmTools } from "./tools/index.js";
 import { initLogger, initBudgetGuard, getLogger, getBudgetGuard, getCostTracker } from "./observability/index.js";
@@ -223,9 +224,10 @@ function setupApp(mode: Mode): AppContext {
 }
 
 async function runTelegram(app: AppContext): Promise<void> {
+  const engine = new ChannelEngine(app.createOrchestrator, app.memoryStore);
   const telegram = new TelegramAdapter({
     token: process.env.TELEGRAM_BOT_TOKEN!,
-    createOrchestrator: app.createOrchestrator,
+    engine,
     memoryStore: app.memoryStore,
   });
 
@@ -246,11 +248,12 @@ async function runTelegram(app: AppContext): Promise<void> {
 }
 
 async function runSlack(app: AppContext): Promise<void> {
+  const engine = new ChannelEngine(app.createOrchestrator, app.memoryStore);
   const slack = new SlackAdapter({
     botToken: process.env.SLACK_BOT_TOKEN!,
     appToken: process.env.SLACK_APP_TOKEN!,
     signingSecret: process.env.SLACK_SIGNING_SECRET!,
-    createOrchestrator: app.createOrchestrator,
+    engine,
     memoryStore: app.memoryStore,
     agentRegistry: app.agentRegistry,
   });
@@ -270,8 +273,9 @@ async function runSlack(app: AppContext): Promise<void> {
 }
 
 async function runCLI(app: AppContext): Promise<void> {
+  const engine = new ChannelEngine(app.createOrchestrator, app.memoryStore);
   const cli = new CLIAdapter({
-    createOrchestrator: app.createOrchestrator,
+    engine,
     memoryStore: app.memoryStore,
   });
 

@@ -1,25 +1,23 @@
 import { Bot, Context } from "grammy";
-import { Agent } from "../core/agent.js";
-import { AgentContext } from "../core/types.js";
+import { ChannelEngine } from "./engine.js";
 import { MemoryStore } from "../memory/store.js";
 import { getBudgetGuard } from "../observability/index.js";
 import { isAllowedTelegramUser } from "./utils/allowlist.js";
 
 export interface TelegramAdapterOptions {
   token: string;
-  createOrchestrator: (context: AgentContext) => Agent;
+  engine: ChannelEngine;
   memoryStore: MemoryStore;
 }
 
 export class TelegramAdapter {
   private bot: Bot;
-  private createOrchestrator: (context: AgentContext) => Agent;
+  private engine: ChannelEngine;
   private memoryStore: MemoryStore;
-  private sessions: Map<number, AgentContext> = new Map();
 
   constructor(options: TelegramAdapterOptions) {
     this.bot = new Bot(options.token);
-    this.createOrchestrator = options.createOrchestrator;
+    this.engine = options.engine;
     this.memoryStore = options.memoryStore;
 
     this.setupHandlers();
@@ -46,12 +44,12 @@ export class TelegramAdapter {
         return;
       }
       if (chatId) {
-        const session = this.sessions.get(chatId);
-        if (session) {
-          this.memoryStore.clearSession(session.sessionId);
-          session.history = [];
-        }
-        this.sessions.delete(chatId);
+        const session = this.memoryStore.getOrCreateSession(
+          "telegram",
+          String(chatId)
+        );
+        this.memoryStore.clearSession(session.id);
+        this.engine.clearSession("telegram", String(chatId));
         await ctx.reply("Session cleared. Starting fresh!");
       }
     });
@@ -95,25 +93,6 @@ export class TelegramAdapter {
     });
   }
 
-  private getOrCreateSession(chatId: number): AgentContext {
-    // Check in-memory cache first
-    let context = this.sessions.get(chatId);
-    if (context) {
-      return context;
-    }
-
-    // Load from persistent storage
-    const session = this.memoryStore.getOrCreateSession(
-      "telegram",
-      String(chatId)
-    );
-    context = this.memoryStore.createContext(session);
-    context.metadata.telegramChatId = chatId;
-
-    this.sessions.set(chatId, context);
-    return context;
-  }
-
   private async handleMessage(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     const messageText = ctx.message?.text;
@@ -132,29 +111,15 @@ export class TelegramAdapter {
     await ctx.replyWithChatAction("typing");
 
     try {
-      // Get or create session context
-      const session = this.getOrCreateSession(chatId);
-
-      // Create orchestrator with session context
-      const orchestrator = this.createOrchestrator(session);
-
-      // Run the orchestrator and collect response
       let response = "";
-      for await (const chunk of orchestrator.run(messageText)) {
+      for await (const chunk of this.engine.run(
+        "telegram",
+        String(chatId),
+        messageText
+      )) {
         if (chunk.type === "text") {
           response += chunk.text;
         }
-      }
-
-      // Sync context to persistent storage
-      this.memoryStore.syncContext(session);
-
-      // Also sync metadata (for things like currentProject)
-      if (session.metadata) {
-        this.memoryStore.updateSessionMetadata(
-          session.sessionId,
-          session.metadata
-        );
       }
 
       // Send response (Telegram has 4096 char limit)

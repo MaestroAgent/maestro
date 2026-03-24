@@ -1,9 +1,8 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
 import { randomUUID } from "crypto";
-import { Agent } from "../../core/agent.js";
-import { AgentContext } from "../../core/types.js";
 import { MemoryStore, ApiKeyRecord } from "../../memory/store.js";
+import { ChannelEngine } from "../../channels/engine.js";
 
 // Type for context with API key
 type Variables = {
@@ -11,7 +10,7 @@ type Variables = {
 };
 
 export interface ChatRoutesOptions {
-  createOrchestrator: (context: AgentContext) => Agent;
+  engine: ChannelEngine;
   memoryStore: MemoryStore;
 }
 
@@ -19,7 +18,7 @@ export function createChatRoutes(
   options: ChatRoutesOptions
 ): Hono<{ Variables: Variables }> {
   const app = new Hono<{ Variables: Variables }>();
-  const { createOrchestrator, memoryStore } = options;
+  const { engine, memoryStore } = options;
 
   /**
    * Check if user can access a session (owner or admin)
@@ -84,30 +83,21 @@ export function createChatRoutes(
 
     // Generate session ID server-side (prevents session fixation)
     const userId = `api-${randomUUID()}`;
+    // Pre-create session so we have the sessionId for SSE events
     const session = memoryStore.getOrCreateSession("api", userId, apiKey?.id);
-    const context = memoryStore.createContext(session);
-
-    const orchestrator = createOrchestrator(context);
+    const chunks = engine.run("api", userId, message, apiKey?.id);
 
     // Non-streaming mode
     if (!stream) {
       let response = "";
-      for await (const chunk of orchestrator.run(message)) {
+      for await (const chunk of chunks) {
         if (chunk.type === "text") {
           response += chunk.text;
         }
       }
 
-      // Sync context to storage
-      memoryStore.syncContext(context);
-
-      // Also sync metadata (for things like currentProject)
-      if (context.metadata) {
-        memoryStore.updateSessionMetadata(context.sessionId, context.metadata);
-      }
-
       return c.json({
-        sessionId: context.sessionId,
+        sessionId: session.id,
         response,
       });
     }
@@ -115,7 +105,8 @@ export function createChatRoutes(
     // Streaming mode (default)
     return streamSSE(c, async (sseStream) => {
       try {
-        for await (const chunk of orchestrator.run(message)) {
+
+        for await (const chunk of chunks) {
           if (chunk.type === "text") {
             await sseStream.writeSSE({
               event: "text",
@@ -133,22 +124,11 @@ export function createChatRoutes(
             await sseStream.writeSSE({
               event: "done",
               data: JSON.stringify({
-                sessionId: context.sessionId,
+                sessionId: session.id,
                 usage: chunk.usage,
               }),
             });
           }
-        }
-
-        // Sync context to storage
-        memoryStore.syncContext(context);
-
-        // Also sync metadata (for things like currentProject)
-        if (context.metadata) {
-          memoryStore.updateSessionMetadata(
-            context.sessionId,
-            context.metadata
-          );
         }
       } catch (error) {
         await sseStream.writeSSE({
