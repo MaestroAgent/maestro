@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import type BetterSqlite3 from "better-sqlite3";
 import { randomUUID } from "crypto";
 import {
   EmbeddingProvider,
@@ -9,7 +9,7 @@ import {
 import { getDefaultEmbeddingProvider } from "./embeddings.js";
 
 export interface VectorStoreOptions {
-  dbPath: string;
+  db: BetterSqlite3.Database;
   embeddingProvider?: EmbeddingProvider;
 }
 
@@ -45,13 +45,12 @@ function cosineSimilarity(a: number[], b: number[]): number {
  * - FTS5 support: enables hybrid search (vector + keyword)
  */
 export class VectorStore {
-  private db: Database.Database;
+  private db: BetterSqlite3.Database;
   private embedder: EmbeddingProvider;
   private ftsEnabled: boolean = false;
 
   constructor(options: VectorStoreOptions) {
-    this.db = new Database(options.dbPath);
-    this.db.pragma("journal_mode = WAL");
+    this.db = options.db;
     this.embedder = options.embeddingProvider ?? getDefaultEmbeddingProvider();
 
     this.initSchema();
@@ -549,18 +548,12 @@ export class VectorStore {
     return { total, byType, bySession, ftsEnabled: this.ftsEnabled };
   }
 
-  close(): void {
-    this.db.close();
-  }
 }
 
 // Global vector store instance
 let vectorStore: VectorStore | null = null;
 
 export function initVectorStore(options: VectorStoreOptions): VectorStore {
-  if (vectorStore) {
-    vectorStore.close();
-  }
   vectorStore = new VectorStore(options);
   return vectorStore;
 }

@@ -1,17 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Hono } from "hono";
 import { MemoryStore } from "../../src/memory/store.js";
+import { MaestroDatabase } from "../../src/core/database.js";
 import { createAuthMiddleware } from "../../src/api/middleware/auth.js";
 import { createSessionRoutes } from "../../src/api/routes/sessions.js";
 import { createObservabilityRoutes } from "../../src/api/routes/observability.js";
 import { generateApiKey } from "../../src/api/utils/auth.js";
-import { unlinkSync, existsSync, writeFileSync, mkdirSync } from "fs";
+import { existsSync, writeFileSync, mkdirSync, unlinkSync } from "fs";
 import { dirname } from "path";
 
-const TEST_DB_PATH = "./data/test-authorization.db";
 const TEST_LOG_FILE = "./data/test-auth.log";
 
 describe("Session Authorization (C1)", () => {
+  let database: MaestroDatabase;
   let store: MemoryStore;
   let app: Hono;
   let userKey: string;
@@ -23,11 +24,8 @@ describe("Session Authorization (C1)", () => {
 
   beforeEach(() => {
     vi.stubEnv("MAESTRO_API_AUTH_ENABLED", "true");
-
-    // Clean up
-    if (existsSync(TEST_DB_PATH)) unlinkSync(TEST_DB_PATH);
-
-    store = new MemoryStore({ dbPath: TEST_DB_PATH });
+    database = new MaestroDatabase(":memory:");
+    store = new MemoryStore(database.db);
 
     // Create test API keys
     const user = generateApiKey();
@@ -53,20 +51,15 @@ describe("Session Authorization (C1)", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
-    store.close();
-    for (const file of [TEST_DB_PATH, TEST_DB_PATH + "-wal", TEST_DB_PATH + "-shm"]) {
-      if (existsSync(file)) unlinkSync(file);
-    }
+    database.close();
   });
 
   describe("session ownership", () => {
     it("user can only see their own sessions", async () => {
-      // Create sessions for different users
       store.getOrCreateSession("api", "user1", userKeyId);
       store.getOrCreateSession("api", "user2", otherUserKeyId);
       store.getOrCreateSession("api", "user3", adminKeyId);
 
-      // User should only see their own session
       const res = await app.request("/sessions", {
         headers: { Authorization: `Bearer ${userKey}` },
       });
@@ -76,12 +69,10 @@ describe("Session Authorization (C1)", () => {
     });
 
     it("admin can see all sessions", async () => {
-      // Create sessions for different users
       store.getOrCreateSession("api", "user1", userKeyId);
       store.getOrCreateSession("api", "user2", otherUserKeyId);
       store.getOrCreateSession("api", "user3", adminKeyId);
 
-      // Admin should see all sessions
       const res = await app.request("/sessions", {
         headers: { Authorization: `Bearer ${adminKey}` },
       });
@@ -151,6 +142,7 @@ describe("Session Authorization (C1)", () => {
 });
 
 describe("Budget Override Authorization (C2)", () => {
+  let database: MaestroDatabase;
   let store: MemoryStore;
   let app: Hono;
   let userKey: string;
@@ -159,15 +151,13 @@ describe("Budget Override Authorization (C2)", () => {
   beforeEach(() => {
     vi.stubEnv("MAESTRO_API_AUTH_ENABLED", "true");
 
-    // Clean up
-    if (existsSync(TEST_DB_PATH)) unlinkSync(TEST_DB_PATH);
-
     // Ensure log directory and file exist
     const logDir = dirname(TEST_LOG_FILE);
     if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true });
     writeFileSync(TEST_LOG_FILE, "");
 
-    store = new MemoryStore({ dbPath: TEST_DB_PATH });
+    database = new MaestroDatabase(":memory:");
+    store = new MemoryStore(database.db);
 
     // Create test API keys
     const user = generateApiKey();
@@ -186,10 +176,8 @@ describe("Budget Override Authorization (C2)", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
-    store.close();
-    for (const file of [TEST_DB_PATH, TEST_DB_PATH + "-wal", TEST_DB_PATH + "-shm", TEST_LOG_FILE]) {
-      if (existsSync(file)) unlinkSync(file);
-    }
+    database.close();
+    if (existsSync(TEST_LOG_FILE)) unlinkSync(TEST_LOG_FILE);
   });
 
   it("non-admin user cannot override budget", async () => {
@@ -222,15 +210,15 @@ describe("Budget Override Authorization (C2)", () => {
 });
 
 describe("Pagination Bounds (H10)", () => {
+  let database: MaestroDatabase;
   let store: MemoryStore;
   let app: Hono;
   let adminKey: string;
 
   beforeEach(() => {
     vi.stubEnv("MAESTRO_API_AUTH_ENABLED", "true");
-
-    if (existsSync(TEST_DB_PATH)) unlinkSync(TEST_DB_PATH);
-    store = new MemoryStore({ dbPath: TEST_DB_PATH });
+    database = new MaestroDatabase(":memory:");
+    store = new MemoryStore(database.db);
 
     const admin = generateApiKey();
     store.createApiKey("Admin Key", admin.keyHash, admin.keyPrefix, true);
@@ -243,10 +231,7 @@ describe("Pagination Bounds (H10)", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
-    store.close();
-    for (const file of [TEST_DB_PATH, TEST_DB_PATH + "-wal", TEST_DB_PATH + "-shm"]) {
-      if (existsSync(file)) unlinkSync(file);
-    }
+    database.close();
   });
 
   it("extremely large limit is capped to max", async () => {
@@ -285,18 +270,16 @@ describe("Pagination Bounds (H10)", () => {
 });
 
 describe("Admin Flag", () => {
+  let database: MaestroDatabase;
   let store: MemoryStore;
 
   beforeEach(() => {
-    if (existsSync(TEST_DB_PATH)) unlinkSync(TEST_DB_PATH);
-    store = new MemoryStore({ dbPath: TEST_DB_PATH });
+    database = new MaestroDatabase(":memory:");
+    store = new MemoryStore(database.db);
   });
 
   afterEach(() => {
-    store.close();
-    for (const file of [TEST_DB_PATH, TEST_DB_PATH + "-wal", TEST_DB_PATH + "-shm"]) {
-      if (existsSync(file)) unlinkSync(file);
-    }
+    database.close();
   });
 
   it("creates non-admin key by default", () => {

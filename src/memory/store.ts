@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import type BetterSqlite3 from "better-sqlite3";
 import { randomUUID } from "crypto";
 import {
   AgentContext,
@@ -36,15 +36,12 @@ interface StoredAgent {
 }
 
 export class MemoryStore {
-  private db: Database.Database;
+  private db: BetterSqlite3.Database;
   private maxMessages: number;
 
-  constructor(options: MemoryStoreOptions = {}) {
-    const dbPath = options.dbPath ?? "./data/maestro.db";
+  constructor(db: BetterSqlite3.Database, options: MemoryStoreOptions = {}) {
+    this.db = db;
     this.maxMessages = options.maxMessages ?? 100;
-
-    this.db = new Database(dbPath);
-    this.db.pragma("journal_mode = WAL");
     this.initSchema();
   }
 
@@ -928,12 +925,5 @@ export class MemoryStore {
   hasApiKeys(): boolean {
     const result = this.db.prepare(`SELECT 1 FROM api_keys LIMIT 1`).get();
     return result !== undefined;
-  }
-
-  /**
-   * Close the database connection
-   */
-  close(): void {
-    this.db.close();
   }
 }

@@ -1,34 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { MemoryStore } from "../src/memory/store.js";
+import { MaestroDatabase } from "../src/core/database.js";
 import { generateApiKey } from "../src/api/utils/auth.js";
-import { unlinkSync, existsSync } from "fs";
-
-const TEST_DB_PATH = "./data/test-api-keys.db";
 
 describe("MemoryStore API Key Management", () => {
+  let database: MaestroDatabase;
   let store: MemoryStore;
 
   beforeEach(() => {
-    // Clean up any existing test database
-    if (existsSync(TEST_DB_PATH)) {
-      unlinkSync(TEST_DB_PATH);
-    }
-    store = new MemoryStore({ dbPath: TEST_DB_PATH });
+    database = new MaestroDatabase(":memory:");
+    store = new MemoryStore(database.db);
   });
 
   afterEach(() => {
-    store.close();
-    // Clean up test database
-    if (existsSync(TEST_DB_PATH)) {
-      unlinkSync(TEST_DB_PATH);
-    }
-    // Clean up WAL files
-    if (existsSync(TEST_DB_PATH + "-wal")) {
-      unlinkSync(TEST_DB_PATH + "-wal");
-    }
-    if (existsSync(TEST_DB_PATH + "-shm")) {
-      unlinkSync(TEST_DB_PATH + "-shm");
-    }
+    database.close();
   });
 
   describe("createApiKey", () => {

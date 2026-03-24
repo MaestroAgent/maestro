@@ -14,7 +14,7 @@ import { MemoryStore } from "./memory/store.js";
 import { createToolRegistry, builtinTools, marketingTools, crmTools } from "./tools/index.js";
 import { initLogger, initBudgetGuard, getLogger, getBudgetGuard, getCostTracker } from "./observability/index.js";
 import { initVectorStore, getVectorStore } from "./memory/index.js";
-import Database from "better-sqlite3";
+import { MaestroDatabase } from "./core/database.js";
 import {
   initCrmSchema,
   CompanyRepo,
@@ -73,6 +73,7 @@ function validateEnv(mode: Mode): void {
 }
 
 interface AppContext {
+  database: MaestroDatabase;
   agentRegistry: DynamicAgentRegistry;
   provider: AnthropicProvider;
   toolRegistry: ToolRegistry;
@@ -124,24 +125,24 @@ function setupApp(mode: Mode): AppContext {
   );
   const toolRegistry = tools.registry;
 
+  // Initialize shared database connection
+  const database = new MaestroDatabase(join(DATA_DIR, "maestro.db"));
+
   // Initialize CRM
-  const crmDb = new Database(join(DATA_DIR, "maestro.db"));
-  crmDb.pragma("journal_mode = WAL");
-  initCrmSchema(crmDb);
-  const activityRepo = new ActivityRepo(crmDb);
-  const pipelineRepo = new PipelineRepo(crmDb);
+  initCrmSchema(database.db);
+  const activityRepo = new ActivityRepo(database.db);
+  const pipelineRepo = new PipelineRepo(database.db);
   const crm: CrmServices = {
-    companies: new CompanyRepo(crmDb),
-    contacts: new ContactRepo(crmDb),
-    deals: new DealRepo(crmDb, activityRepo, pipelineRepo),
+    companies: new CompanyRepo(database.db),
+    contacts: new ContactRepo(database.db),
+    deals: new DealRepo(database.db, activityRepo, pipelineRepo),
     activities: activityRepo,
     pipeline: pipelineRepo,
   };
   console.log("CRM initialized");
 
   // Create memory store
-  const memoryStore = new MemoryStore({
-    dbPath: join(DATA_DIR, "maestro.db"),
+  const memoryStore = new MemoryStore(database.db, {
     maxMessages: 100,
   });
 
@@ -174,15 +175,14 @@ function setupApp(mode: Mode): AppContext {
 
   // Initialize budget guard
   const dailyBudget = parseFloat(process.env.DAILY_BUDGET_USD ?? "20");
-  initBudgetGuard({
+  initBudgetGuard(database.db, {
     dailyLimitUsd: dailyBudget,
-    dbPath: join(DATA_DIR, "maestro.db"),
   });
   console.log(`Budget guard initialized: $${dailyBudget}/day limit`);
 
   // Initialize vector store for semantic memory
   initVectorStore({
-    dbPath: join(DATA_DIR, "maestro.db"),
+    db: database.db,
   });
   console.log("Semantic memory initialized");
 
@@ -212,6 +212,7 @@ function setupApp(mode: Mode): AppContext {
   };
 
   return {
+    database,
     agentRegistry,
     provider,
     toolRegistry,
@@ -232,7 +233,7 @@ async function runTelegram(app: AppContext): Promise<void> {
   const shutdown = () => {
     console.log("\nShutting down...");
     telegram.stop();
-    app.memoryStore.close();
+    app.database.close();
     process.exit(0);
   };
 
@@ -258,7 +259,7 @@ async function runSlack(app: AppContext): Promise<void> {
   const shutdown = async () => {
     console.log("\nShutting down...");
     await slack.stop();
-    app.memoryStore.close();
+    app.database.close();
     process.exit(0);
   };
 
@@ -275,10 +276,14 @@ async function runCLI(app: AppContext): Promise<void> {
   });
 
   // Check for pipe mode
-  if (CLIAdapter.isPipeMode()) {
-    await cli.runPipeMode();
-  } else {
-    await cli.startInteractive();
+  try {
+    if (CLIAdapter.isPipeMode()) {
+      await cli.runPipeMode();
+    } else {
+      await cli.startInteractive();
+    }
+  } finally {
+    app.database.close();
   }
 }
 
@@ -299,7 +304,7 @@ async function runAPI(app: AppContext): Promise<void> {
   const shutdown = () => {
     console.log("\nShutting down...");
     apiServer.stop();
-    app.memoryStore.close();
+    app.database.close();
     process.exit(0);
   };
 

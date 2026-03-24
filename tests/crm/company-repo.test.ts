@@ -1,17 +1,17 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import Database from "better-sqlite3";
+import { MaestroDatabase } from "../../src/core/database.js";
 import { initCrmSchema } from "../../src/crm/schema.js";
 import { CompanyRepo } from "../../src/crm/company-repo.js";
 import type { Company } from "../../src/crm/company-repo.js";
 
 describe("CompanyRepo", () => {
-  let db: Database.Database;
+  let database: MaestroDatabase;
   let repo: CompanyRepo;
 
   beforeEach(() => {
-    db = new Database(":memory:");
-    initCrmSchema(db);
-    repo = new CompanyRepo(db);
+    database = new MaestroDatabase(":memory:");
+    initCrmSchema(database.db);
+    repo = new CompanyRepo(database.db);
   });
 
   describe("createCompany + getCompany", () => {

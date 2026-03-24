@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import Database from "better-sqlite3";
+import { MaestroDatabase } from "../../src/core/database.js";
 import { initCrmSchema } from "../../src/crm/schema.js";
 import { DealRepo } from "../../src/crm/deal-repo.js";
 import { ActivityRepo } from "../../src/crm/activity-repo.js";
@@ -8,7 +8,7 @@ import { CompanyRepo } from "../../src/crm/company-repo.js";
 import { ContactRepo } from "../../src/crm/contact-repo.js";
 
 describe("DealRepo", () => {
-  let db: Database.Database;
+  let database: MaestroDatabase;
   let dealRepo: DealRepo;
   let activityRepo: ActivityRepo;
   let pipelineRepo: PipelineRepo;
@@ -17,13 +17,13 @@ describe("DealRepo", () => {
   let leadStageId: string;
 
   beforeEach(() => {
-    db = new Database(":memory:");
-    initCrmSchema(db);
-    activityRepo = new ActivityRepo(db);
-    pipelineRepo = new PipelineRepo(db);
-    companyRepo = new CompanyRepo(db);
-    contactRepo = new ContactRepo(db);
-    dealRepo = new DealRepo(db, activityRepo, pipelineRepo);
+    database = new MaestroDatabase(":memory:");
+    initCrmSchema(database.db);
+    activityRepo = new ActivityRepo(database.db);
+    pipelineRepo = new PipelineRepo(database.db);
+    companyRepo = new CompanyRepo(database.db);
+    contactRepo = new ContactRepo(database.db);
+    dealRepo = new DealRepo(database.db, activityRepo, pipelineRepo);
 
     const stages = pipelineRepo.getStages();
     leadStageId = stages.find((s) => s.name === "Lead")!.id;

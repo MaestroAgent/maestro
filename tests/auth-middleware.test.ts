@@ -1,27 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Hono } from "hono";
 import { MemoryStore } from "../src/memory/store.js";
+import { MaestroDatabase } from "../src/core/database.js";
 import { createAuthMiddleware, validateWebSocketToken } from "../src/api/middleware/auth.js";
 import { generateApiKey } from "../src/api/utils/auth.js";
-import { unlinkSync, existsSync } from "fs";
-
-const TEST_DB_PATH = "./data/test-auth-middleware.db";
 
 describe("Auth Middleware", () => {
+  let database: MaestroDatabase;
   let store: MemoryStore;
   let app: Hono;
 
   beforeEach(() => {
-    // Reset environment
     vi.stubEnv("MAESTRO_API_AUTH_ENABLED", "true");
+    database = new MaestroDatabase(":memory:");
+    store = new MemoryStore(database.db);
 
-    // Clean up any existing test database
-    if (existsSync(TEST_DB_PATH)) {
-      unlinkSync(TEST_DB_PATH);
-    }
-    store = new MemoryStore({ dbPath: TEST_DB_PATH });
-
-    // Create app with auth middleware
     app = new Hono();
     app.use("*", createAuthMiddleware(store));
     app.get("/", (c) => c.json({ message: "root" }));
@@ -33,17 +26,7 @@ describe("Auth Middleware", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
-    store.close();
-    // Clean up test database
-    if (existsSync(TEST_DB_PATH)) {
-      unlinkSync(TEST_DB_PATH);
-    }
-    if (existsSync(TEST_DB_PATH + "-wal")) {
-      unlinkSync(TEST_DB_PATH + "-wal");
-    }
-    if (existsSync(TEST_DB_PATH + "-shm")) {
-      unlinkSync(TEST_DB_PATH + "-shm");
-    }
+    database.close();
   });
 
   describe("public paths", () => {
@@ -119,7 +102,6 @@ describe("Auth Middleware", () => {
     it("should allow access when auth is disabled", async () => {
       vi.stubEnv("MAESTRO_API_AUTH_ENABLED", "false");
 
-      // Create new app with fresh middleware that reads the env
       const disabledApp = new Hono();
       disabledApp.use("*", createAuthMiddleware(store));
       disabledApp.get("/agents", (c) => c.json({ message: "agents" }));
@@ -131,28 +113,18 @@ describe("Auth Middleware", () => {
 });
 
 describe("validateWebSocketToken", () => {
+  let database: MaestroDatabase;
   let store: MemoryStore;
 
   beforeEach(() => {
     vi.stubEnv("MAESTRO_API_AUTH_ENABLED", "true");
-    if (existsSync(TEST_DB_PATH)) {
-      unlinkSync(TEST_DB_PATH);
-    }
-    store = new MemoryStore({ dbPath: TEST_DB_PATH });
+    database = new MaestroDatabase(":memory:");
+    store = new MemoryStore(database.db);
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
-    store.close();
-    if (existsSync(TEST_DB_PATH)) {
-      unlinkSync(TEST_DB_PATH);
-    }
-    if (existsSync(TEST_DB_PATH + "-wal")) {
-      unlinkSync(TEST_DB_PATH + "-wal");
-    }
-    if (existsSync(TEST_DB_PATH + "-shm")) {
-      unlinkSync(TEST_DB_PATH + "-shm");
-    }
+    database.close();
   });
 
   it("should return true when auth is disabled", () => {
