@@ -30,7 +30,7 @@ export interface APIServerOptions {
   agentRegistry: DynamicAgentRegistry;
   logFile?: string;
   dashboardPath?: string;
-  crmStore?: import("../crm/index.js").CrmStore;
+  crm?: import("../crm/index.js").CrmServices;
 }
 
 export class APIServer {
@@ -153,9 +153,9 @@ export class APIServer {
     });
     this.app.route("/sessions", sessionRoutes);
 
-    if (this.options.crmStore) {
+    if (this.options.crm) {
       const crmRoutes = createCrmRoutes({
-        crmStore: this.options.crmStore,
+        crm: this.options.crm,
       });
       this.app.route("/crm", crmRoutes);
     }

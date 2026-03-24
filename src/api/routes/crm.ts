@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { CrmStore } from "../../crm/index.js";
+import type { CrmServices } from "../../crm/index.js";
 
 // Pagination bounds
 const MIN_LIMIT = 1;
@@ -8,26 +8,26 @@ const DEFAULT_LIMIT = 50;
 
 function boundPagination(
   limitStr: string | undefined,
-  offsetStr: string | undefined
+  offsetStr: string | undefined,
 ): { limit: number; offset: number } {
   const limit = Math.min(
     Math.max(
       parseInt(limitStr ?? String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT,
-      MIN_LIMIT
+      MIN_LIMIT,
     ),
-    MAX_LIMIT
+    MAX_LIMIT,
   );
   const offset = Math.max(parseInt(offsetStr ?? "0", 10) || 0, 0);
   return { limit, offset };
 }
 
 export interface CrmRoutesOptions {
-  crmStore: CrmStore;
+  crm: CrmServices;
 }
 
 export function createCrmRoutes(options: CrmRoutesOptions): Hono {
   const app = new Hono();
-  const { crmStore } = options;
+  const { crm } = options;
 
   // --- Companies ---
 
@@ -36,7 +36,7 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
     if (!body.name) {
       return c.json({ error: "name is required" }, 400);
     }
-    const company = crmStore.createCompany({
+    const company = crm.companies.createCompany({
       name: body.name,
       domain: body.domain,
       industry: body.industry,
@@ -49,10 +49,10 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
   app.get("/companies", async (c) => {
     const { limit, offset } = boundPagination(
       c.req.query("limit"),
-      c.req.query("offset")
+      c.req.query("offset"),
     );
     const q = c.req.query("q");
-    const result = crmStore.searchCompanies(q, limit, offset);
+    const result = crm.companies.searchCompanies(q, limit, offset);
     return c.json({
       companies: result.companies,
       pagination: {
@@ -65,20 +65,20 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
   });
 
   app.get("/companies/:id", async (c) => {
-    const company = crmStore.getCompany(c.req.param("id"));
+    const company = crm.companies.getCompany(c.req.param("id"));
     if (!company) return c.json({ error: "Company not found" }, 404);
     return c.json(company);
   });
 
   app.put("/companies/:id", async (c) => {
     const body = await c.req.json();
-    const company = crmStore.updateCompany(c.req.param("id"), body);
+    const company = crm.companies.updateCompany(c.req.param("id"), body);
     if (!company) return c.json({ error: "Company not found" }, 404);
     return c.json(company);
   });
 
   app.delete("/companies/:id", async (c) => {
-    const deleted = crmStore.deleteCompany(c.req.param("id"));
+    const deleted = crm.companies.deleteCompany(c.req.param("id"));
     if (!deleted) return c.json({ error: "Company not found" }, 404);
     return c.json({ success: true });
   });
@@ -90,7 +90,7 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
     if (!body.firstName || !body.lastName) {
       return c.json({ error: "firstName and lastName are required" }, 400);
     }
-    const contact = crmStore.createContact({
+    const contact = crm.contacts.createContact({
       firstName: body.firstName,
       lastName: body.lastName,
       email: body.email,
@@ -106,9 +106,9 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
   app.get("/contacts", async (c) => {
     const { limit, offset } = boundPagination(
       c.req.query("limit"),
-      c.req.query("offset")
+      c.req.query("offset"),
     );
-    const result = crmStore.searchContacts({
+    const result = crm.contacts.searchContacts({
       query: c.req.query("q"),
       companyId: c.req.query("company_id"),
       limit,
@@ -126,20 +126,20 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
   });
 
   app.get("/contacts/:id", async (c) => {
-    const contact = crmStore.getContact(c.req.param("id"));
+    const contact = crm.contacts.getContact(c.req.param("id"));
     if (!contact) return c.json({ error: "Contact not found" }, 404);
     return c.json(contact);
   });
 
   app.put("/contacts/:id", async (c) => {
     const body = await c.req.json();
-    const contact = crmStore.updateContact(c.req.param("id"), body);
+    const contact = crm.contacts.updateContact(c.req.param("id"), body);
     if (!contact) return c.json({ error: "Contact not found" }, 404);
     return c.json(contact);
   });
 
   app.delete("/contacts/:id", async (c) => {
-    const deleted = crmStore.deleteContact(c.req.param("id"));
+    const deleted = crm.contacts.deleteContact(c.req.param("id"));
     if (!deleted) return c.json({ error: "Contact not found" }, 404);
     return c.json({ success: true });
   });
@@ -152,11 +152,11 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
       return c.json({ error: "title is required" }, 400);
     }
     const stageName = body.stage || "Lead";
-    const stage = crmStore.getStageByName(stageName);
+    const stage = crm.pipeline.getStageByName(stageName);
     if (!stage) {
       return c.json({ error: `Unknown stage: ${stageName}` }, 400);
     }
-    const deal = crmStore.createDeal({
+    const deal = crm.deals.createDeal({
       title: body.title,
       stageId: stage.id,
       companyId: body.companyId,
@@ -172,16 +172,16 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
   app.get("/deals", async (c) => {
     const { limit, offset } = boundPagination(
       c.req.query("limit"),
-      c.req.query("offset")
+      c.req.query("offset"),
     );
     const stageName = c.req.query("stage");
     let stageId: string | undefined;
     if (stageName) {
-      const stage = crmStore.getStageByName(stageName);
+      const stage = crm.pipeline.getStageByName(stageName);
       if (!stage) return c.json({ error: `Unknown stage: ${stageName}` }, 400);
       stageId = stage.id;
     }
-    const result = crmStore.searchDeals({
+    const result = crm.deals.searchDeals({
       query: c.req.query("q"),
       stageId,
       companyId: c.req.query("company_id"),
@@ -201,14 +201,14 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
   });
 
   app.get("/deals/:id", async (c) => {
-    const deal = crmStore.getDeal(c.req.param("id"));
+    const deal = crm.deals.getDeal(c.req.param("id"));
     if (!deal) return c.json({ error: "Deal not found" }, 404);
     return c.json(deal);
   });
 
   app.put("/deals/:id", async (c) => {
     const body = await c.req.json();
-    const deal = crmStore.updateDeal(c.req.param("id"), body);
+    const deal = crm.deals.updateDeal(c.req.param("id"), body);
     if (!deal) return c.json({ error: "Deal not found" }, 404);
     return c.json(deal);
   });
@@ -218,11 +218,11 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
     if (!body.stage) {
       return c.json({ error: "stage is required" }, 400);
     }
-    const stage = crmStore.getStageByName(body.stage);
+    const stage = crm.pipeline.getStageByName(body.stage);
     if (!stage) {
       return c.json({ error: `Unknown stage: ${body.stage}` }, 400);
     }
-    const deal = crmStore.moveDealStage(c.req.param("id"), stage.id);
+    const deal = crm.deals.moveDealStage(c.req.param("id"), stage.id);
     if (!deal) return c.json({ error: "Deal not found" }, 404);
     return c.json(deal);
   });
@@ -232,17 +232,17 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
     if (body.won === undefined) {
       return c.json({ error: "won (boolean) is required" }, 400);
     }
-    const deal = crmStore.closeDeal(
+    const deal = crm.deals.closeDeal(
       c.req.param("id"),
       body.won,
-      body.lostReason
+      body.lostReason,
     );
     if (!deal) return c.json({ error: "Deal not found" }, 404);
     return c.json(deal);
   });
 
   app.delete("/deals/:id", async (c) => {
-    const deleted = crmStore.deleteDeal(c.req.param("id"));
+    const deleted = crm.deals.deleteDeal(c.req.param("id"));
     if (!deleted) return c.json({ error: "Deal not found" }, 404);
     return c.json({ success: true });
   });
@@ -257,10 +257,10 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
     if (!body.contactId && !body.companyId && !body.dealId) {
       return c.json(
         { error: "At least one of contactId, companyId, or dealId is required" },
-        400
+        400,
       );
     }
-    const activity = crmStore.logActivity({
+    const activity = crm.activities.logActivity({
       type: body.type,
       subject: body.subject,
       description: body.description,
@@ -277,9 +277,9 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
   app.get("/activities", async (c) => {
     const { limit, offset } = boundPagination(
       c.req.query("limit"),
-      c.req.query("offset")
+      c.req.query("offset"),
     );
-    const result = crmStore.listActivities({
+    const result = crm.activities.listActivities({
       contactId: c.req.query("contact_id"),
       companyId: c.req.query("company_id"),
       dealId: c.req.query("deal_id"),
@@ -299,7 +299,7 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
   });
 
   app.post("/activities/:id/complete", async (c) => {
-    const activity = crmStore.completeActivity(c.req.param("id"));
+    const activity = crm.activities.completeActivity(c.req.param("id"));
     if (!activity) return c.json({ error: "Activity not found" }, 404);
     return c.json(activity);
   });
@@ -307,7 +307,7 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
   // --- Pipeline ---
 
   app.get("/pipeline/summary", async (c) => {
-    const summary = crmStore.getPipelineSummary();
+    const summary = crm.pipeline.getPipelineSummary();
     const totalDeals = summary.reduce((sum, s) => sum + s.dealCount, 0);
     const totalValue = summary.reduce((sum, s) => sum + s.totalValue, 0);
     return c.json({ stages: summary, totalOpenDeals: totalDeals, totalPipelineValue: totalValue });
@@ -315,11 +315,11 @@ export function createCrmRoutes(options: CrmRoutesOptions): Hono {
 
   app.get("/pipeline/forecast", async (c) => {
     const period = c.req.query("period") || "this_month";
-    return c.json(crmStore.getDealForecast(period));
+    return c.json(crm.pipeline.getDealForecast(period));
   });
 
   app.get("/pipeline/stages", async (c) => {
-    return c.json({ stages: crmStore.getStages() });
+    return c.json({ stages: crm.pipeline.getStages() });
   });
 
   return app;

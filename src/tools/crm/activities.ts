@@ -53,8 +53,8 @@ export const crmActivitiesTool: ToolDefinition = defineTool(
     required: ["action"],
   },
   async (args, context) => {
-    const store = context.services.crmStore;
-    if (!store) {
+    const crm = context.services.crm;
+    if (!crm) {
       return { error: "CRM not initialized" };
     }
 
@@ -70,7 +70,7 @@ export const crmActivitiesTool: ToolDefinition = defineTool(
         if (!contactId && !companyId && !dealId) {
           return { error: "At least one of contact_id, company_id, or deal_id is required" };
         }
-        const activity = store.logActivity({
+        const activity = crm.activities.logActivity({
           type,
           subject: args.subject as string | undefined,
           description: args.description as string | undefined,
@@ -85,7 +85,7 @@ export const crmActivitiesTool: ToolDefinition = defineTool(
 
       case "list": {
         const limit = parseInt((args.limit as string) || "20", 10);
-        const result = store.listActivities({
+        const result = crm.activities.listActivities({
           contactId: args.contact_id as string | undefined,
           companyId: args.company_id as string | undefined,
           dealId: args.deal_id as string | undefined,
@@ -102,7 +102,7 @@ export const crmActivitiesTool: ToolDefinition = defineTool(
       case "complete": {
         const id = args.id as string;
         if (!id) return { error: "id is required for 'complete'" };
-        const activity = store.completeActivity(id);
+        const activity = crm.activities.completeActivity(id);
         if (!activity) return { error: `Activity not found: ${id}` };
         return { success: true, activity };
       }

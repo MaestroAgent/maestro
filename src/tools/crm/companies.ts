@@ -45,8 +45,8 @@ export const crmCompaniesTool: ToolDefinition = defineTool(
     required: ["action"],
   },
   async (args, context) => {
-    const store = context.services.crmStore;
-    if (!store) {
+    const crm = context.services.crm;
+    if (!crm) {
       return { error: "CRM not initialized" };
     }
 
@@ -55,7 +55,7 @@ export const crmCompaniesTool: ToolDefinition = defineTool(
     switch (action) {
       case "search": {
         const limit = parseInt((args.limit as string) || "20", 10);
-        const result = store.searchCompanies(args.query as string | undefined, limit);
+        const result = crm.companies.searchCompanies(args.query as string | undefined, limit);
         return {
           companies: result.companies,
           total: result.total,
@@ -66,7 +66,7 @@ export const crmCompaniesTool: ToolDefinition = defineTool(
       case "get": {
         const id = args.id as string;
         if (!id) return { error: "id is required for 'get'" };
-        const company = store.getCompany(id);
+        const company = crm.companies.getCompany(id);
         if (!company) return { error: `Company not found: ${id}` };
         return company;
       }
@@ -74,7 +74,7 @@ export const crmCompaniesTool: ToolDefinition = defineTool(
       case "create": {
         const name = args.name as string;
         if (!name) return { error: "name is required for 'create'" };
-        const company = store.createCompany({
+        const company = crm.companies.createCompany({
           name,
           domain: args.domain as string | undefined,
           industry: args.industry as string | undefined,
@@ -91,7 +91,7 @@ export const crmCompaniesTool: ToolDefinition = defineTool(
         if (args.domain !== undefined) updates.domain = args.domain;
         if (args.industry !== undefined) updates.industry = args.industry;
         if (args.size !== undefined) updates.size = args.size;
-        const company = store.updateCompany(id, updates);
+        const company = crm.companies.updateCompany(id, updates);
         if (!company) return { error: `Company not found: ${id}` };
         return { success: true, company };
       }

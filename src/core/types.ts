@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CrmStore } from "../crm/store.js";
+import type { CrmServices } from "../crm/index.js";
 import type { VectorStore } from "../memory/vectors.js";
 
 // Message types for LLM communication
@@ -36,7 +36,7 @@ export type StreamChunk =
 
 // Services injected into tools via context
 export interface ToolServices {
-  crmStore?: CrmStore;
+  crm?: CrmServices;
   vectorStore?: VectorStore;
 }
 

@@ -57,8 +57,8 @@ export const crmContactsTool: ToolDefinition = defineTool(
     required: ["action"],
   },
   async (args, context) => {
-    const store = context.services.crmStore;
-    if (!store) {
+    const crm = context.services.crm;
+    if (!crm) {
       return { error: "CRM not initialized" };
     }
 
@@ -67,7 +67,7 @@ export const crmContactsTool: ToolDefinition = defineTool(
     switch (action) {
       case "search": {
         const limit = parseInt((args.limit as string) || "20", 10);
-        const result = store.searchContacts({
+        const result = crm.contacts.searchContacts({
           query: args.query as string | undefined,
           companyId: args.company_id as string | undefined,
           limit,
@@ -82,7 +82,7 @@ export const crmContactsTool: ToolDefinition = defineTool(
       case "get": {
         const id = args.id as string;
         if (!id) return { error: "id is required for 'get'" };
-        const contact = store.getContact(id);
+        const contact = crm.contacts.getContact(id);
         if (!contact) return { error: `Contact not found: ${id}` };
         return contact;
       }
@@ -92,7 +92,7 @@ export const crmContactsTool: ToolDefinition = defineTool(
         const lastName = args.last_name as string;
         if (!firstName || !lastName)
           return { error: "first_name and last_name are required for 'create'" };
-        const contact = store.createContact({
+        const contact = crm.contacts.createContact({
           firstName,
           lastName,
           email: args.email as string | undefined,
@@ -115,7 +115,7 @@ export const crmContactsTool: ToolDefinition = defineTool(
         if (args.title !== undefined) updates.title = args.title;
         if (args.company_id !== undefined) updates.companyId = args.company_id;
         if (args.source !== undefined) updates.source = args.source;
-        const contact = store.updateContact(id, updates);
+        const contact = crm.contacts.updateContact(id, updates);
         if (!contact) return { error: `Contact not found: ${id}` };
         return { success: true, contact };
       }

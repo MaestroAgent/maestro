@@ -14,7 +14,16 @@ import { MemoryStore } from "./memory/store.js";
 import { createToolRegistry, builtinTools, marketingTools, crmTools } from "./tools/index.js";
 import { initLogger, initBudgetGuard, getLogger, getBudgetGuard, getCostTracker } from "./observability/index.js";
 import { initVectorStore, getVectorStore } from "./memory/index.js";
-import { CrmStore, initCrmStore } from "./crm/index.js";
+import Database from "better-sqlite3";
+import {
+  initCrmSchema,
+  CompanyRepo,
+  ContactRepo,
+  ActivityRepo,
+  PipelineRepo,
+  DealRepo,
+} from "./crm/index.js";
+import type { CrmServices } from "./crm/index.js";
 import { APIServer } from "./api/index.js";
 import { hashApiKey, isValidKeyFormat } from "./api/utils/auth.js";
 import { checkAllowlistConfiguration } from "./channels/utils/allowlist.js";
@@ -68,7 +77,7 @@ interface AppContext {
   provider: AnthropicProvider;
   toolRegistry: ToolRegistry;
   memoryStore: MemoryStore;
-  crmStore: CrmStore;
+  crm: CrmServices;
   createOrchestrator: (
     context: AgentContext
   ) => ReturnType<typeof createOrchestratorAgent>;
@@ -115,8 +124,19 @@ function setupApp(mode: Mode): AppContext {
   );
   const toolRegistry = tools.registry;
 
-  // Initialize CRM store
-  const crmStore = initCrmStore({ dbPath: join(DATA_DIR, "maestro.db") });
+  // Initialize CRM
+  const crmDb = new Database(join(DATA_DIR, "maestro.db"));
+  crmDb.pragma("journal_mode = WAL");
+  initCrmSchema(crmDb);
+  const activityRepo = new ActivityRepo(crmDb);
+  const pipelineRepo = new PipelineRepo(crmDb);
+  const crm: CrmServices = {
+    companies: new CompanyRepo(crmDb),
+    contacts: new ContactRepo(crmDb),
+    deals: new DealRepo(crmDb, activityRepo, pipelineRepo),
+    activities: activityRepo,
+    pipeline: pipelineRepo,
+  };
   console.log("CRM initialized");
 
   // Create memory store
@@ -178,7 +198,7 @@ function setupApp(mode: Mode): AppContext {
       logger: getLogger(),
       costTracker: getCostTracker(context.sessionId, orchestratorConfig.model.name),
       budgetGuard: getBudgetGuard() ?? undefined,
-      crmStore,
+      crm,
       vectorStore: getVectorStore() ?? undefined,
     };
     return createOrchestratorAgent(
@@ -196,7 +216,7 @@ function setupApp(mode: Mode): AppContext {
     provider,
     toolRegistry,
     memoryStore,
-    crmStore,
+    crm,
     createOrchestrator,
   };
 }
@@ -270,7 +290,7 @@ async function runAPI(app: AppContext): Promise<void> {
     createOrchestrator: app.createOrchestrator,
     memoryStore: app.memoryStore,
     agentRegistry: app.agentRegistry,
-    crmStore: app.crmStore,
+    crm: app.crm,
     logFile: join(LOGS_DIR, "maestro.jsonl"),
     dashboardPath: join(__dirname, "..", "dashboard", "dist"),
   });

@@ -27,7 +27,7 @@ export interface AgentServices {
   logger: Logger;
   costTracker: CostTracker;
   budgetGuard?: BudgetGuard;
-  crmStore?: import("../crm/store.js").CrmStore;
+  crm?: import("../crm/index.js").CrmServices;
   vectorStore?: import("../memory/vectors.js").VectorStore;
 }
 
@@ -72,7 +72,7 @@ export class Agent implements AgentRuntime {
     // Populate context.services from AgentServices
     this.context.services = {
       ...this.context.services,
-      crmStore: options.services.crmStore ?? this.context.services.crmStore,
+      crm: options.services.crm ?? this.context.services.crm,
       vectorStore:
         options.services.vectorStore ?? this.context.services.vectorStore,
     };
