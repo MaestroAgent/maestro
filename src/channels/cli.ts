@@ -245,6 +245,5 @@ export class CLIAdapter {
     if (this.rl) {
       this.rl.close();
     }
-    this.memoryStore.close();
   }
 }

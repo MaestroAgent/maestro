@@ -141,8 +141,7 @@ function setupApp(mode: Mode): AppContext {
   console.log("CRM initialized");
 
   // Create memory store
-  const memoryStore = new MemoryStore({
-    dbPath: join(DATA_DIR, "maestro.db"),
+  const memoryStore = new MemoryStore(database.db, {
     maxMessages: 100,
   });
 
@@ -233,7 +232,7 @@ async function runTelegram(app: AppContext): Promise<void> {
   const shutdown = () => {
     console.log("\nShutting down...");
     telegram.stop();
-    app.memoryStore.close();
+
     process.exit(0);
   };
 
@@ -259,7 +258,7 @@ async function runSlack(app: AppContext): Promise<void> {
   const shutdown = async () => {
     console.log("\nShutting down...");
     await slack.stop();
-    app.memoryStore.close();
+
     process.exit(0);
   };
 
@@ -300,7 +299,7 @@ async function runAPI(app: AppContext): Promise<void> {
   const shutdown = () => {
     console.log("\nShutting down...");
     apiServer.stop();
-    app.memoryStore.close();
+
     process.exit(0);
   };
 

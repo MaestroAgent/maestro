@@ -27,7 +27,6 @@ export type StoredMessage = z.infer<typeof StoredMessageSchema>;
 
 // Options for memory store
 export interface MemoryStoreOptions {
-  dbPath?: string;
   maxMessages?: number; // Max messages to retain per session (default: 100)
 }
 
