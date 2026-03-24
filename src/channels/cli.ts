@@ -1,6 +1,5 @@
 import * as readline from "readline";
-import { Agent } from "../core/agent.js";
-import { AgentContext } from "../core/types.js";
+import { ChannelEngine } from "./engine.js";
 import { MemoryStore } from "../memory/store.js";
 import {
   getCostTracker,
@@ -9,20 +8,19 @@ import {
 } from "../observability/index.js";
 
 export interface CLIAdapterOptions {
-  createOrchestrator: (context: AgentContext) => Agent;
+  engine: ChannelEngine;
   memoryStore: MemoryStore;
   userId?: string;
 }
 
 export class CLIAdapter {
-  private createOrchestrator: (context: AgentContext) => Agent;
+  private engine: ChannelEngine;
   private memoryStore: MemoryStore;
   private userId: string;
-  private context: AgentContext | null = null;
   private rl: readline.Interface | null = null;
 
   constructor(options: CLIAdapterOptions) {
-    this.createOrchestrator = options.createOrchestrator;
+    this.engine = options.engine;
     this.memoryStore = options.memoryStore;
     this.userId = options.userId ?? "cli-user";
   }
@@ -31,8 +29,6 @@ export class CLIAdapter {
    * Start interactive REPL mode
    */
   async startInteractive(): Promise<void> {
-    this.initSession();
-
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -76,7 +72,6 @@ export class CLIAdapter {
    * Process a single message (for pipe mode)
    */
   async processOnce(input: string): Promise<string> {
-    this.initSession();
     return this.processMessageSilent(input);
   }
 
@@ -106,11 +101,8 @@ export class CLIAdapter {
     this.shutdown();
   }
 
-  private initSession(): void {
-    if (!this.context) {
-      const session = this.memoryStore.getOrCreateSession("cli", this.userId);
-      this.context = this.memoryStore.createContext(session);
-    }
+  private getSessionId(): string {
+    return this.memoryStore.getOrCreateSession("cli", this.userId).id;
   }
 
   private async handleCommand(command: string): Promise<void> {
@@ -119,23 +111,21 @@ export class CLIAdapter {
     const args = parts.slice(1);
 
     switch (cmd) {
-      case "/clear":
-        if (this.context) {
-          this.memoryStore.clearSession(this.context.sessionId);
-          clearCostTracker(this.context.sessionId);
-          this.context.history = [];
-        }
+      case "/clear": {
+        const sessionId = this.getSessionId();
+        this.memoryStore.clearSession(sessionId);
+        clearCostTracker(sessionId);
+        this.engine.clearSession("cli", this.userId);
         console.log("Session cleared.\n");
         break;
+      }
 
-      case "/cost":
-        if (this.context) {
-          const tracker = getCostTracker(this.context.sessionId);
-          console.log(tracker.formatSummary());
-        } else {
-          console.log("No active session.\n");
-        }
+      case "/cost": {
+        const sessionId = this.getSessionId();
+        const tracker = getCostTracker(sessionId);
+        console.log(tracker.formatSummary());
         break;
+      }
 
       case "/budget": {
         const budgetGuard = getBudgetGuard();
@@ -176,28 +166,13 @@ export class CLIAdapter {
   }
 
   private async processMessage(input: string): Promise<void> {
-    if (!this.context) return;
-
     process.stdout.write("\nMaestro: ");
 
     try {
-      const orchestrator = this.createOrchestrator(this.context);
-
-      for await (const chunk of orchestrator.run(input)) {
+      for await (const chunk of this.engine.run("cli", this.userId, input)) {
         if (chunk.type === "text") {
           process.stdout.write(chunk.text);
         }
-      }
-
-      // Sync context to storage
-      this.memoryStore.syncContext(this.context);
-
-      // Also sync metadata (for things like currentProject)
-      if (this.context.metadata) {
-        this.memoryStore.updateSessionMetadata(
-          this.context.sessionId,
-          this.context.metadata
-        );
       }
 
       console.log("\n");
@@ -211,28 +186,13 @@ export class CLIAdapter {
   }
 
   private async processMessageSilent(input: string): Promise<string> {
-    if (!this.context) return "";
-
     let response = "";
 
     try {
-      const orchestrator = this.createOrchestrator(this.context);
-
-      for await (const chunk of orchestrator.run(input)) {
+      for await (const chunk of this.engine.run("cli", this.userId, input)) {
         if (chunk.type === "text") {
           response += chunk.text;
         }
-      }
-
-      // Sync context to storage
-      this.memoryStore.syncContext(this.context);
-
-      // Also sync metadata (for things like currentProject)
-      if (this.context.metadata) {
-        this.memoryStore.updateSessionMetadata(
-          this.context.sessionId,
-          this.context.metadata
-        );
       }
     } catch (error) {
       response = `Error: ${error instanceof Error ? error.message : String(error)}`;

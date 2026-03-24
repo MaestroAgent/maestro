@@ -10,6 +10,7 @@ import { createOrchestratorAgent } from "./agents/orchestrator.js";
 import { TelegramAdapter } from "./channels/telegram.js";
 import { SlackAdapter } from "./channels/slack.js";
 import { CLIAdapter } from "./channels/cli.js";
+import { ChannelEngine } from "./channels/engine.js";
 import { MemoryStore } from "./memory/store.js";
 import { createToolRegistry, builtinTools, marketingTools, crmTools } from "./tools/index.js";
 import { initLogger, initBudgetGuard, getLogger, getBudgetGuard, getCostTracker } from "./observability/index.js";
@@ -270,8 +271,9 @@ async function runSlack(app: AppContext): Promise<void> {
 }
 
 async function runCLI(app: AppContext): Promise<void> {
+  const engine = new ChannelEngine(app.createOrchestrator, app.memoryStore);
   const cli = new CLIAdapter({
-    createOrchestrator: app.createOrchestrator,
+    engine,
     memoryStore: app.memoryStore,
   });
 
