@@ -73,6 +73,7 @@ function validateEnv(mode: Mode): void {
 }
 
 interface AppContext {
+  database: MaestroDatabase;
   agentRegistry: DynamicAgentRegistry;
   provider: AnthropicProvider;
   toolRegistry: ToolRegistry;
@@ -211,6 +212,7 @@ function setupApp(mode: Mode): AppContext {
   };
 
   return {
+    database,
     agentRegistry,
     provider,
     toolRegistry,
@@ -231,7 +233,7 @@ async function runTelegram(app: AppContext): Promise<void> {
   const shutdown = () => {
     console.log("\nShutting down...");
     telegram.stop();
-
+    app.database.close();
     process.exit(0);
   };
 
@@ -257,7 +259,7 @@ async function runSlack(app: AppContext): Promise<void> {
   const shutdown = async () => {
     console.log("\nShutting down...");
     await slack.stop();
-
+    app.database.close();
     process.exit(0);
   };
 
@@ -274,10 +276,14 @@ async function runCLI(app: AppContext): Promise<void> {
   });
 
   // Check for pipe mode
-  if (CLIAdapter.isPipeMode()) {
-    await cli.runPipeMode();
-  } else {
-    await cli.startInteractive();
+  try {
+    if (CLIAdapter.isPipeMode()) {
+      await cli.runPipeMode();
+    } else {
+      await cli.startInteractive();
+    }
+  } finally {
+    app.database.close();
   }
 }
 
@@ -298,7 +304,7 @@ async function runAPI(app: AppContext): Promise<void> {
   const shutdown = () => {
     console.log("\nShutting down...");
     apiServer.stop();
-
+    app.database.close();
     process.exit(0);
   };
 
