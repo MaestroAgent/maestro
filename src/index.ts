@@ -248,11 +248,12 @@ async function runTelegram(app: AppContext): Promise<void> {
 }
 
 async function runSlack(app: AppContext): Promise<void> {
+  const engine = new ChannelEngine(app.createOrchestrator, app.memoryStore);
   const slack = new SlackAdapter({
     botToken: process.env.SLACK_BOT_TOKEN!,
     appToken: process.env.SLACK_APP_TOKEN!,
     signingSecret: process.env.SLACK_SIGNING_SECRET!,
-    createOrchestrator: app.createOrchestrator,
+    engine,
     memoryStore: app.memoryStore,
     agentRegistry: app.agentRegistry,
   });
