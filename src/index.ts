@@ -224,9 +224,10 @@ function setupApp(mode: Mode): AppContext {
 }
 
 async function runTelegram(app: AppContext): Promise<void> {
+  const engine = new ChannelEngine(app.createOrchestrator, app.memoryStore);
   const telegram = new TelegramAdapter({
     token: process.env.TELEGRAM_BOT_TOKEN!,
-    createOrchestrator: app.createOrchestrator,
+    engine,
     memoryStore: app.memoryStore,
   });
 
