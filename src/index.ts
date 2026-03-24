@@ -182,7 +182,7 @@ function setupApp(mode: Mode): AppContext {
 
   // Initialize vector store for semantic memory
   initVectorStore({
-    dbPath: join(DATA_DIR, "maestro.db"),
+    db: database.db,
   });
   console.log("Semantic memory initialized");
 
