@@ -13,9 +13,10 @@ export class ChannelEngine {
   async *run(
     channel: string,
     userId: string,
-    message: string
+    message: string,
+    apiKeyId?: string
   ): AsyncGenerator<StreamChunk> {
-    const context = this.getOrCreateContext(channel, userId);
+    const context = this.getOrCreateContext(channel, userId, apiKeyId);
     const orchestrator = this.createOrchestrator(context);
 
     yield* orchestrator.run(message);
@@ -33,12 +34,20 @@ export class ChannelEngine {
     this.sessions.delete(`${channel}:${userId}`);
   }
 
-  private getOrCreateContext(channel: string, userId: string): AgentContext {
+  private getOrCreateContext(
+    channel: string,
+    userId: string,
+    apiKeyId?: string
+  ): AgentContext {
     const key = `${channel}:${userId}`;
     let context = this.sessions.get(key);
     if (context) return context;
 
-    const session = this.memoryStore.getOrCreateSession(channel, userId);
+    const session = this.memoryStore.getOrCreateSession(
+      channel,
+      userId,
+      apiKeyId
+    );
     context = this.memoryStore.createContext(session);
     this.sessions.set(key, context);
     return context;

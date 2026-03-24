@@ -8,6 +8,7 @@ import { Agent } from "../core/agent.js";
 import { DynamicAgentRegistry } from "../core/registry.js";
 import { AgentContext } from "../core/types.js";
 import { MemoryStore } from "../memory/store.js";
+import { ChannelEngine } from "../channels/engine.js";
 import { createChatRoutes } from "./routes/chat.js";
 import { createAgentRoutes } from "./routes/agents.js";
 import { createSessionRoutes } from "./routes/sessions.js";
@@ -137,8 +138,12 @@ export class APIServer {
     });
 
     // Mount routes
+    const engine = new ChannelEngine(
+      this.options.createOrchestrator,
+      this.options.memoryStore
+    );
     const chatRoutes = createChatRoutes({
-      createOrchestrator: this.options.createOrchestrator,
+      engine,
       memoryStore: this.options.memoryStore,
     });
     this.app.route("/chat", chatRoutes);

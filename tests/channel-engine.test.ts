@@ -57,7 +57,11 @@ describe("ChannelEngine", () => {
       result.push(chunk);
     }
 
-    expect(store.getOrCreateSession).toHaveBeenCalledWith("telegram", "user-1");
+    expect(store.getOrCreateSession).toHaveBeenCalledWith(
+      "telegram",
+      "user-1",
+      undefined
+    );
     expect(store.createContext).toHaveBeenCalledOnce();
   });
 
@@ -135,7 +139,15 @@ describe("ChannelEngine", () => {
     }
 
     expect(store.getOrCreateSession).toHaveBeenCalledTimes(2);
-    expect(store.getOrCreateSession).toHaveBeenCalledWith("telegram", "user-1");
-    expect(store.getOrCreateSession).toHaveBeenCalledWith("slack", "user-2");
+    expect(store.getOrCreateSession).toHaveBeenCalledWith(
+      "telegram",
+      "user-1",
+      undefined
+    );
+    expect(store.getOrCreateSession).toHaveBeenCalledWith(
+      "slack",
+      "user-2",
+      undefined
+    );
   });
 });
