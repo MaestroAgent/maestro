@@ -1,10 +1,9 @@
-import Database from "better-sqlite3";
+import type BetterSqlite3 from "better-sqlite3";
 import { calculateCost } from "./cost.js";
 import { TokenUsage } from "./types.js";
 
 export interface BudgetConfig {
   dailyLimitUsd: number;
-  dbPath: string;
 }
 
 export interface BudgetStatus {
@@ -20,14 +19,13 @@ export interface BudgetStatus {
  * Budget guard that tracks daily spending and enforces limits
  */
 export class BudgetGuard {
-  private db: Database.Database;
+  private db: BetterSqlite3.Database;
   private dailyLimitUsd: number;
   private overrideUntil: Date | null = null;
 
-  constructor(config: BudgetConfig) {
+  constructor(db: BetterSqlite3.Database, config: BudgetConfig) {
+    this.db = db;
     this.dailyLimitUsd = config.dailyLimitUsd;
-    this.db = new Database(config.dbPath);
-    this.db.pragma("journal_mode = WAL");
     this.initSchema();
   }
 
@@ -223,22 +221,16 @@ export class BudgetGuard {
     return output;
   }
 
-  /**
-   * Close database connection
-   */
-  close(): void {
-    this.db.close();
-  }
 }
 
 // Global budget guard instance
 let budgetGuard: BudgetGuard | null = null;
 
-export function initBudgetGuard(config: BudgetConfig): BudgetGuard {
-  if (budgetGuard) {
-    budgetGuard.close();
-  }
-  budgetGuard = new BudgetGuard(config);
+export function initBudgetGuard(
+  db: BetterSqlite3.Database,
+  config: BudgetConfig,
+): BudgetGuard {
+  budgetGuard = new BudgetGuard(db, config);
   return budgetGuard;
 }
 

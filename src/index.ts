@@ -174,9 +174,8 @@ function setupApp(mode: Mode): AppContext {
 
   // Initialize budget guard
   const dailyBudget = parseFloat(process.env.DAILY_BUDGET_USD ?? "20");
-  initBudgetGuard({
+  initBudgetGuard(database.db, {
     dailyLimitUsd: dailyBudget,
-    dbPath: join(DATA_DIR, "maestro.db"),
   });
   console.log(`Budget guard initialized: $${dailyBudget}/day limit`);
 
